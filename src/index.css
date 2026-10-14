@@ -48,13 +48,18 @@
   }
 
   /*
-   * iOS Safari zooms the whole page when a focused control is under 16px,
-   * and the usual answer — `maximum-scale=1` in the viewport meta — buys
-   * that by taking pinch-zoom away from everyone, which fails WCAG 1.4.4.
-   * Sizing the controls fixes the cause instead. This is the floor; `.field`
-   * says the same thing, and the few inputs that set their own size set a
-   * larger one. It matters for the invisible `select` and `date` overlays
-   * behind the Quick Add chips too, which would otherwise inherit 14px.
+   * Controls are 16px, a point above body text.
+   *
+   * iOS Safari zooms the whole page when a focused control is smaller than
+   * that, and the usual answer — `maximum-scale=1` in the viewport meta —
+   * pays for it by taking pinch-zoom away from everyone, which fails WCAG
+   * 1.4.4. Sizing the controls fixes the cause.
+   *
+   * This one rule is the whole of it: `.field` deliberately does not set a
+   * size, so there is nothing to keep in step, and the few inputs that do
+   * set their own set a larger one. It is also what covers the invisible
+   * `select` and `date` overlays behind the Quick Add chips, which have no
+   * classes of their own and would otherwise inherit the chip's 14px.
    */
   input,
   textarea,
@@ -122,7 +127,7 @@
   }
 
   .field {
-    @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-input text-ink placeholder:text-muted;
+    @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-ink placeholder:text-muted;
   }
 
   /* The three square actions on the transaction detail screen. */
