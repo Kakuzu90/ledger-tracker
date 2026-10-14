@@ -20,6 +20,27 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+   * Allowing pinch-zoom (no `maximum-scale` in the viewport meta) also
+   * re-allows double-tap-to-zoom, and a browser that is watching for a
+   * second tap holds the first one back. On the PIN keypad that is fatal:
+   * entering four digits *is* fast repeated taps on small targets, and the
+   * zoom gesture eats them. `manipulation` keeps panning and pinch-zoom on
+   * the page while telling the browser no control is waiting for a
+   * double-tap, so taps land immediately.
+   */
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  label,
+  [role='button'],
+  [role='switch'],
+  [role='checkbox'] {
+    touch-action: manipulation;
+  }
+
   body {
     @apply bg-bg font-sans text-base text-ink antialiased;
     margin: 0;
