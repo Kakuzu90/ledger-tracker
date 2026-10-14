@@ -54,13 +54,16 @@ sample data in production; that stays an explicit action.
 
 ## Screens
 
-**Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**
-and **Accounts** are built
-(`src/features/{home,quick-add,activity,transactions,accounts}`). Both follow the same split: a pure module holds the logic
-(`dashboard.ts`, `draft.ts`), a `db.ts` holds the Dexie queries and writes, and
-the components only render. That is what makes the figures testable —
-`dashboard.test.ts` asserts the home cards against the sample data, so a change
-that breaks the arithmetic fails the suite rather than the screen.
+**Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
+**Accounts**, the **Loans** hub, a **person's ledger**, **New loan** and
+**Split** are built
+(`src/features/{home,quick-add,activity,transactions,accounts,loans,split}`).
+They all follow the same split: a pure module holds the logic (`dashboard.ts`,
+`draft.ts`, `loans.ts`, `person.ts`, `split.ts`), a `db.ts` holds the Dexie
+queries and writes, and the components only render. That is what makes the
+figures testable — `dashboard.test.ts` asserts the home cards against the
+sample data, so a change that breaks the arithmetic fails the suite rather
+than the screen.
 
 Home reads through one `useLiveQuery`, so a saved transaction updates every
 card at once. Amounts render through `src/ui/Money.tsx`, which is what makes
@@ -71,6 +74,13 @@ cut across date, account, category, tags and amount at once, and no single
 index serves that. Deleting goes through `deleteTransaction`, which returns
 everything it removed so the Undo bar can put it back exactly — receipt
 included, so no orphaned blob is left behind.
+
+Loans are three views over the same two tables. The hub groups open personal
+loans by contact and amortises the formal ones; a person's page adds the
+per-loan progress, the history of every movement and the reminder message;
+Split turns one expense into a loan per person. Repayments go through
+`recordPayment`, which writes the `loanPayments` row *and* the transaction
+that mirrors it, and closes the loan when nothing is left.
 
 ## Notes for the next change
 
@@ -91,7 +101,20 @@ included, so no orphaned blob is left behind.
   is just a transfer into it, so the debt drops and net worth does not move.
 - **Formal loans** need amortisation for their remaining balance; `outstanding()`
   is principal less payments, which is only right at 0%. `loanTotals()` covers
-  personal loans only, matching the cards in Loans.dc.html.
+  personal loans only, matching the cards in Loans.dc.html. For the same
+  reason `recordPayment` caps a *personal* loan at what it is owed but lets a
+  formal one take more — the extra is interest, not principal.
+- **A loan payment is never deleted from the transaction.**
+  `deleteTransaction` refuses rows that carry one; `deletePayment` is the way
+  back, and it removes the payment, its transaction and the settled flag it
+  may have set. The Undo on the payment snackbar calls it.
+- **Settling records no money.** It is for a debt written off or squared away
+  outside the app; `settleLoans` returns what it actually closed so Undo
+  reopens only that. Money changing hands is `recordPayment`.
+- **A split moves nothing.** The expense already left your account, so each
+  split loan books no transaction of its own — counting it again would double
+  the peso. The loans carry `splitFromTxnId`, which is what lets the Split
+  screen show an existing split and unpick it while no one has paid.
 - **Theme** is a `data-theme` attribute on `<html>` over CSS variables in
   `src/styles/tokens.css`; Tailwind colours all resolve through them. The
   preference lives in the IndexedDB `settings` table — `localStorage` holds a

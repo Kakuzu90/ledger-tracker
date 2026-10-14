@@ -181,3 +181,22 @@ export const ArchiveIcon = (p: IconProps) => (
     <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
   </Svg>
 )
+
+export const ShareIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 3v12M8 7l4-4 4 4" />
+  </Svg>
+)
+
+export const CheckIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M5 12l5 5 9-10" />
+  </Svg>
+)
+
+export const PersonIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <circle cx="12" cy="8" r="3.6" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </Svg>
+)
