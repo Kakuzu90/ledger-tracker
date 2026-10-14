@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Screen } from '@/ui/Screen'
 import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
-import { ChevronRightIcon, LoansIcon, PlusIcon } from '@/ui/Icon'
+import { ChevronRightIcon, EditIcon, LoansIcon, PlusIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
 import { formatPercent } from '@/lib/money'
 import type { Account } from '@/db/types'
@@ -121,6 +121,7 @@ export function AccountsScreen() {
                 type="button"
                 onClick={() => setShowArchived((shown) => !shown)}
                 aria-expanded={showArchived}
+                aria-controls="archived-accounts"
                 className="flex min-h-[52px] items-center justify-between px-1 text-sm text-muted"
               >
                 {view.archived.length} archived{' '}
@@ -132,7 +133,7 @@ export function AccountsScreen() {
               </button>
 
               {showArchived && (
-                <div className="card py-1">
+                <div id="archived-accounts" className="card py-1">
                   {view.archived.map((summary) => (
                     <AccountRow key={summary.account.id} summary={summary} onEdit={edit} />
                   ))}
@@ -161,6 +162,7 @@ function AccountRow({
     <button
       type="button"
       onClick={() => onEdit(account)}
+      aria-label={`Edit ${account.name}`}
       className="list-row w-full text-left"
     >
       <AccountTile type={account.type} color={account.color} />
@@ -169,6 +171,9 @@ function AccountRow({
         <span className="block text-meta text-muted">{TYPE_LABEL[account.type]}</span>
       </span>
       <Money value={balance} tone={balance < 0 ? 'negative' : 'plain'} whole className="font-semibold" />
+      {/* The row opens the editor; without this it reads as a link to a
+          detail screen that does not exist. */}
+      <EditIcon size={16} aria-hidden="true" className="flex-none text-muted" />
     </button>
   )
 }
@@ -189,6 +194,7 @@ function CreditCard({
       <button
         type="button"
         onClick={() => onEdit(card.account)}
+        aria-label={`Edit ${card.account.name}`}
         className="flex w-full items-center gap-3 text-left"
       >
         <AccountTile type="credit" color={card.account.color} />
@@ -199,6 +205,7 @@ function CreditCard({
           </span>
         </span>
         <Money value={card.balance} tone="negative" whole className="font-semibold" />
+        <EditIcon size={16} aria-hidden="true" className="flex-none text-muted" />
       </button>
 
       {card.limit > 0 ? (

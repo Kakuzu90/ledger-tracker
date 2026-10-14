@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Account, Category, Id } from '@/db/types'
 import { Chip } from '@/ui/Chip'
-import { CalendarIcon, ReceiptIcon } from '@/ui/Icon'
+import { CalendarIcon, CloseIcon, ReceiptIcon } from '@/ui/Icon'
 import { relativeDay } from '@/lib/dates'
 
 /** Category chips: the first six, then "More" opens the rest. */
@@ -36,8 +36,10 @@ export function CategoryPicker({
           {category.name}
         </Chip>
       ))}
-      {!expanded && categories.length > 6 && (
-        <Chip onClick={() => setExpanded(true)}>More</Chip>
+      {categories.length > 6 && (
+        <Chip onClick={() => setExpanded((shown) => !shown)}>
+          {expanded ? 'Fewer' : 'More'}
+        </Chip>
       )}
     </div>
   )
@@ -120,18 +122,32 @@ export function DatePicker({
   )
 }
 
-/** Attaches a photo of a receipt. */
+/** Attaches a photo of a receipt, and takes it off again. */
 export function ReceiptPicker({
   attached,
   onPick,
+  onClear,
 }: {
   attached: boolean
   onPick: (file: File | null) => void
+  /** Given once something is attached — there was no way back before. */
+  onClear?: () => void
 }) {
+  if (attached && onClear) {
+    return (
+      <button type="button" className="chip chip-on" onClick={onClear}>
+        <ReceiptIcon />
+        Receipt added
+        <CloseIcon size={14} aria-hidden="true" />
+        <span className="sr-only">— remove</span>
+      </button>
+    )
+  }
+
   return (
-    <span className={`chip relative ${attached ? 'chip-on' : ''}`}>
+    <span className="chip relative">
       <ReceiptIcon />
-      {attached ? 'Receipt added' : 'Receipt'}
+      Receipt
       <input
         type="file"
         accept="image/*"

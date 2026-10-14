@@ -15,7 +15,7 @@ function Tab({ to, label, Icon, end }: (typeof tabs)[number]) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `flex min-h-[52px] min-w-[60px] flex-col items-center justify-center gap-[3px] text-[11px] font-medium no-underline ${
+        `flex min-h-[52px] min-w-[60px] flex-col items-center justify-center gap-[3px] text-label normal-case tracking-normal no-underline ${
           isActive ? 'text-primary' : 'text-muted'
         }`
       }

@@ -5,8 +5,9 @@ import { BellIcon, ChevronRightIcon, PlusIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
 import { getSetting, setSetting } from '@/db/settings'
 import { askForNotifications, notificationState } from '@/lib/notifications'
-import { confirmPending, skipPending } from '@/features/transactions/db'
+import { confirmPending, restorePending, skipPending } from '@/features/transactions/db'
 import type { Recurring } from '@/db/types'
+import { Badge } from '@/ui/Rows'
 import { useBillsData } from './db'
 import { buildBillsView, type BillRow, type RuleRow } from './bills'
 import { RuleForm } from './components/RuleForm'
@@ -49,6 +50,21 @@ export function BillsScreen() {
         state === 'granted'
           ? 'Reminders on — you will see them when you open Ledger'
           : 'Reminders stay off',
+    })
+  }
+
+  // Same confirmations the Activity screen gives for the same two actions.
+  const onConfirm = async (id: string) => {
+    await confirmPending(id)
+    showSnack({ message: 'Added to your ledger' })
+  }
+
+  const onSkip = async (id: string) => {
+    const skipped = await skipPending(id)
+    showSnack({
+      message: 'Skipped this one',
+      actionLabel: 'Undo',
+      onAction: () => restorePending(skipped),
     })
   }
 
@@ -143,8 +159,8 @@ export function BillsScreen() {
                     key={row.key}
                     row={row}
                     onEdit={edit}
-                    onConfirm={() => void confirmPending(row.pending?.id ?? '')}
-                    onSkip={() => void skipPending(row.pending?.id ?? '')}
+                    onConfirm={() => void onConfirm(row.pending?.id ?? '')}
+                    onSkip={() => void onSkip(row.pending?.id ?? '')}
                   />
                 ))}
               </div>
@@ -214,18 +230,6 @@ export function BillsScreen() {
   )
 }
 
-function Badge({ mode }: { mode: BillRow['mode'] }) {
-  return (
-    <span
-      className={`inline-flex min-h-[20px] flex-none items-center rounded-full px-2 text-[11px] font-semibold ${
-        mode === 'auto' ? 'bg-primary/15 text-primary' : 'bg-divider text-muted'
-      }`}
-    >
-      {mode === 'auto' ? 'Auto' : 'Ask first'}
-    </span>
-  )
-}
-
 function BillLine({
   row,
   onEdit,
@@ -239,62 +243,77 @@ function BillLine({
 }) {
   const waiting = row.pending !== undefined
 
+  const body = (
+    <>
+      <span
+        aria-hidden="true"
+        className={`flex h-11 w-11 flex-none flex-col items-center justify-center rounded-ctl border bg-bg leading-[1.1] ${
+          row.due ? 'border-primary' : 'border-border'
+        }`}
+      >
+        <span className="text-label text-muted">{row.month}</span>
+        <span className="num text-base font-bold">{row.day}</span>
+      </span>
+
+      <span className="min-w-0 flex-1 text-left">
+        <span className="block truncate font-medium">{row.title}</span>
+        <span className="flex items-center gap-1.5 text-meta text-muted">
+          <span className="truncate">
+            {row.subtitle}
+            {row.lastAmount !== undefined && (
+              <>
+                {' · last '}
+                <Money value={row.lastAmount} compact className="text-muted" />
+              </>
+            )}
+          </span>
+          <Badge tone={row.mode === 'auto' ? 'positive' : 'neutral'}>
+            {row.mode === 'auto' ? 'Auto' : 'Ask first'}
+          </Badge>
+        </span>
+      </span>
+
+      <span className="num flex-none font-semibold">
+        {row.estimated && '~'}
+        <Money value={row.amount} whole={row.estimated} compact />
+      </span>
+    </>
+  )
+
   return (
     <div className="border-b border-divider py-2.5 last:border-b-0">
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className={`flex h-11 w-11 flex-none flex-col items-center justify-center rounded-ctl border bg-bg leading-[1.1] ${
-            row.due ? 'border-primary' : 'border-border'
-          }`}
-        >
-          <span className="text-[10px] font-semibold uppercase text-muted">{row.month}</span>
-          <span className="num text-base font-bold">{row.day}</span>
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{row.title}</span>
-          <span className="flex items-center gap-1.5 text-meta text-muted">
-            <span className="truncate">
-              {row.subtitle}
-              {row.lastAmount !== undefined && (
-                <>
-                  {' · last '}
-                  <Money value={row.lastAmount} compact className="text-muted" />
-                </>
-              )}
-            </span>
-            <Badge mode={row.mode} />
-          </span>
-        </span>
-
+      {/*
+        The whole line is the edit control, as in RuleLine below. It used to
+        be the amount text alone — a small target with no affordance — and
+        `disabled:opacity-100` hid the fact that a line without a rule
+        behind it does nothing at all.
+      */}
+      {row.rule ? (
         <button
           type="button"
           onClick={() => row.rule && onEdit(row.rule)}
-          disabled={!row.rule}
           aria-label={`Edit ${row.title}`}
-          className="flex-none text-right disabled:opacity-100"
+          className="flex w-full items-center gap-3"
         >
-          <span className="num font-semibold">
-            {row.estimated && '~'}
-            <Money value={row.amount} whole={row.estimated} compact />
-          </span>
+          {body}
         </button>
-      </div>
+      ) : (
+        <div className="flex w-full items-center gap-3">{body}</div>
+      )}
 
       {waiting && onConfirm && onSkip && (
         <div className="mt-2 flex justify-end gap-2">
           <button
             type="button"
             onClick={onSkip}
-            className="min-h-[38px] px-2.5 text-sm font-medium text-muted"
+            className="min-h-touch px-2.5 text-sm font-medium text-muted"
           >
             Skip
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="min-h-[38px] rounded-ctl bg-primary px-3.5 text-sm font-semibold text-primary-ink"
+            className="min-h-touch rounded-ctl bg-primary px-3.5 text-sm font-semibold text-primary-ink"
           >
             Confirm
           </button>
@@ -314,15 +333,13 @@ function RuleLine({ row, onEdit }: { row: RuleRow; onEdit: (rule: Recurring) => 
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate font-medium">{row.title}</span>
-          {row.subscription && (
-            <span className="inline-flex min-h-[20px] flex-none items-center rounded-full bg-divider px-2 text-[11px] font-semibold text-muted">
-              Sub
-            </span>
-          )}
+          {row.subscription && <Badge>Sub</Badge>}
         </span>
         <span className="block truncate text-meta text-muted">{row.subtitle}</span>
       </span>
-      <Badge mode={row.rule.mode} />
+      <Badge tone={row.rule.mode === 'auto' ? 'positive' : 'neutral'}>
+        {row.rule.mode === 'auto' ? 'Auto' : 'Ask first'}
+      </Badge>
       <Money value={row.amount} compact className="flex-none font-semibold" />
     </button>
   )

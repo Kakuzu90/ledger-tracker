@@ -54,8 +54,17 @@
     margin: 0;
   }
 
-  /* Stroke icons, matching the mockups' SVG defaults. */
-  svg {
+  /*
+   * Stroke icons, matching the mockups' SVG defaults.
+   *
+   * `fill` and `stroke` are inherited properties, so these defaults reach
+   * every shape inside the svg — which is what icons want and what a chart
+   * does not: Recharts sets a fill on its bars and sectors but no stroke, so
+   * it would inherit `currentColor` and outline every bar in the ink colour.
+   * Excluding its root surface leaves the chart subtree on the ordinary SVG
+   * defaults it is written against.
+   */
+  svg:not(.recharts-surface) {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
@@ -66,6 +75,24 @@
 
   :focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg;
+  }
+
+  /*
+   * Honour the OS "reduce motion" setting. Nothing here carries meaning on
+   * its own — the pulsing skeletons, the switch knob, the chevron that turns
+   * — so the honest answer to the request is to cut all of it rather than
+   * shorten it. Kept at a hair above zero so `transitionend` still fires for
+   * anything that waits on it.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /*
@@ -137,10 +164,22 @@
   /* 44px square icon button in screen headers. */
   .icon-btn {
     @apply flex h-touch w-touch items-center justify-center rounded-ctl border border-border bg-surface text-ink;
+    @apply disabled:opacity-40;
   }
 
   .chip {
-    @apply inline-flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-full border border-border-strong bg-surface px-3.5 text-sm font-medium text-ink;
+    @apply inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-full border border-border-strong bg-surface px-3.5 text-sm font-medium text-ink;
+    @apply disabled:opacity-40;
+  }
+
+  /*
+   * Several chips are a label with a transparent native control laid over
+   * them (account, date, receipt). The control is the real focus target, so
+   * the focus ring lands on something with `opacity: 0` and is never drawn.
+   * This puts it on the chip the user can actually see.
+   */
+  .chip:has(:focus-visible) {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg;
   }
 
   .chip-on {

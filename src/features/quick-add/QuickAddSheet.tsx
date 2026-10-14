@@ -1,17 +1,22 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Sheet } from '@/ui/Sheet'
 import { Chip } from '@/ui/Chip'
 import { Segmented } from '@/ui/Segmented'
 import { useUIStore } from '@/store/ui'
-import type { TransactionType } from '@/db/types'
+import { db } from '@/db/db'
+import type { Id, TransactionType } from '@/db/types'
 import { AmountDisplay, Keypad } from './components/Keypad'
 import { AccountPicker, CategoryPicker, DatePicker, ReceiptPicker } from './components/Pickers'
 import { ReceiptIcon, RepeatIcon } from '@/ui/Icon'
 import { useAccounts, useCategories, useLastUsedAccountId } from './hooks/usePickers'
-import { saveDraft } from './db'
+import { saveDraft, updateDraft } from './db'
+import { useKeypadKeys } from '@/lib/keypad'
 import {
   changeType,
+  draftChanged,
+  draftFromTransaction,
   emptyDraft,
+  hasReceipt,
   PROBLEM_MESSAGE,
   pressKey,
   SAVE_LABEL,
@@ -25,29 +30,83 @@ const TYPES: ReadonlyArray<{ value: TransactionType; label: string }> = [
   { value: 'transfer', label: 'Transfer' },
 ]
 
-/** New transaction, per design/QuickAdd.dc.html. */
+/**
+ * New transaction, per design/QuickAdd.dc.html — and, with an id to edit,
+ * the same sheet over an existing one. Editing reuses this rather than
+ * getting a screen of its own: it is the same amount, the same pickers and
+ * the same rules, and a second form would be a second set of both.
+ */
 export function QuickAddSheet() {
   const open = useUIStore((s) => s.quickAddOpen)
   const session = useUIStore((s) => s.quickAddSession)
   const initial = useUIStore((s) => s.quickAddInitial)
+  const editId = useUIStore((s) => s.quickAddEditId)
   const close = useUIStore((s) => s.closeQuickAdd)
+
+  if (!open) return null
 
   // Keyed on the session so each open starts from a clean draft, rather than
   // resetting state from an effect.
-  return open ? <QuickAddForm key={session} initial={initial} onClose={close} /> : null
+  return editId ? (
+    <EditLoader key={session} id={editId} onClose={close} />
+  ) : (
+    <QuickAddForm key={session} initial={initial} onClose={close} />
+  )
+}
+
+/**
+ * Reads the entry before the form mounts, so the form itself still takes a
+ * draft it owns outright and never has to reconcile one arriving late.
+ */
+function EditLoader({ id, onClose }: { id: Id; onClose: () => void }) {
+  const [loaded, setLoaded] = useState<Draft | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    void db.transactions.get(id).then((transaction) => {
+      if (cancelled) return
+      // Deleted between opening the detail screen and tapping Edit.
+      if (!transaction) onClose()
+      else setLoaded(draftFromTransaction(transaction))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, onClose])
+
+  if (!loaded) {
+    return (
+      <Sheet open onClose={onClose} title="Edit transaction" fill>
+        <div aria-hidden="true" className="h-40 animate-pulse rounded-card bg-surface" />
+      </Sheet>
+    )
+  }
+
+  return <QuickAddForm editId={id} initialDraft={loaded} onClose={onClose} />
 }
 
 function QuickAddForm({
   initial,
+  initialDraft,
+  editId,
   onClose,
 }: {
-  initial: Partial<Draft> | null
+  initial?: Partial<Draft> | null
+  /** The whole draft, when editing an entry that has been read already. */
+  initialDraft?: Draft
+  editId?: Id
   onClose: () => void
 }) {
   const today = useMemo(() => new Date(), [])
-  const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(today), ...initial }))
+  const [draft, setDraft] = useState<Draft>(
+    () => initialDraft ?? { ...emptyDraft(today), ...initial },
+  )
   const [saving, setSaving] = useState(false)
   const [showProblem, setShowProblem] = useState(false)
+  /** A refusal from the write itself, as opposed to a field being empty. */
+  const [failure, setFailure] = useState<string | null>(null)
 
   const accounts = useAccounts()
   const lastUsed = useLastUsedAccountId()
@@ -61,6 +120,17 @@ function QuickAddForm({
   }
   const problem = validate(current)
 
+  // Worth a confirmation before the backdrop throws it away. A type or a
+  // date on their own are just the defaults. When editing, everything is
+  // filled in from the start, so what matters is whether it has moved.
+  const editing = editId !== undefined
+  const dirty = editing
+    ? initialDraft !== undefined && draftChanged(draft, initialDraft)
+    : draft.amountInput !== '' ||
+      draft.note !== '' ||
+      draft.categoryId !== undefined ||
+      draft.receipt !== undefined
+
   const update = (patch: Partial<Draft>) => setDraft((draft) => ({ ...draft, ...patch }))
 
   const onSave = async () => {
@@ -70,14 +140,29 @@ function QuickAddForm({
     }
 
     setSaving(true)
+    setFailure(null)
     try {
-      await saveDraft(current)
+      if (editId) await updateDraft(editId, current)
+      else await saveDraft(current)
       onClose()
-    } catch {
+    } catch (error) {
+      // Says what went wrong. Before, a refused write showed the *validation*
+      // message — which is blank whenever the form itself is valid, so a
+      // failed save looked like nothing happening at all.
       setSaving(false)
-      setShowProblem(true)
+      setFailure(error instanceof Error ? error.message : 'That could not be saved')
     }
   }
+
+  const press = (key: string) =>
+    setDraft((draft) => ({ ...draft, amountInput: pressKey(draft.amountInput, key) }))
+
+  useKeypadKeys({
+    onKey: press,
+    onBackspace: () => press('backspace'),
+    onSubmit: () => void onSave(),
+    decimal: true,
+  })
 
   const onPickReceipt = (file: File | null) => {
     if (!file) return
@@ -90,8 +175,17 @@ function QuickAddForm({
     <Sheet
       open
       onClose={onClose}
-      title="New transaction"
+      title={editing ? 'Edit transaction' : 'New transaction'}
       fill
+      confirmDiscard={dirty}
+      {...(editing
+        ? {
+            discardCopy: {
+              title: 'Discard your changes?',
+              detail: 'This entry will stay as it was.',
+            },
+          }
+        : {})}
       action={
         <label className="icon-btn relative cursor-pointer">
           <ReceiptIcon />
@@ -114,8 +208,49 @@ function QuickAddForm({
 
       <AmountDisplay input={current.amountInput} type={current.type} />
 
-      {/* Only the pickers scroll; the amount and keypad stay put. */}
-      <div className="-mx-1 flex flex-1 flex-col gap-3 overflow-y-auto px-1">
+      {/*
+        Account, date and the rest stay pinned above the scroll. They used to
+        sit below the category chips inside it, which on a 375x812 phone put
+        the account — the field that decides which balance moves — entirely
+        off screen behind an inner scrollbar.
+      */}
+      <div className="flex flex-none flex-wrap gap-2">
+        <AccountPicker
+          label={current.type === 'transfer' ? 'From' : 'Account'}
+          accounts={accounts ?? []}
+          value={current.accountId}
+          onChange={(accountId) => update({ accountId })}
+        />
+
+        {current.type === 'transfer' && (
+          <AccountPicker
+            label="To"
+            accounts={accounts ?? []}
+            value={current.toAccountId}
+            onChange={(toAccountId) => update({ toAccountId })}
+          />
+        )}
+
+        <DatePicker value={current.date} onChange={(date) => update({ date })} today={today} />
+
+        {!editing && (
+          <Chip active={current.repeat} onClick={() => update({ repeat: !current.repeat })}>
+            <RepeatIcon />
+            {current.repeat ? 'Repeats monthly' : 'Repeat'}
+          </Chip>
+        )}
+
+        <ReceiptPicker
+          attached={hasReceipt(current)}
+          onPick={onPickReceipt}
+          {...(hasReceipt(current)
+            ? { onClear: () => update({ receipt: undefined, receiptId: undefined }) }
+            : {})}
+        />
+      </div>
+
+      {/* Only the category list scrolls; everything else stays put. */}
+      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {current.type !== 'transfer' && (
           <CategoryPicker
             categories={categories ?? []}
@@ -123,33 +258,6 @@ function QuickAddForm({
             onChange={(categoryId) => update({ categoryId })}
           />
         )}
-
-        <div className="flex flex-wrap gap-2">
-          <AccountPicker
-            label={current.type === 'transfer' ? 'From' : 'Account'}
-            accounts={accounts ?? []}
-            value={current.accountId}
-            onChange={(accountId) => update({ accountId })}
-          />
-
-          {current.type === 'transfer' && (
-            <AccountPicker
-              label="To"
-              accounts={accounts ?? []}
-              value={current.toAccountId}
-              onChange={(toAccountId) => update({ toAccountId })}
-            />
-          )}
-
-          <DatePicker value={current.date} onChange={(date) => update({ date })} today={today} />
-
-          <Chip active={current.repeat} onClick={() => update({ repeat: !current.repeat })}>
-            <RepeatIcon />
-            {current.repeat ? 'Repeats monthly' : 'Repeat'}
-          </Chip>
-
-          <ReceiptPicker attached={current.receipt !== undefined} onPick={onPickReceipt} />
-        </div>
       </div>
 
       {/* The note stays with the keypad: it is typed, not browsed. */}
@@ -166,13 +274,13 @@ function QuickAddForm({
           placeholder="Add a note or #tag"
         />
 
-        {showProblem && problem && (
+        {(failure ?? (showProblem && problem ? PROBLEM_MESSAGE[problem] : null)) && (
           <p role="alert" className="text-center text-meta text-negative">
-            {PROBLEM_MESSAGE[problem]}
+            {failure ?? (problem ? PROBLEM_MESSAGE[problem] : null)}
           </p>
         )}
 
-        <Keypad onPress={(key) => update({ amountInput: pressKey(current.amountInput, key) })} />
+        <Keypad onPress={press} />
 
         <button
           type="button"
@@ -180,7 +288,7 @@ function QuickAddForm({
           disabled={saving}
           className="btn-primary min-h-[52px] w-full text-base disabled:opacity-60"
         >
-          {saving ? 'Saving…' : SAVE_LABEL[current.type]}
+          {saving ? 'Saving…' : editing ? 'Save changes' : SAVE_LABEL[current.type]}
         </button>
       </div>
     </Sheet>

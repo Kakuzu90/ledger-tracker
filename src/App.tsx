@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Outlet, ScrollRestoration } from 'react-router-dom'
 import { QuickAddSheet } from '@/features/quick-add/QuickAddSheet'
 import { UpdateBanner } from '@/ui/UpdateBanner'
@@ -106,8 +107,22 @@ export function App() {
       <ScrollRestoration />
       <Outlet />
       <QuickAddSheet />
-      <Snackbar />
-      <UpdateBanner />
+      {/*
+        One slot above the tab bar, shared. Both of these used to position
+        themselves at the same fixed offset, so a service-worker update
+        landing while an undo was on offer drew one on top of the other.
+
+        Portalled out of the app root because an open sheet makes that root
+        inert, and a snackbar raised from inside a sheet would then be
+        unreachable — Undo included.
+      */}
+      {createPortal(
+        <div className="pointer-events-none fixed inset-x-0 bottom-[96px] z-[60] mx-auto flex max-w-screen flex-col gap-2 px-4">
+          <Snackbar />
+          <UpdateBanner />
+        </div>,
+        document.body,
+      )}
     </>
   )
 }

@@ -21,6 +21,7 @@ export function TxnDetailScreen() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const showSnack = useUIStore((s) => s.showSnack)
+  const editTransaction = useUIStore((s) => s.editTransaction)
   const [problem, setProblem] = useState<string | null>(null)
 
   const data = useLiveQuery(async () => {
@@ -28,14 +29,22 @@ export function TxnDetailScreen() {
     const transaction = await db.transactions.get(id)
     if (!transaction) return null
 
-    const [categories, accounts, receipt, rule] = await Promise.all([
+    const [categories, accounts, receipt, rule, payment] = await Promise.all([
       db.categories.toArray(),
       db.accounts.toArray(),
       transaction.receiptId ? db.receipts.get(transaction.receiptId) : undefined,
       transaction.recurringId ? db.recurring.get(transaction.recurringId) : undefined,
+      // Half of a loan repayment: neither editable nor deletable from here.
+      db.loanPayments.where('transactionId').equals(transaction.id).first(),
     ])
 
-    return { transaction, lookups: buildLookups(categories, accounts), receipt, rule }
+    return {
+      transaction,
+      lookups: buildLookups(categories, accounts),
+      receipt,
+      rule,
+      isLoanPayment: payment !== undefined,
+    }
   }, [id])
 
   const row = useMemo(
@@ -56,7 +65,22 @@ export function TxnDetailScreen() {
     )
   }
 
-  const { transaction, receipt, rule } = data
+  const { transaction, receipt, rule, isLoanPayment } = data
+
+  /*
+   * A repayment is refused before the form opens rather than when it is
+   * saved. `updateDraft` refuses it either way, but these entries carry no
+   * category, so the form would have stopped on "Pick a category" first —
+   * asking for something that is beside the point on an entry that cannot
+   * be edited here at all.
+   */
+  const onEdit = () => {
+    if (isLoanPayment) {
+      setProblem('Edit this from the loan instead — it is a loan payment')
+      return
+    }
+    editTransaction(transaction.id)
+  }
 
   const onDuplicate = async () => {
     const copy = await duplicateTransaction(transaction.id)
@@ -88,9 +112,16 @@ export function TxnDetailScreen() {
       title="Transaction"
       back
       actions={
-        <Link to={`/txn/${transaction.id}/edit`} className="icon-btn" aria-label="Edit">
+        // Opens the Quick Add sheet over this entry rather than a screen of
+        // its own, so adding and editing stay the same form.
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Edit transaction"
+          onClick={onEdit}
+        >
           <EditIcon size={20} />
-        </Link>
+        </button>
       }
     >
       <div className="pb-1 pt-2 text-center">
@@ -146,7 +177,7 @@ export function TxnDetailScreen() {
         {transaction.note && (
           <div className="flex items-start justify-between gap-3 border-b border-divider py-3.5 last:border-b-0">
             <dt className="text-sm text-muted">Note</dt>
-            <dd className="m-0 max-w-[220px] text-right">{transaction.note}</dd>
+            <dd className="m-0 min-w-0 flex-1 break-words text-right">{transaction.note}</dd>
           </div>
         )}
       </dl>

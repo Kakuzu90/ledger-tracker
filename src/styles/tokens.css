@@ -52,6 +52,17 @@
      the mockups use on the dark net-worth card. A mix of the negative token
      cannot serve both themes, since the surface flips with them. */
   --c-negative-on-contrast: 245 180 140;
+  /* Same trap as above, for the accent: the contrast surface flips with the
+     theme, so `--c-primary` on it lands light-on-light in dark mode. This
+     holds the opposite theme's primary, which is the one that reads. */
+  --c-primary-on-contrast: 79 179 166;
+
+  /* Chart and marker colours. These are picked for hue, not for role, so
+     they need their own light/dark pair — a fixed hex that works on paper
+     turns into a dark bar on a dark track. */
+  --c-event: 75 58 140; /* #4B3A8C — bill due marker */
+  --c-loan-interest: 29 78 137; /* #1D4E89 — interest-bearing formal loan */
+  --c-loan-plan: 138 36 82; /* #8A2452 — 0% instalment plan */
 
   color-scheme: light;
 }
@@ -83,6 +94,11 @@
     --c-contrast: 242 243 240;
     --c-contrast-ink: 22 24 29;
     --c-negative-on-contrast: 143 62 10;
+    --c-primary-on-contrast: 15 110 100;
+
+    --c-event: 169 155 232;
+    --c-loan-interest: 111 163 220;
+    --c-loan-plan: 217 123 166;
 
     color-scheme: dark;
   }
@@ -114,6 +130,11 @@
   --c-contrast: 242 243 240;
   --c-contrast-ink: 22 24 29;
   --c-negative-on-contrast: 143 62 10;
+  --c-primary-on-contrast: 15 110 100;
+
+  --c-event: 169 155 232;
+  --c-loan-interest: 111 163 220;
+  --c-loan-plan: 217 123 166;
 
   color-scheme: dark;
 }

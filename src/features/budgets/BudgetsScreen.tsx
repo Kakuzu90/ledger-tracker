@@ -5,6 +5,7 @@ import { Meter } from '@/ui/Meter'
 import { Ring } from '@/ui/Ring'
 import { Sheet } from '@/ui/Sheet'
 import { ChevronDownIcon, EditIcon } from '@/ui/Icon'
+import { Badge } from '@/ui/Rows'
 import { formatPercent } from '@/lib/money'
 import { monthKey } from '@/lib/dates'
 import type { Goal } from '@/db/types'
@@ -233,17 +234,15 @@ function BudgetLineView({ row }: { row: BudgetRow }) {
         <p className="flex-1 truncate font-medium">{row.name}</p>
 
         {row.status === 'over' ? (
-          <span className="inline-flex min-h-[22px] flex-none items-center gap-1 rounded-full bg-negative-soft px-2 text-[12px] font-semibold text-negative">
+          <Badge tone="negative">
             Over by <Money value={-row.remaining} compact tone="negative" />
-          </span>
+          </Badge>
         ) : row.status === 'near' ? (
-          <span className="inline-flex min-h-[22px] flex-none items-center rounded-full bg-warning-soft px-2 text-[12px] font-semibold text-warning-ink">
-            {formatPercent(row.share)} · near limit
-          </span>
+          <Badge tone="warning">{formatPercent(row.share)} · near limit</Badge>
         ) : row.carry > 0 ? (
-          <span className="inline-flex min-h-[22px] flex-none items-center gap-1 rounded-full bg-divider px-2 text-[12px] font-semibold text-muted">
+          <Badge>
             Rollover <Money value={row.carry} compact signed className="text-muted" />
-          </span>
+          </Badge>
         ) : (
           <p className="flex-none text-meta text-muted">{formatPercent(row.share)}</p>
         )}
@@ -278,8 +277,16 @@ function GoalTile({ card, onEdit }: { card: GoalCard; onEdit: () => void }) {
   const { goal } = card
 
   return (
-    <button type="button" onClick={onEdit} className="card p-3.5 text-left">
-      <Ring value={card.share} className="mb-2" />
+    <button
+      type="button"
+      onClick={onEdit}
+      aria-label={`Edit ${goal.name}`}
+      className="card p-3.5 text-left"
+    >
+      <div className="mb-2 flex items-start justify-between">
+        <Ring value={card.share} />
+        <EditIcon size={16} aria-hidden="true" className="text-muted" />
+      </div>
       <p className="truncate font-semibold">{goal.name}</p>
       <p className="num my-0.5 text-sm">
         <Money value={goal.saved} whole /> / <Money value={goal.target} whole />

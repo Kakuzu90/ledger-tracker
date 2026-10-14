@@ -82,6 +82,7 @@ export function FilterBar({
 
       <Sheet open={open === 'month'} onClose={close} title="Month">
         <OptionList
+          label="Month"
           options={[
             { id: 'all', label: 'All time' },
             ...months.map((month) => ({ id: month, label: monthLabel(month) })),
@@ -96,6 +97,7 @@ export function FilterBar({
 
       <Sheet open={open === 'accounts'} onClose={close} title="Accounts">
         <MultiSelect
+          label="Accounts"
           options={accounts.map((a) => ({ id: a.id, label: a.name, color: a.color }))}
           selected={filters.accountIds}
           onChange={(accountIds) => onChange({ ...filters, accountIds })}
@@ -105,6 +107,7 @@ export function FilterBar({
 
       <Sheet open={open === 'categories'} onClose={close} title="Categories">
         <MultiSelect
+          label="Categories"
           options={categories.map((c) => ({
             id: c.id,
             label: c.parentId ? `    ${c.name}` : c.name,
@@ -123,6 +126,7 @@ export function FilterBar({
           </p>
         ) : (
           <MultiSelect
+            label="Tags"
             options={[...tags.entries()].map(([tag, count]) => ({
               id: tag,
               label: `#${tag}`,
@@ -206,16 +210,18 @@ function Row({
 }
 
 function OptionList({
+  label,
   options,
   selected,
   onToggle,
 }: {
+  label: string
   options: Option[]
   selected: string[]
   onToggle: (id: string) => void
 }) {
   return (
-    <div role="radiogroup" className="max-h-[50dvh] overflow-y-auto">
+    <div role="radiogroup" aria-label={label} className="max-h-[50dvh] overflow-y-auto">
       {options.map((option) => (
         <Row
           key={option.id}
@@ -230,11 +236,13 @@ function OptionList({
 }
 
 function MultiSelect({
+  label,
   options,
   selected,
   onChange,
   emptyLabel,
 }: {
+  label: string
   options: Option[]
   selected: string[]
   onChange: (selected: string[]) => void
@@ -242,7 +250,7 @@ function MultiSelect({
 }) {
   return (
     <>
-      <div role="group" className="max-h-[50dvh] overflow-y-auto">
+      <div role="group" aria-label={label} className="max-h-[50dvh] overflow-y-auto">
         {options.map((option) => (
           <Row
             key={option.id}
@@ -283,6 +291,8 @@ function AmountRange({
   const read = (raw: string): Centavos | undefined =>
     raw.trim() === '' ? undefined : (parseMoney(raw) ?? undefined)
 
+  const inverted = min !== undefined && max !== undefined && min > max
+
   return (
     <>
       <div className="flex items-center gap-3">
@@ -294,7 +304,7 @@ function AmountRange({
             inputMode="decimal"
             min={0}
             placeholder="0"
-            defaultValue={show(min)}
+            value={show(min)}
             onChange={(event) => onChange(read(event.target.value), max)}
           />
         </label>
@@ -306,11 +316,16 @@ function AmountRange({
             inputMode="decimal"
             min={0}
             placeholder="Any"
-            defaultValue={show(max)}
+            value={show(max)}
             onChange={(event) => onChange(min, read(event.target.value))}
           />
         </label>
       </div>
+      {inverted && (
+        <p role="alert" className="text-meta text-negative">
+          The lowest amount is above the highest, so nothing can match.
+        </p>
+      )}
       <div className="flex gap-2">
         <button
           type="button"

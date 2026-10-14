@@ -1,17 +1,24 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from './Icon'
+import { CheckIcon, ChevronRightIcon } from './Icon'
 
 /** The white rounded group the settings and backup mockups list rows in. */
 export function RowGroup({
   children,
   className = '',
+  ...rest
 }: {
   children: ReactNode
   className?: string
+  /** Set when the group is a pick-one list, so it reads as a radiogroup. */
+  role?: string
+  'aria-label'?: string
 }) {
   return (
-    <div className={`rounded-card border border-border bg-surface px-4 ${className}`}>
+    <div
+      {...rest}
+      className={`rounded-card border border-border bg-surface px-4 ${className}`}
+    >
       {children}
     </div>
   )
@@ -93,25 +100,69 @@ export function Row(props: RowProps) {
   return <div className={BODY}>{body}</div>
 }
 
-type BadgeTone = 'neutral' | 'positive' | 'negative'
+/**
+ * A row in a pick-one list, for the sheets that choose a currency, an
+ * auto-lock delay or a reminder interval.
+ *
+ * These used to mark the current choice with a bare `CheckIcon`, which is
+ * `aria-hidden` by construction, or with the literal string "On" — so a
+ * screen reader was told the options but never which one was in force. The
+ * radio role carries that, and the tick stays for everyone else.
+ */
+export function ChoiceRow({
+  label,
+  hint,
+  selected,
+  onSelect,
+}: {
+  label: ReactNode
+  hint?: ReactNode
+  selected: boolean
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={BODY}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">{label}</span>
+        {hint && <span className="block text-meta text-muted">{hint}</span>}
+      </span>
+      {selected && <CheckIcon aria-hidden="true" className="flex-none text-primary" />}
+    </button>
+  )
+}
+
+type BadgeTone = 'neutral' | 'positive' | 'negative' | 'warning'
 
 const TONES: Record<BadgeTone, string> = {
   neutral: 'bg-divider text-muted',
   positive: 'bg-primary-soft text-primary',
   negative: 'bg-negative-soft text-negative',
+  warning: 'bg-warning-soft text-warning-ink',
 }
 
-/** The small pill the mockups use for "Later", "Granted" and the like. */
+/**
+ * The small pill the mockups use for "Later", "Granted", "Auto", "Overdue"
+ * and the like. One size and one type scale for all of them — the screens
+ * had grown four near-identical copies at 11px, 12px and two pill heights.
+ */
 export function Badge({
   children,
   tone = 'neutral',
+  className = '',
 }: {
   children: ReactNode
   tone?: BadgeTone
+  className?: string
 }) {
   return (
     <span
-      className={`inline-flex min-h-[22px] items-center rounded-full px-2 text-label ${TONES[tone]}`}
+      className={`inline-flex min-h-[22px] flex-none items-center gap-1 rounded-full px-2 text-label ${TONES[tone]} ${className}`}
     >
       {children}
     </span>

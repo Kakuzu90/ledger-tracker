@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Draft } from '@/features/quick-add/draft'
+import type { Id } from '@/db/types'
 import { DEFAULT_CURRENCY } from '@/lib/money'
 
 export interface Snack {
@@ -16,7 +17,11 @@ interface UIState {
   quickAddSession: number
   /** Fields the opener wants filled in, e.g. a transfer to a given card. */
   quickAddInitial: Partial<Draft> | null
+  /** Set when the sheet is editing an entry rather than adding one. */
+  quickAddEditId: Id | null
   openQuickAdd: (initial?: Partial<Draft>) => void
+  /** Opens the same sheet over an existing entry. */
+  editTransaction: (id: Id) => void
   closeQuickAdd: () => void
   /** "Hide amounts" toggle in the home header. */
   amountsHidden: boolean
@@ -40,13 +45,23 @@ export const useUIStore = create<UIState>((set) => ({
   quickAddOpen: false,
   quickAddSession: 0,
   quickAddInitial: null,
+  quickAddEditId: null,
   openQuickAdd: (initial) =>
     set((s) => ({
       quickAddOpen: true,
       quickAddSession: s.quickAddSession + 1,
       quickAddInitial: initial ?? null,
+      quickAddEditId: null,
     })),
-  closeQuickAdd: () => set({ quickAddOpen: false, quickAddInitial: null }),
+  editTransaction: (id) =>
+    set((s) => ({
+      quickAddOpen: true,
+      quickAddSession: s.quickAddSession + 1,
+      quickAddInitial: null,
+      quickAddEditId: id,
+    })),
+  closeQuickAdd: () =>
+    set({ quickAddOpen: false, quickAddInitial: null, quickAddEditId: null }),
   amountsHidden: false,
   toggleAmounts: () => set((s) => ({ amountsHidden: !s.amountsHidden })),
   setAmountsHidden: (amountsHidden) => set({ amountsHidden }),

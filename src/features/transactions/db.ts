@@ -144,7 +144,24 @@ export async function confirmPending(transactionId: Id): Promise<void> {
   await db.transactions.update(transactionId, { status: 'posted', ...touch() })
 }
 
-/** Declines this occurrence. The entry goes; the rule has already moved on. */
-export async function skipPending(transactionId: Id): Promise<void> {
-  await db.transactions.delete(transactionId)
+/**
+ * Declines this occurrence. The entry goes; the rule has already moved on.
+ *
+ * Hands back what it removed so the snackbar can offer Undo, the way
+ * deleting a transaction does — skipping was the one destructive action in
+ * the app with no way back.
+ */
+export async function skipPending(transactionId: Id): Promise<Transaction | undefined> {
+  return db.transaction('rw', db.transactions, async () => {
+    const transaction = await db.transactions.get(transactionId)
+    if (!transaction) return undefined
+    await db.transactions.delete(transactionId)
+    return transaction
+  })
+}
+
+/** Puts back an occurrence that `skipPending` declined. */
+export async function restorePending(transaction: Transaction | undefined): Promise<void> {
+  if (!transaction) return
+  await db.transactions.put(transaction)
 }

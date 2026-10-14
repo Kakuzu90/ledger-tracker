@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 interface ToggleProps {
   checked: boolean
@@ -14,6 +14,8 @@ interface ToggleProps {
 
 /** The switch row from the mockups (`.row` + `.sw`). */
 export function Toggle({ checked, onChange, label, hint, icon, disabled = false }: ToggleProps) {
+  const hintId = useId()
+
   return (
     <div className="flex min-h-[56px] items-center justify-between gap-3 border-b border-divider last:border-b-0">
       {icon && (
@@ -26,16 +28,24 @@ export function Toggle({ checked, onChange, label, hint, icon, disabled = false 
       )}
       <div className={`min-w-0 flex-1 ${disabled ? 'opacity-50' : ''}`}>
         <p className="font-medium">{label}</p>
-        {hint && <p className="text-meta text-muted">{hint}</p>}
+        {hint && (
+          <p id={hintId} className="text-meta text-muted">
+            {hint}
+          </p>
+        )}
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         aria-label={label}
+        {...(hint ? { 'aria-describedby': hintId } : {})}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative h-7 w-[46px] flex-none rounded-full transition-colors disabled:opacity-50 ${
+        // The 28px track is the mockup's; the hit area is padded out to 44
+        // with a pseudo-element so the switch looks the same and is still
+        // comfortable to hit.
+        className={`relative h-7 w-[46px] flex-none rounded-full transition-colors before:absolute before:inset-x-0 before:-inset-y-2 before:content-[''] disabled:opacity-50 ${
           checked ? 'bg-primary' : 'bg-border-strong'
         }`}
       >

@@ -8,6 +8,7 @@ import {
   makeRecurring,
   restoreTransaction,
   setReceipt,
+  restorePending,
   skipPending,
 } from './db'
 
@@ -267,6 +268,26 @@ describe('skipPending', () => {
 
     expect(await db.transactions.get(pending.id)).toBeUndefined()
     expect((await db.recurring.get(recurring.id))?.nextDate).toBe('2026-11-14')
+  })
+
+  it('hands back the entry so the skip can be undone', async () => {
+    const pending = txn({ status: 'pending' })
+    await db.transactions.add(pending)
+
+    const skipped = await skipPending(pending.id)
+    expect(skipped?.id).toBe(pending.id)
+    expect(await db.transactions.get(pending.id)).toBeUndefined()
+
+    await restorePending(skipped)
+    const back = await db.transactions.get(pending.id)
+    expect(back).toEqual(pending)
+  })
+
+  it('has nothing to hand back for an entry that is already gone', async () => {
+    expect(await skipPending('nope')).toBeUndefined()
+    // And restoring that nothing is a no-op rather than a crash.
+    await expect(restorePending(undefined)).resolves.toBeUndefined()
+    expect(await db.transactions.count()).toBe(0)
   })
 })
 

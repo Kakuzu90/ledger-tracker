@@ -24,7 +24,7 @@ export function InstallBanner({ prompt }: { prompt: InstallPrompt }) {
         type="button"
         aria-label="Dismiss"
         onClick={() => void prompt.dismiss()}
-        className="flex h-touch w-6 items-center justify-center opacity-70"
+        className="-mr-1.5 flex h-touch w-touch flex-none items-center justify-center opacity-70"
       >
         <CloseIcon size={16} />
       </button>

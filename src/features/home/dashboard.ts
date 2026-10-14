@@ -182,7 +182,7 @@ export function buildDashboard(input: DashboardInput, today: Date = new Date()):
           ? remainingBalance(loan.principal, rate, term, paid)
           : outstanding(loan, loanPayments),
         share: term ? paidShare(loan.principal, rate, term, paid) : 0,
-        color: '#1D4E89',
+        color: 'rgb(var(--c-loan-interest))',
       }
     })
     .sort((a, b) => b.remaining - a.remaining)

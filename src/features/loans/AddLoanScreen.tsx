@@ -147,7 +147,7 @@ export function AddLoanScreen() {
                 active={contact.id === contactId}
                 onClick={() => setContactId(contact.id)}
               >
-                <Avatar name={contact.name} className="!-ml-2 !h-7 !w-7 !text-[11px]" />
+                <Avatar name={contact.name} className="!-ml-2 !h-7 !w-7 !text-label" />
                 {contact.name}
               </Chip>
             ))}

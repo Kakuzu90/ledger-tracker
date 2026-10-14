@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns'
 import { Screen } from '@/ui/Screen'
 import { Sheet } from '@/ui/Sheet'
 import { Toggle } from '@/ui/Toggle'
-import { Badge, Row, RowGroup } from '@/ui/Rows'
+import { Badge, ChoiceRow, Row, RowGroup } from '@/ui/Rows'
 import {
   AlertIcon,
   CloudIcon,
@@ -64,6 +64,7 @@ export function BackupScreen() {
   const today = useMemo(() => new Date(), [])
   const fileInput = useRef<HTMLInputElement>(null)
 
+  const [restoreOpen, setRestoreOpen] = useState(false)
   const [storage, setStorage] = useState<StorageFacts>(NO_STORAGE)
   const [chosen, setChosen] = useState<Chosen | null>(null)
   const [asking, setAsking] = useState<'export' | 'import' | null>(null)
@@ -108,6 +109,12 @@ export function BackupScreen() {
             ? `Backed up — ${skippedReceipts} receipts could not be read`
             : `Backed up ${summarise(envelope).rows.toLocaleString()} rows`,
       })
+    } catch (error) {
+      // Running out of quota mid-export used to leave the button simply
+      // stop saying "Working…", with no word of what happened.
+      showSnack({
+        message: error instanceof Error ? error.message : 'The backup could not be written',
+      })
     } finally {
       setBusy(false)
     }
@@ -144,7 +151,15 @@ export function BackupScreen() {
   }
 
   const onChooseFile = async (file: File) => {
-    const parsed = parseBackup(await file.text())
+    let text: string
+    try {
+      text = await file.text()
+    } catch {
+      setChosen({ filename: file.name, problem: 'That file could not be read' })
+      return
+    }
+
+    const parsed = parseBackup(text)
 
     if (parsed.kind === 'invalid') {
       setChosen({ filename: file.name, problem: parsed.problem })
@@ -167,6 +182,10 @@ export function BackupScreen() {
       await restoreBackup(envelope)
       setChosen(null)
       showSnack({ message: 'Restored. Everything on this device is from the file now.' })
+    } catch (error) {
+      showSnack({
+        message: error instanceof Error ? error.message : 'That backup could not be restored',
+      })
     } finally {
       setBusy(false)
     }
@@ -237,6 +256,10 @@ export function BackupScreen() {
           ref={fileInput}
           type="file"
           accept="application/json,.json"
+          // Reached through the button below, never by Tab: as an `sr-only`
+          // control it is a 1x1 focus stop with nothing to announce.
+          tabIndex={-1}
+          aria-hidden="true"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0]
@@ -290,7 +313,7 @@ export function BackupScreen() {
                   type="button"
                   className="btn-primary mt-3 w-full"
                   disabled={busy}
-                  onClick={() => void onRestore(chosen.envelope as BackupEnvelope)}
+                  onClick={() => setRestoreOpen(true)}
                 >
                   Restore this backup
                 </button>
@@ -427,18 +450,54 @@ export function BackupScreen() {
       >
         <RowGroup>
           {REMINDER_INTERVALS.map((option) => (
-            <Row
+            <ChoiceRow
               key={option.days}
               label={option.label}
-              chevron={false}
-              onClick={() => {
+              selected={option.days === view.reminderDays}
+              onSelect={() => {
                 void savePreference('backupReminderDays', option.days)
                 setIntervalOpen(false)
               }}
-              value={option.days === view.reminderDays ? 'On' : undefined}
             />
           ))}
         </RowGroup>
+      </Sheet>
+
+      {/*
+        Restoring overwrites every entry on the device, exactly as Reset
+        does, and it used to be a single unguarded tap.
+      */}
+      <Sheet
+        open={restoreOpen}
+        onClose={() => setRestoreOpen(false)}
+        title="Restore this backup"
+      >
+        <p className="text-meta text-muted">
+          Everything currently on this device — entries, accounts, loans, budgets and
+          receipts — is replaced by what is in {chosen?.filename ?? 'this file'}. There is
+          no undo.
+        </p>
+        {chosen?.summary && (
+          <p className="text-meta text-muted">The file holds {summaryLine(chosen.summary)}.</p>
+        )}
+        <button
+          type="button"
+          className="btn-secondary w-full"
+          onClick={() => setRestoreOpen(false)}
+        >
+          Keep what is here
+        </button>
+        <button
+          type="button"
+          className="min-h-[50px] w-full rounded-btn bg-negative font-semibold text-negative-ink disabled:opacity-60"
+          disabled={busy}
+          onClick={() => {
+            setRestoreOpen(false)
+            void onRestore(chosen?.envelope as BackupEnvelope)
+          }}
+        >
+          Replace everything
+        </button>
       </Sheet>
 
       <Sheet open={resetOpen} onClose={() => setResetOpen(false)} title="Reset all data">

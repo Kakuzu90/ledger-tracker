@@ -57,6 +57,7 @@ export function CategoriesScreen() {
   const reorder = useReorder(
     useMemo(() => parents.map((category) => category.id), [parents]),
     (next) => void applyOrder(planFromOrder(parents, next)),
+    (id) => parents.find((category) => category.id === id)?.name ?? 'Category',
   )
 
   if (!view || !data) {
@@ -151,10 +152,15 @@ export function CategoriesScreen() {
         ]}
       />
 
-      <p className="px-1 text-meta text-muted">
+      <p id="reorder-help" className="px-1 text-meta text-muted">
         {merging
           ? 'Pick the categories to merge, then choose which one to keep.'
-          : 'Drag to reorder. Tap to rename, recolour or add subcategories.'}
+          : 'Drag to reorder, or focus a handle and use the up and down arrows. Tap to rename, recolour or add subcategories.'}
+      </p>
+
+      {/* Says where a row landed after an arrow press, which nothing did. */}
+      <p role="status" className="sr-only">
+        {reorder.announcement}
       </p>
 
       <div className="rounded-card border border-border bg-surface pl-1 pr-2">
@@ -180,19 +186,25 @@ export function CategoriesScreen() {
                     aria-checked={picked}
                     aria-label={`Select ${row.category.name}`}
                     onClick={() => toggleSelected(row.category.id)}
-                    className={`ml-1.5 flex h-6 w-6 flex-none items-center justify-center rounded-md border ${
-                      picked
-                        ? 'border-primary bg-primary text-primary-ink'
-                        : 'border-border-strong'
-                    }`}
+                    className="flex h-touch w-touch flex-none items-center justify-center"
                   >
-                    {picked && <CheckIcon size={14} />}
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-6 w-6 items-center justify-center rounded-md border ${
+                        picked
+                          ? 'border-primary bg-primary text-primary-ink'
+                          : 'border-border-strong'
+                      }`}
+                    >
+                      {picked && <CheckIcon size={14} />}
+                    </span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     aria-label={`Reorder ${row.category.name}`}
-                    className="flex h-touch w-8 flex-none cursor-grab touch-none items-center justify-center text-muted"
+                    aria-describedby="reorder-help"
+                    className="flex h-touch w-touch flex-none cursor-grab touch-none items-center justify-center text-muted"
                     {...reorder.handleProps(row.category.id)}
                   >
                     <GripIcon />
@@ -220,7 +232,7 @@ export function CategoriesScreen() {
                     aria-label={expanded ? 'Hide subcategories' : 'Show subcategories'}
                     aria-expanded={expanded}
                     onClick={() => toggleOpen(row.category.id)}
-                    className="flex h-touch w-8 flex-none items-center justify-center text-muted"
+                    className="flex h-touch w-touch flex-none items-center justify-center text-muted"
                   >
                     {expanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
                   </button>
@@ -290,6 +302,8 @@ export function CategoriesScreen() {
           ))}
         </div>
       )}
+
+      {merging && selected.size > 0 && <div aria-hidden="true" className="h-16" />}
 
       {merging && selected.size > 0 && (
         <div
