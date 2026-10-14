@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   backupFilename,
-  base64ToBytes,
   BACKUP_VERSION,
   buildEnvelope,
-  bytesToBase64,
   decryptBackup,
   emptyTables,
   encryptBackup,
@@ -156,18 +154,6 @@ describe('summarise', () => {
   it('warns about a file from a newer version', () => {
     const future = { ...envelope, version: BACKUP_VERSION + 1 }
     expect(summarise(future).warning).toContain('newer version')
-  })
-})
-
-describe('base64', () => {
-  it('round-trips bytes', () => {
-    const bytes = new Uint8Array([0, 1, 127, 128, 255, 42])
-    expect(base64ToBytes(bytesToBase64(bytes))).toEqual(bytes)
-  })
-
-  it('handles more bytes than fit in one call stack', () => {
-    const big = new Uint8Array(200_000).map((_, i) => i % 256)
-    expect(base64ToBytes(bytesToBase64(big))).toEqual(big)
   })
 })
 

@@ -63,3 +63,24 @@ describe('reminderLabel', () => {
     expect(REMINDER_INTERVALS.some((interval) => interval.days === 0)).toBe(true)
   })
 })
+
+describe('the lock preferences', () => {
+  it('starts off, with the lock coming back after a minute away', () => {
+    expect(readPreferences([])).toMatchObject({
+      lockEnabled: false,
+      biometricUnlock: false,
+      autoLock: '1m',
+    })
+  })
+
+  it('reads what the user chose', () => {
+    expect(readPreferences(rows({ lockEnabled: true, autoLock: 'never' }))).toMatchObject({
+      lockEnabled: true,
+      autoLock: 'never',
+    })
+  })
+
+  it('refuses an auto-lock interval it does not offer', () => {
+    expect(readPreferences(rows({ autoLock: '3 fortnights' })).autoLock).toBe('1m')
+  })
+})

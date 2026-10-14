@@ -11,6 +11,7 @@
 import type { Setting } from '@/db/types'
 import type { ThemePref } from './theme'
 import { DEFAULT_CURRENCY } from './money'
+import { AUTO_LOCKS, type AutoLock } from './pin'
 
 export interface Preferences {
   /** Shown in the home greeting. Empty until the user says who they are. */
@@ -19,6 +20,12 @@ export interface Preferences {
   theme: ThemePref
   /** Start each launch with amounts masked. */
   hideAmountsOnOpen: boolean
+  /** Ask for the PIN before showing anything. */
+  lockEnabled: boolean
+  /** Offer the device's own fingerprint or face check as a way past it. */
+  biometricUnlock: boolean
+  /** How long away from the app before the lock comes back. */
+  autoLock: AutoLock
   billReminders: boolean
   loanReminders: boolean
   budgetAlerts: boolean
@@ -33,6 +40,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   currency: DEFAULT_CURRENCY,
   theme: 'system',
   hideAmountsOnOpen: false,
+  lockEnabled: false,
+  biometricUnlock: false,
+  autoLock: '1m',
   billReminders: false,
   loanReminders: false,
   budgetAlerts: false,
@@ -43,6 +53,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
 export type PreferenceKey = keyof Preferences
 
 const THEMES: readonly ThemePref[] = ['light', 'dark', 'system']
+const LOCKS: readonly AutoLock[] = AUTO_LOCKS.map((option) => option.value)
 
 /** The intervals the backup reminder offers. */
 export const REMINDER_INTERVALS: ReadonlyArray<{ days: number; label: string }> = [
@@ -68,6 +79,8 @@ export function readPreferences(rows: readonly Setting[]): Preferences {
   const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
   const isTheme = (value: unknown): value is ThemePref =>
     isString(value) && (THEMES as readonly string[]).includes(value)
+  const isAutoLock = (value: unknown): value is AutoLock =>
+    isString(value) && (LOCKS as readonly string[]).includes(value)
   const isDays = (value: unknown): value is number =>
     typeof value === 'number' && Number.isFinite(value) && value >= 0
 
@@ -80,6 +93,13 @@ export function readPreferences(rows: readonly Setting[]): Preferences {
       isBoolean,
       DEFAULT_PREFERENCES.hideAmountsOnOpen,
     ),
+    lockEnabled: read('lockEnabled', isBoolean, DEFAULT_PREFERENCES.lockEnabled),
+    biometricUnlock: read(
+      'biometricUnlock',
+      isBoolean,
+      DEFAULT_PREFERENCES.biometricUnlock,
+    ),
+    autoLock: read('autoLock', isAutoLock, DEFAULT_PREFERENCES.autoLock),
     billReminders: read('billReminders', isBoolean, DEFAULT_PREFERENCES.billReminders),
     loanReminders: read('loanReminders', isBoolean, DEFAULT_PREFERENCES.loanReminders),
     budgetAlerts: read('budgetAlerts', isBoolean, DEFAULT_PREFERENCES.budgetAlerts),

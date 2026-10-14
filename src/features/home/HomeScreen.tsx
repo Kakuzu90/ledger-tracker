@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { Screen } from '@/ui/Screen'
-import { EyeIcon, SettingsIcon } from '@/ui/Icon'
+import { EyeIcon, EyeOffIcon, SettingsIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
 import { useDashboard, useUserName } from './db'
 import { InstallBanner } from './components/InstallBanner'
@@ -54,7 +54,7 @@ export function HomeScreen() {
             aria-pressed={amountsHidden}
             onClick={toggleAmounts}
           >
-            <EyeIcon size={20} />
+            {amountsHidden ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
           </button>
           <Link to="/settings" className="icon-btn" aria-label="Settings">
             <SettingsIcon size={20} />

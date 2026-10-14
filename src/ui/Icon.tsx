@@ -278,3 +278,24 @@ export const TagIcon = (p: IconProps) => (
     <circle cx="7.5" cy="7.5" r="1.2" />
   </Svg>
 )
+
+export const EyeOffIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.8M6.3 7.9A17 17 0 0 0 2 12s3.5 6 10 6a9.8 9.8 0 0 0 4-.8M3 3l18 18" />
+    <path d="M9.9 10a3 3 0 0 0 4.2 4.2" />
+  </Svg>
+)
+
+/** The fingerprint key on the lock keypad (design/Lock.dc.html). */
+export const FingerprintIcon = (p: IconProps) => (
+  <Svg size={30} {...p}>
+    <path d="M12 11v4M8 9a4 4 0 0 1 8 0v4a8 8 0 0 1-1 4M5 12a7 7 0 0 1 14-3M8 13c0 3 0 5-1 7M12 19v2" />
+  </Svg>
+)
+
+/** Backspace, with the arrow cut into it. */
+export const BackspaceIcon = (p: IconProps) => (
+  <Svg size={28} {...p}>
+    <path d="M21 5H9l-6 7 6 7h12zM13 10l4 4M17 10l-4 4" />
+  </Svg>
+)

@@ -31,6 +31,20 @@
   --c-warning-soft: 253 241 214; /* #FDF1D6 */
   --c-warning-ink: 122 90 0; /* #7A5A00 */
 
+  /* The lock screen (design/Lock.dc.html) is dark in both themes, so these
+     are deliberately not redefined below: a light lock screen at night is
+     a flashbang, and a light one by day would not match the mockup. */
+  --c-lock: 22 24 29; /* #16181D */
+  --c-lock-ink: 255 255 255;
+  --c-lock-muted: 180 186 178; /* #B4BAB2 */
+  --c-lock-key: 36 39 46; /* #24272E */
+  --c-lock-dot: 142 148 140; /* #8E948C */
+  --c-lock-tile: 15 110 100; /* #0F6E64 */
+  --c-lock-accent: 143 211 198; /* #8FD3C6 */
+  /* A wrong PIN has to read as wrong, and the negative token flips with the
+     theme while this screen does not. #F5B48C, as on the dark cards. */
+  --c-lock-alert: 245 180 140;
+
   /* Inverted surface used by the install banner and active chips. */
   --c-contrast: 22 24 29;
   --c-contrast-ink: 255 255 255;

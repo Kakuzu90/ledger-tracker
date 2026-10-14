@@ -57,9 +57,9 @@ sample data in production; that stays an explicit action.
 **Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
 **Accounts**, the **Loans** hub, a **person's ledger**, **New loan**, a
 **formal loan**, **Split**, **Bills & recurring**, **Budgets**, **Reports**,
-**Settings**, **Categories & tags** and **Backup & data** are built
-(`src/features/{home,quick-add,activity,transactions,accounts,loans,split,
-bills,budgets,reports,settings,categories,backup}`).
+**Settings**, **Categories & tags**, **Backup & data** and the **lock** are
+built (`src/features/{home,quick-add,activity,transactions,accounts,loans,
+split,bills,budgets,reports,settings,categories,backup,lock}`).
 They all follow the same split: a pure module holds the logic (`dashboard.ts`,
 `draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`, `bills.ts`,
 `budgets.ts`, `reports.ts`, `settings.ts`, `categories.ts`, `backup.ts`), a
@@ -128,6 +128,13 @@ so the file format lives on its own in `src/lib/backup.ts` — it carries every
 table including the receipt blobs, refuses anything it cannot vouch for, and
 can wrap the whole thing in AES-GCM under a PBKDF2 key when the user asks.
 
+The lock renders *instead of* the app rather than over it, so nothing behind
+it is reachable by a scroll, a screen reader or a devtools pane. The PIN goes
+through `src/lib/pin.ts` (PBKDF2-SHA256, random salt, growing cooldowns);
+fingerprint and face unlock go through `src/lib/webauthn.ts`, which asks the
+device's own platform authenticator and checks both that the credential is the
+one this app registered and that the authenticator says it verified a person.
+
 ## Notes for the next change
 
 - **Money** is integer centavos end to end. `src/lib/money.ts` parses from
@@ -169,8 +176,8 @@ can wrap the whole thing in AES-GCM under a PBKDF2 key when the user asks.
   thinking keeps the month still in progress out of "leanest month".
 - **Reports is a lazy route.** Recharts is about a third of the bundle and
   only that screen draws a chart, so it loads on demand: the main chunk is
-  684 kB instead of a megabyte, and the service worker still precaches both
-  so offline is unaffected.
+  698 kB instead of over a megabyte, and the service worker still precaches
+  both so offline is unaffected.
 - **A fourth colour: `warning`.** The budget mockup distinguishes "near the
   limit" from "over it", and negative alone cannot carry both without every
   budget reading as blown. It lives with the other tokens in
@@ -239,9 +246,39 @@ can wrap the whole thing in AES-GCM under a PBKDF2 key when the user asks.
 - **A receipt that cannot be read does not stop the backup.** It is counted
   and reported instead; losing a photo is worth far less than losing the
   ledger over it.
-- **The lock screen is not built.** `src/features/lock/LockOverlay.tsx` is a
-  placeholder and is not mounted, so the PIN, biometric and auto-lock rows in
-  Settings are badged "Later" rather than wired to nothing.
+- **The lock hides the screen; it does not encrypt the data.** IndexedDB is
+  stored in the clear, so anyone with the unlocked device and a devtools
+  window can read the ledger whatever the PIN says. What the lock is worth is
+  the ordinary case — a phone handed over, a shoulder at a desk — and the
+  Settings copy says exactly that rather than implying more. Encryption is
+  what a *backup file* gets, because that is the copy that leaves the device.
+- **The PIN is never stored**, only PBKDF2-SHA256 over it with a random salt,
+  so reading the database does not hand anyone a PIN they may also be using
+  elsewhere. That also means there is nothing to reset it from: "Forgot PIN?"
+  offers erase-and-restore, and says what that costs without a backup file.
+- **Guessable PINs are refused, not warned about.** A lock that opens to 1234
+  is decoration, and 1234 is the first thing anyone tries.
+- **The failed-attempt count and the cooldown live in the database**, not in
+  memory. A lockout you could get past by reloading the page would not be one.
+  The waits grow — 30s, 1m, 5m, 15m — which is what turns ten thousand
+  four-digit combinations from an afternoon's work into nothing.
+- **WebAuthn here is a local gate, not a proof to anyone.** With no server
+  there is no challenge to verify a signature against, so two things are
+  checked instead of assumed: the credential that answers has to be the one
+  registered on this origin, and the authenticator has to set the
+  user-verified flag — otherwise `userVerification: 'required'` is a request
+  it is free to ignore, and a button press would unlock the app. A failed
+  read does not count as a wrong PIN; a wet thumb is not an attacker.
+- **A launch always locks; the interval only governs coming back.** The app
+  was not away for a while, it was closed. Returning from the background
+  measures against a `lastActiveAt` written when the app was left, so a phone
+  asleep for an hour and a tab backgrounded for an hour behave the same and
+  nothing has to keep running while the app is away.
+- **The lock screen is dark in both themes**, which is why `--c-lock-*` is
+  the one group of tokens in `src/styles/tokens.css` deliberately not
+  redefined for dark mode. A light lock screen at night is a flashbang.
+- **Unlocking is an opening**, so it re-applies "hide amounts on open" rather
+  than handing back whatever state the session was left in.
 - **Theme** is a `data-theme` attribute on `<html>` over CSS variables in
   `src/styles/tokens.css`; Tailwind colours all resolve through them. The
   preference lives in the IndexedDB `settings` table — `localStorage` holds a

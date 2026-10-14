@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Screen } from '@/ui/Screen'
 import { Sheet } from '@/ui/Sheet'
 import { Segmented } from '@/ui/Segmented'
@@ -9,7 +9,17 @@ import { useUIStore } from '@/store/ui'
 import { CURRENCIES, currencyLabel } from '@/lib/money'
 import { NEAR_LIMIT } from '@/lib/budgets'
 import { askForNotifications } from '@/lib/notifications'
+import { AUTO_LOCKS, autoLockLabel } from '@/lib/pin'
+import { biometricsAvailable, describeError } from '@/lib/webauthn'
 import type { ThemePref } from '@/lib/theme'
+import {
+  disableBiometrics,
+  enableBiometrics,
+  removePin,
+  setPin,
+} from '@/features/lock/db'
+import { PinSheet } from '@/features/lock/components/PinSheet'
+import { useLockStore } from '@/store/lock'
 import { useSettingsData, savePreference } from './db'
 import { buildSettingsView } from './settings'
 
@@ -22,18 +32,26 @@ const THEMES: ReadonlyArray<{ value: ThemePref; label: string }> = [
 /**
  * Settings (design/Settings.dc.html).
  *
- * Rows the app cannot honour yet carry a "Later" badge rather than a switch
- * that does nothing. That is the mockup's own idiom — it marks cross-device
- * sync the same way — and it is the only honest way to show a screen whose
- * design runs ahead of what is built.
+ * The few rows the app still cannot honour carry a "Later" badge rather
+ * than a switch that does nothing. That is the mockup's own idiom — it
+ * marks cross-device sync the same way — and it is the only honest way to
+ * show a screen whose design runs ahead of what is built.
  */
 export function SettingsScreen() {
   const data = useSettingsData()
   const showSnack = useUIStore((s) => s.showSnack)
   const today = useMemo(() => new Date(), [])
 
-  const [picking, setPicking] = useState<'currency' | 'name' | null>(null)
+  const [picking, setPicking] = useState<'currency' | 'name' | 'autoLock' | null>(null)
   const [name, setName] = useState('')
+  const [asking, setAsking] = useState<'set' | 'remove' | null>(null)
+  const [canUseBiometrics, setCanUseBiometrics] = useState(false)
+
+  // Whether this device has a fingerprint reader or a face camera the
+  // browser will talk to. A USB key is not what the row is offering.
+  useEffect(() => {
+    void biometricsAvailable().then(setCanUseBiometrics)
+  }, [])
 
   const view = useMemo(() => (data ? buildSettingsView(data, today) : undefined), [data, today])
 
@@ -71,6 +89,20 @@ export function SettingsScreen() {
       return
     }
     await savePreference(key, true)
+  }
+
+  /** Enrolling runs the device's own prompt, which can be declined. */
+  const setBiometrics = async (on: boolean) => {
+    if (!on) {
+      await disableBiometrics()
+      return
+    }
+    try {
+      await enableBiometrics(prefs.name)
+      showSnack({ message: 'This device can unlock Ledger now' })
+    } catch (error) {
+      showSnack({ message: describeError(error) })
+    }
   }
 
   const notifyHint = (hint: string) =>
@@ -141,24 +173,46 @@ export function SettingsScreen() {
 
       <p className="label mt-1">Security</p>
       <RowGroup>
-        <Row
+        <Toggle
           label="PIN lock"
-          hint="The lock screen is not built yet"
-          value={<Badge>Later</Badge>}
-          chevron={false}
+          hint="Asked for whenever Ledger is opened"
+          checked={prefs.lockEnabled}
+          onChange={(on) => setAsking(on ? 'set' : 'remove')}
         />
-        <Row
+        <Toggle
           label="Fingerprint / Face unlock"
-          value={<Badge>Later</Badge>}
-          chevron={false}
+          hint={
+            !canUseBiometrics
+              ? 'This device has nothing to check'
+              : prefs.lockEnabled
+                ? 'A faster way past the PIN, not a replacement'
+                : 'Turn the PIN lock on first'
+          }
+          checked={prefs.biometricUnlock}
+          disabled={!canUseBiometrics || !prefs.lockEnabled}
+          onChange={(on) => void setBiometrics(on)}
         />
+        {prefs.lockEnabled && (
+          <Row
+            label="Auto-lock"
+            value={autoLockLabel(prefs.autoLock)}
+            onClick={() => setPicking('autoLock')}
+          />
+        )}
         <Toggle
           label="Hide amounts on open"
           hint="Tap the eye on Home to reveal"
           checked={prefs.hideAmountsOnOpen}
           onChange={(on) => void savePreference('hideAmountsOnOpen', on)}
         />
+        {prefs.lockEnabled && (
+          <Row label="Lock now" onClick={() => useLockStore.getState().lock()} />
+        )}
       </RowGroup>
+      <p className="px-1 text-meta text-muted">
+        The lock hides Ledger on this device. It does not encrypt what is
+        stored — that is what a password on a backup file is for.
+      </p>
 
       <p className="label mt-1">Notifications</p>
       <RowGroup>
@@ -232,6 +286,62 @@ export function SettingsScreen() {
           Save
         </button>
       </Sheet>
+
+      <Sheet
+        open={picking === 'autoLock'}
+        onClose={() => setPicking(null)}
+        title="Auto-lock"
+      >
+        <p className="text-meta text-muted">
+          How long Ledger can sit in the background before it asks again.
+          Closing it and opening it afresh always asks.
+        </p>
+        <RowGroup>
+          {AUTO_LOCKS.map((option) => (
+            <Row
+              key={option.value}
+              label={option.label}
+              chevron={false}
+              onClick={() => {
+                void savePreference('autoLock', option.value)
+                setPicking(null)
+              }}
+              value={
+                option.value === prefs.autoLock ? (
+                  <CheckIcon className="text-primary" />
+                ) : undefined
+              }
+            />
+          ))}
+        </RowGroup>
+      </Sheet>
+
+      {asking === 'set' && (
+        <PinSheet
+          onClose={() => setAsking(null)}
+          title="Set a PIN"
+          hint="Ledger will ask for this whenever it is opened."
+          action="Turn the lock on"
+          choosing
+          onSubmit={async (pin) => {
+            await setPin(pin)
+            showSnack({ message: 'PIN lock on' })
+          }}
+        />
+      )}
+
+      {asking === 'remove' && (
+        <PinSheet
+          onClose={() => setAsking(null)}
+          title="Turn the lock off"
+          hint="Enter your current PIN. Fingerprint unlock goes with it."
+          action="Turn the lock off"
+          onSubmit={async (pin) => {
+            if (!(await removePin(pin))) throw new Error('That is not the PIN')
+            showSnack({ message: 'PIN lock off' })
+          }}
+        />
+      )}
 
       <Sheet
         open={picking === 'currency'}

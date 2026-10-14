@@ -13,15 +13,13 @@ import { ensureSeeded } from '@/db/seed'
 import { setSetting } from '@/db/settings'
 import type { Receipt, Timestamp } from '@/db/types'
 import {
-  base64ToBytes,
-  blobToBytes,
   buildEnvelope,
-  bytesToBase64,
   emptyTables,
   type BackupEnvelope,
   type BackupTables,
   type ReceiptRecord,
 } from '@/lib/backup'
+import { base64ToBytes, blobToBytes, bytesToBase64 } from '@/lib/bytes'
 import { readPreferences } from '@/lib/preferences'
 import { estimateStorage, requestPersistentStorage } from '@/lib/storage'
 import type { StorageFacts } from './backup'
