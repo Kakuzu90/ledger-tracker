@@ -147,19 +147,28 @@ describe('the bills in Bills.dc.html', () => {
 
   it('bills ₱34,597 over seven payments in the next 30 days', () => {
     const horizon = new Date(2026, 9, 14 + 30).toISOString().slice(0, 10)
+    // Six rules have yet to fire; Spotify's occurrence is already sitting in
+    // the ledger waiting for a yes, and it is still a payment to come.
     const due = data.recurring.filter((r) => r.nextDate <= horizon)
+    const waiting = data.transactions.filter((t) => t.status === 'pending')
 
-    expect(due).toHaveLength(7)
-    expect(sumMoney(due.map((r) => r.template.amount))).toBe(34_597_00)
+    expect(due.length + waiting.length).toBe(7)
+    expect(
+      sumMoney([...due.map((r) => r.template.amount), ...waiting.map((t) => t.amount)]),
+    ).toBe(34_597_00)
   })
 
   it('subscribes to ₱1,247 a month', () => {
-    const subscriptions = ['Spotify', 'Netflix', 'iCloud storage', 'YouTube Premium']
-    const amounts = subscriptions.map((name) => byName(
-      data.recurring.map((r) => ({ name: r.template.note, amount: r.template.amount })),
-      name,
-    ).amount)
-    expect(sumMoney(amounts)).toBe(1_247_00)
+    const subscriptions = data.recurring.filter((r) =>
+      r.template.tags.includes('subscription'),
+    )
+    expect(subscriptions.map((r) => r.template.note)).toEqual([
+      'Spotify',
+      'Netflix',
+      'iCloud storage',
+      'YouTube Premium',
+    ])
+    expect(sumMoney(subscriptions.map((r) => r.template.amount))).toBe(1_247_00)
   })
 
   it('leaves the rule due today pending rather than posting it', () => {
@@ -167,6 +176,18 @@ describe('the bills in Bills.dc.html', () => {
     expect(pending).toHaveLength(1)
     expect(pending[0]?.note).toBe('Spotify')
     expect(pending[0]?.recurringId).toBeDefined()
+  })
+
+  it('moves the rule behind a pending entry on, so it is not made twice', () => {
+    const spotify = data.recurring.find((r) => r.template.note === 'Spotify')
+    expect(spotify?.nextDate).toBe('2026-11-14')
+  })
+
+  it('links the last electricity bill to its rule, so the amount reads as a guess', () => {
+    const rule = data.recurring.find((r) => r.template.note === 'Electricity')
+    const bill = data.transactions.find((t) => t.note === 'Electricity')
+    expect(bill?.recurringId).toBe(rule?.id)
+    expect(bill?.amount).not.toBe(rule?.template.amount)
   })
 })
 

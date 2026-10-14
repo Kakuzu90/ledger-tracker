@@ -198,20 +198,43 @@ export function buildDashboard(input: DashboardInput, today: Date = new Date()):
   }
 
   // ---- Upcoming bills -----------------------------------------------------
-  const bills: BillSummary[] = [...recurring]
-    .sort((a, b) => a.nextDate.localeCompare(b.nextDate))
+  // An occurrence the scheduler has already made and nobody has answered is
+  // still a payment to come, and its rule has moved on past it — so the card
+  // reads both, the same way the Bills screen does.
+  const ruleById = new Map(recurring.map((rule) => [rule.id, rule]))
+
+  const waiting: BillSummary[] = transactions
+    .filter((txn) => txn.status === 'pending')
+    .map((txn) => {
+      const rule = txn.recurringId ? ruleById.get(txn.recurringId) : undefined
+      return {
+        id: txn.id,
+        title: txn.note || rule?.template.note || 'Payment',
+        amount: txn.amount,
+        date: txn.date,
+        when: `${relativeDay(txn.date, today)} · ${
+          rule?.mode === 'auto' ? 'Auto-add' : 'Ask first'
+        }`,
+        day: Number(txn.date.slice(8, 10)),
+        color: categoryById.get(txn.categoryId ?? '')?.color ?? MUTED_COLOR,
+      }
+    })
+
+  const scheduled: BillSummary[] = recurring.map((rule) => ({
+    id: rule.id,
+    title: rule.template.note,
+    amount: rule.template.amount,
+    date: rule.nextDate,
+    when: `${relativeDay(rule.nextDate, today)} · ${
+      rule.mode === 'auto' ? 'Auto-add' : 'Ask first'
+    }`,
+    day: Number(rule.nextDate.slice(8, 10)),
+    color: categoryById.get(rule.template.categoryId ?? '')?.color ?? MUTED_COLOR,
+  }))
+
+  const bills: BillSummary[] = [...waiting, ...scheduled]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title))
     .slice(0, 3)
-    .map((rule) => ({
-      id: rule.id,
-      title: rule.template.note,
-      amount: rule.template.amount,
-      date: rule.nextDate,
-      when: `${relativeDay(rule.nextDate, today)} · ${
-        rule.mode === 'auto' ? 'Auto-add' : 'Ask first'
-      }`,
-      day: Number(rule.nextDate.slice(8, 10)),
-      color: categoryById.get(rule.template.categoryId ?? '')?.color ?? MUTED_COLOR,
-    }))
 
   // ---- Recent activity ----------------------------------------------------
   const recent: RecentRow[] = [...transactions]

@@ -227,7 +227,7 @@ describe('makeRecurring', () => {
 })
 
 describe('confirmPending', () => {
-  it('posts the entry and moves the rule on', async () => {
+  it('posts the entry', async () => {
     const recurring = rule()
     await db.recurring.add(recurring)
     const pending = txn({ status: 'pending', recurringId: recurring.id, amount: 149_00 })
@@ -236,6 +236,18 @@ describe('confirmPending', () => {
     await confirmPending(pending.id)
 
     expect((await db.transactions.get(pending.id))?.status).toBe('posted')
+  })
+
+  it('leaves the rule where the scheduler put it', async () => {
+    const recurring = rule({ nextDate: '2026-11-14' })
+    await db.recurring.add(recurring)
+    const pending = txn({ status: 'pending', recurringId: recurring.id })
+    await db.transactions.add(pending)
+
+    await confirmPending(pending.id)
+
+    // runSchedule already advanced it when it made this entry; advancing
+    // again here would skip a month every time the user says yes.
     expect((await db.recurring.get(recurring.id))?.nextDate).toBe('2026-11-14')
   })
 
@@ -245,8 +257,8 @@ describe('confirmPending', () => {
 })
 
 describe('skipPending', () => {
-  it('drops the entry but still moves the rule on', async () => {
-    const recurring = rule()
+  it('drops the entry and leaves the rule alone', async () => {
+    const recurring = rule({ nextDate: '2026-11-14' })
     await db.recurring.add(recurring)
     const pending = txn({ status: 'pending', recurringId: recurring.id })
     await db.transactions.add(pending)
@@ -254,7 +266,6 @@ describe('skipPending', () => {
     await skipPending(pending.id)
 
     expect(await db.transactions.get(pending.id)).toBeUndefined()
-    // Skipping one month must not leave the rule stuck on that date.
     expect((await db.recurring.get(recurring.id))?.nextDate).toBe('2026-11-14')
   })
 })

@@ -1,6 +1,6 @@
 import { db, newId, stamp, touch } from '@/db/db'
 import type { Id, Receipt, Recurring, Transaction } from '@/db/types'
-import { advanceDate, advanceRule } from '@/lib/recurring'
+import { advanceDate } from '@/lib/recurring'
 import { toDateOnly } from '@/lib/dates'
 
 /**
@@ -134,30 +134,17 @@ export async function makeRecurring(transactionId: Id): Promise<Id> {
 }
 
 /**
- * Accepts a pending recurring entry: the transaction posts and the rule
- * moves to its next date.
+ * Accepts a pending recurring entry: it simply posts.
+ *
+ * The rule is not touched. `runSchedule` already moved it on when it made
+ * this entry — it owns `nextDate`, and advancing it here as well would skip
+ * a month every time the user said yes.
  */
 export async function confirmPending(transactionId: Id): Promise<void> {
-  await db.transaction('rw', db.transactions, db.recurring, async () => {
-    const pending = await db.transactions.get(transactionId)
-    if (!pending) return
-
-    await db.transactions.update(transactionId, { status: 'posted', ...touch() })
-
-    const rule = pending.recurringId ? await db.recurring.get(pending.recurringId) : undefined
-    if (rule) await db.recurring.update(rule.id, { ...advanceRule(rule), ...touch() })
-  })
+  await db.transactions.update(transactionId, { status: 'posted', ...touch() })
 }
 
-/** Declines this occurrence: the entry goes, the rule still moves on. */
+/** Declines this occurrence. The entry goes; the rule has already moved on. */
 export async function skipPending(transactionId: Id): Promise<void> {
-  await db.transaction('rw', db.transactions, db.recurring, async () => {
-    const pending = await db.transactions.get(transactionId)
-    if (!pending) return
-
-    await db.transactions.delete(transactionId)
-
-    const rule = pending.recurringId ? await db.recurring.get(pending.recurringId) : undefined
-    if (rule) await db.recurring.update(rule.id, { ...advanceRule(rule), ...touch() })
-  })
+  await db.transactions.delete(transactionId)
 }

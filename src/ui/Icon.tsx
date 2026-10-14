@@ -200,3 +200,9 @@ export const PersonIcon = (p: IconProps) => (
     <path d="M5 20a7 7 0 0 1 14 0" />
   </Svg>
 )
+
+export const BellIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21h4" />
+  </Svg>
+)

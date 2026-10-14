@@ -565,17 +565,18 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
 
   const recurring: Recurring[] = (
     [
-      ['Spotify', 149_00, 'GCash', 'Bills', 'confirm', 0],
-      ['Rent', 15_000_00, 'BPI Savings', 'Home', 'auto', 1],
-      ['Internet', 1_699_00, 'BPI Savings', 'Bills', 'confirm', 4],
-      ['Netflix', 549_00, 'BPI Visa', 'Bills', 'auto', 6],
-      ['iCloud storage', 149_00, 'BPI Visa', 'Bills', 'auto', 8],
-      ['Car loan payment', 13_651_00, 'BPI Savings', 'Bills', 'confirm', 11],
-      ['Electricity', 3_400_00, 'BPI Savings', 'Bills', 'confirm', 19],
-      ['Water', 680_00, 'BPI Savings', 'Bills', 'confirm', 35],
-      ['YouTube Premium', 400_00, 'BPI Visa', 'Bills', 'auto', 37],
+      // name, amount, account, category, mode, days away, subscription
+      ['Spotify', 149_00, 'GCash', 'Bills', 'confirm', 0, true],
+      ['Rent', 15_000_00, 'BPI Savings', 'Home', 'auto', 1, false],
+      ['Internet', 1_699_00, 'BPI Savings', 'Bills', 'confirm', 4, false],
+      ['Netflix', 549_00, 'BPI Visa', 'Bills', 'auto', 6, true],
+      ['iCloud storage', 149_00, 'BPI Visa', 'Bills', 'auto', 8, true],
+      ['Car loan payment', 13_651_00, 'BPI Savings', 'Bills', 'confirm', 11, false],
+      ['Electricity', 3_400_00, 'BPI Savings', 'Bills', 'confirm', 19, false],
+      ['Water', 680_00, 'BPI Savings', 'Bills', 'confirm', 35, false],
+      ['YouTube Premium', 400_00, 'BPI Visa', 'Bills', 'auto', 37, true],
     ] as const
-  ).map(([name, amount, account, category, mode, offset]) => ({
+  ).map(([name, amount, account, category, mode, offset, subscription]) => ({
     id: newId(),
     template: {
       type: 'expense' as const,
@@ -583,7 +584,7 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
       accountId: accountId(account),
       categoryId: categoryId(category),
       note: name,
-      tags: [],
+      tags: subscription ? ['subscription'] : [],
     },
     freq: 'monthly' as const,
     interval: 1,
@@ -593,7 +594,9 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
     ...stamp(),
   }))
 
-  // Spotify is due today and waits for a yes — the pending row in Activity.
+  // Spotify came due today and is waiting for a yes — the pending row in
+  // Activity. The scheduler owns `nextDate`, and it moves a rule on as it
+  // makes the entry, so this one already points at next month.
   const spotify = recurring[0]
   if (spotify) {
     txn({
@@ -606,7 +609,14 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
       recurringId: spotify.id,
       status: 'pending',
     })
+    spotify.nextDate = iso(addMonths(today, 1))
   }
+
+  // The electricity bill lands at a different figure every month, so the
+  // forecast shows it as an estimate rather than a quoted ₱3,400.
+  const electricity = recurring.find((rule) => rule.template.note === 'Electricity')
+  const lastBill = transactions.find((row) => row.note === 'Electricity')
+  if (electricity && lastBill) lastBill.recurringId = electricity.id
 
   // ---- Budgets and goals ---------------------------------------------------
   const month = format(today, 'yyyy-MM')

@@ -4,7 +4,7 @@
  */
 
 import { addDays, addMonths, addWeeks, addYears, parseISO } from 'date-fns'
-import type { DateOnly, Recurring } from '@/db/types'
+import type { DateOnly, Id, Recurring, TransactionStatus } from '@/db/types'
 import { toDateOnly } from './dates'
 
 /** One step of `freq` × `interval` from `date`. */
@@ -67,4 +67,71 @@ export function upcomingDates(rule: Recurring, count: number): DateOnly[] {
   }
 
   return dates
+}
+
+/**
+ * How many occurrences of one rule a single run will catch up on. A phone
+ * left in a drawer for a year should not wake up and post 365 daily rows in
+ * one go; what is left over is simply picked up on the next open.
+ */
+export const MAX_CATCHUP = 60
+
+export interface PlannedOccurrence {
+  ruleId: Id
+  date: DateOnly
+  /** Auto rules post straight away; confirm rules wait for a yes. */
+  status: TransactionStatus
+}
+
+export interface SchedulePlan {
+  occurrences: PlannedOccurrence[]
+  /** Where each touched rule's `nextDate` ends up. */
+  nextDates: Array<{ ruleId: Id; nextDate: DateOnly }>
+  /** Rules that hit the catch-up cap and still have occurrences waiting. */
+  capped: Id[]
+}
+
+const fallsDue = (date: DateOnly, endDate: DateOnly | undefined, today: DateOnly): boolean =>
+  date <= today && (endDate === undefined || date <= endDate)
+
+/**
+ * Everything that should have happened by `today`, worked out without
+ * touching the database.
+ *
+ * Each rule is walked forward from its `nextDate`, so an app that has not
+ * been opened for three months catches up on all three occurrences rather
+ * than only the latest. The scheduler owns `nextDate`: an occurrence is
+ * materialised and the rule moves on in the same breath, which is what makes
+ * running this twice harmless.
+ */
+export function planSchedule(
+  rules: readonly Recurring[],
+  today: DateOnly,
+  limit: number = MAX_CATCHUP,
+): SchedulePlan {
+  const occurrences: PlannedOccurrence[] = []
+  const nextDates: SchedulePlan['nextDates'] = []
+  const capped: Id[] = []
+
+  for (const rule of rules) {
+    let cursor = rule.nextDate
+    let made = 0
+
+    while (fallsDue(cursor, rule.endDate, today) && made < limit) {
+      occurrences.push({
+        ruleId: rule.id,
+        date: cursor,
+        status: rule.mode === 'auto' ? 'posted' : 'pending',
+      })
+      cursor = advanceDate(cursor, rule.freq, rule.interval)
+      made += 1
+    }
+
+    if (made === 0) continue
+    nextDates.push({ ruleId: rule.id, nextDate: cursor })
+    if (fallsDue(cursor, rule.endDate, today)) capped.push(rule.id)
+  }
+
+  occurrences.sort((a, b) => a.date.localeCompare(b.date))
+  return { occurrences, nextDates, capped }
 }

@@ -56,10 +56,10 @@ sample data in production; that stays an explicit action.
 
 **Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
 **Accounts**, the **Loans** hub, a **person's ledger**, **New loan**, a
-**formal loan** and **Split** are built
-(`src/features/{home,quick-add,activity,transactions,accounts,loans,split}`).
+**formal loan**, **Split** and **Bills & recurring** are built
+(`src/features/{home,quick-add,activity,transactions,accounts,loans,split,bills}`).
 They all follow the same split: a pure module holds the logic (`dashboard.ts`,
-`draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`), a `db.ts` holds the Dexie
+`draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`, `bills.ts`), a `db.ts` holds the Dexie
 queries and writes, and the components only render. That is what makes the
 figures testable — `dashboard.test.ts` asserts the home cards against the
 sample data, so a change that breaks the arithmetic fails the suite rather
@@ -81,6 +81,14 @@ per-loan progress, the history of every movement and the reminder message;
 Split turns one expense into a loan per person. Repayments go through
 `recordPayment`, which writes the `loanPayments` row *and* the transaction
 that mirrors it, and closes the loan when nothing is left.
+
+The recurring scheduler runs on every app open, from `App.tsx`. `planSchedule`
+in `src/lib/recurring.ts` works out everything that has come due without
+touching the database; `runSchedule` applies it in one Dexie transaction.
+Auto rules post straight into the ledger, confirm rules land as pending
+entries in Activity and on Bills. It catches up: three months away from a
+monthly rule posts all three, capped at 60 occurrences a run so a phone left
+in a drawer cannot wake up and write a year of daily rows at once.
 
 A formal loan's screen is the amortisation calculator made visible:
 `src/lib/amortization.ts` walks the schedule payment by payment, rounding the
@@ -119,6 +127,22 @@ interest.
   formal loan is the plan the lender wrote; how far through it you are comes
   from how many instalments have been logged. Keeping the two apart is what
   lets the screen show ticks against future rows without inventing history.
+- **The scheduler owns `nextDate` — nothing else writes it.** It materialises
+  an occurrence and advances the rule in the same transaction, which is what
+  makes running it twice (React's double effect, two tabs, a reload) a no-op
+  rather than a double charge. `confirmPending` only posts and `skipPending`
+  only deletes: advancing there as well would skip a month every time the
+  user answered.
+- **A pending entry is still an upcoming bill.** Its rule has already moved
+  past it, so the Bills forecast and the Home card read pending rows *and*
+  future rule occurrences, or the next payment would vanish from both the
+  moment the scheduler made it.
+- **Subscriptions are a tag** (`subscription`) on the rule's template, set by
+  a toggle in the rule form. The v1 schema has no field for it, and a
+  threshold on the amount would quietly reclassify a cheap utility bill.
+- **Reminders fire on open, not on a schedule.** There is no server to push
+  from, so `remindAboutBills` raises one system notice a day for anything due
+  within a day, and the banner's copy says exactly that.
 - **A loan payment is never deleted from the transaction.**
   `deleteTransaction` refuses rows that carry one; `deletePayment` is the way
   back, and it removes the payment, its transaction and the settled flag it

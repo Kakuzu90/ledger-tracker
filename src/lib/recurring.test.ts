@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { advanceDate, advanceRule, dueRules, hasEnded, isDue, upcomingDates } from './recurring'
+import {
+  advanceDate,
+  advanceRule,
+  dueRules,
+  hasEnded,
+  isDue,
+  planSchedule,
+  upcomingDates,
+} from './recurring'
 import type { Recurring } from '@/db/types'
 
 const stamps = { createdAt: '2026-10-01T00:00:00.000Z', updatedAt: '2026-10-01T00:00:00.000Z' }
@@ -110,6 +118,111 @@ describe('upcomingDates', () => {
     expect(upcomingDates(rule({ id: 'a', endDate: '2026-11-30' }), 5)).toEqual([
       '2026-10-14',
       '2026-11-14',
+    ])
+  })
+})
+
+describe('planSchedule', () => {
+  it('finds nothing when no rule has come due', () => {
+    const plan = planSchedule([rule({ id: 'a', nextDate: '2026-10-20' })], '2026-10-14')
+    expect(plan.occurrences).toEqual([])
+    expect(plan.nextDates).toEqual([])
+  })
+
+  it('posts an auto rule and waits on a confirm one', () => {
+    const plan = planSchedule(
+      [
+        rule({ id: 'auto', mode: 'auto', nextDate: '2026-10-14' }),
+        rule({ id: 'ask', mode: 'confirm', nextDate: '2026-10-14' }),
+      ],
+      '2026-10-14',
+    )
+
+    expect(plan.occurrences).toEqual([
+      { ruleId: 'auto', date: '2026-10-14', status: 'posted' },
+      { ruleId: 'ask', date: '2026-10-14', status: 'pending' },
+    ])
+  })
+
+  it('moves every rule it touched on, which is what stops a second run', () => {
+    const rules = [rule({ id: 'a', mode: 'auto', nextDate: '2026-10-14' })]
+    const plan = planSchedule(rules, '2026-10-14')
+
+    expect(plan.nextDates).toEqual([{ ruleId: 'a', nextDate: '2026-11-14' }])
+    expect(
+      planSchedule([rule({ id: 'a', mode: 'auto', nextDate: '2026-11-14' })], '2026-10-14')
+        .occurrences,
+    ).toEqual([])
+  })
+
+  it('catches up on every occurrence missed while the app was shut', () => {
+    // Three months away from a monthly rule.
+    const plan = planSchedule([rule({ id: 'a', mode: 'auto', nextDate: '2026-07-14' })], '2026-10-14')
+
+    expect(plan.occurrences.map((o) => o.date)).toEqual([
+      '2026-07-14',
+      '2026-08-14',
+      '2026-09-14',
+      '2026-10-14',
+    ])
+    expect(plan.nextDates[0]?.nextDate).toBe('2026-11-14')
+  })
+
+  it('stops a rule at its end date', () => {
+    const plan = planSchedule(
+      [rule({ id: 'a', mode: 'auto', nextDate: '2026-08-14', endDate: '2026-09-30' })],
+      '2026-10-14',
+    )
+    expect(plan.occurrences.map((o) => o.date)).toEqual(['2026-08-14', '2026-09-14'])
+  })
+
+  it('leaves an already-finished rule alone', () => {
+    const plan = planSchedule(
+      [rule({ id: 'a', nextDate: '2026-10-14', endDate: '2026-09-01' })],
+      '2026-10-14',
+    )
+    expect(plan.occurrences).toEqual([])
+  })
+
+  it('caps a long catch-up and says there is more to come', () => {
+    // A daily rule, a year unopened.
+    const plan = planSchedule(
+      [rule({ id: 'a', freq: 'daily', mode: 'auto', nextDate: '2025-10-14' })],
+      '2026-10-14',
+      5,
+    )
+
+    expect(plan.occurrences).toHaveLength(5)
+    expect(plan.capped).toEqual(['a'])
+    // What is left is simply picked up by the next run.
+    expect(plan.nextDates[0]?.nextDate).toBe('2025-10-19')
+  })
+
+  it('does not flag a rule that finished its catch-up', () => {
+    const plan = planSchedule([rule({ id: 'a', mode: 'auto', nextDate: '2026-10-14' })], '2026-10-14', 5)
+    expect(plan.capped).toEqual([])
+  })
+
+  it('orders everything by date, oldest first', () => {
+    const plan = planSchedule(
+      [
+        rule({ id: 'b', mode: 'auto', nextDate: '2026-10-12' }),
+        rule({ id: 'a', mode: 'auto', nextDate: '2026-10-10' }),
+      ],
+      '2026-10-14',
+    )
+    expect(plan.occurrences.map((o) => o.date)).toEqual(['2026-10-10', '2026-10-12'])
+  })
+
+  it('honours each rule’s own cadence', () => {
+    const plan = planSchedule(
+      [rule({ id: 'a', freq: 'weekly', interval: 2, mode: 'auto', nextDate: '2026-09-16' })],
+      '2026-10-14',
+    )
+    expect(plan.occurrences.map((o) => o.date)).toEqual([
+      '2026-09-16',
+      '2026-09-30',
+      '2026-10-14',
     ])
   })
 })
