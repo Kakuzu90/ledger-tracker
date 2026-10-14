@@ -54,8 +54,8 @@ sample data in production; that stays an explicit action.
 
 ## Screens
 
-**Home** (`src/features/home`) and **Quick Add** (`src/features/quick-add`) are
-built. Both follow the same split: a pure module holds the logic
+**Home**, **Quick Add**, **Activity**, **Calendar** and **Transaction detail**
+are built (`src/features/{home,quick-add,activity,transactions}`). Both follow the same split: a pure module holds the logic
 (`dashboard.ts`, `draft.ts`), a `db.ts` holds the Dexie queries and writes, and
 the components only render. That is what makes the figures testable —
 `dashboard.test.ts` asserts the home cards against the sample data, so a change
@@ -65,6 +65,12 @@ Home reads through one `useLiveQuery`, so a saved transaction updates every
 card at once. Amounts render through `src/ui/Money.tsx`, which is what makes
 the "hide amounts" toggle cover the whole screen.
 
+Activity filters in memory rather than through an index: search and the chips
+cut across date, account, category, tags and amount at once, and no single
+index serves that. Deleting goes through `deleteTransaction`, which returns
+everything it removed so the Undo bar can put it back exactly — receipt
+included, so no orphaned blob is left behind.
+
 ## Notes for the next change
 
 - **Money** is integer centavos end to end. `src/lib/money.ts` parses from
@@ -73,6 +79,11 @@ the "hide amounts" toggle cover the whole screen.
 - **Computed, never stored**: balances live in `src/lib/balances.ts`, loan
   remainders in `src/lib/loans.ts`. Transfers and loan principal are movements,
   not income or expense, so they are excluded from month totals.
+- **One rule for what counts as a flow.** `countsAsFlow` in
+  `src/lib/balances.ts` decides it: transfers move money sideways, and loan
+  principal is borrowed or lent rather than earned or spent. Home, Activity's
+  in/out strip, the day nets and the calendar heatmap all defer to it, so a
+  month reads the same figure wherever you look at it.
 - **Formal loans** need amortisation for their remaining balance; `outstanding()`
   is principal less payments, which is only right at 0%. `loanTotals()` covers
   personal loans only, matching the cards in Loans.dc.html.

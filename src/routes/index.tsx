@@ -34,6 +34,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <HomeScreen /> },
           { path: '/activity', element: <ActivityScreen /> },
+          { path: '/activity/calendar', element: <CalendarScreen /> },
           { path: '/loans', element: <LoansScreen /> },
           { path: '/reports', element: <ReportsScreen /> },
         ],
@@ -41,7 +42,6 @@ export const router = createBrowserRouter([
       {
         element: <SubLayout />,
         children: [
-          { path: '/activity/calendar', element: <CalendarScreen /> },
           { path: '/txn/:id', element: <TxnDetailScreen /> },
           { path: '/loans/new', element: <AddLoanScreen /> },
           { path: '/loans/person/:id', element: <PersonScreen /> },

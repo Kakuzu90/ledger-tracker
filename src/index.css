@@ -110,6 +110,11 @@
     @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-base text-ink placeholder:text-muted;
   }
 
+  /* The three square actions on the transaction detail screen. */
+  .action-tile {
+    @apply flex min-h-[72px] flex-col items-center justify-center gap-1.5 rounded-btn border border-border bg-surface text-meta font-medium text-ink no-underline disabled:opacity-50;
+  }
+
   .meter {
     @apply h-2 overflow-hidden rounded-full bg-divider;
   }

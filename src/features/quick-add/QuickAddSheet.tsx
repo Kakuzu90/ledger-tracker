@@ -5,14 +5,8 @@ import { Segmented } from '@/ui/Segmented'
 import { useUIStore } from '@/store/ui'
 import type { TransactionType } from '@/db/types'
 import { AmountDisplay, Keypad } from './components/Keypad'
-import {
-  AccountPicker,
-  CategoryPicker,
-  DatePicker,
-  ReceiptIcon,
-  ReceiptPicker,
-  RepeatIcon,
-} from './components/Pickers'
+import { AccountPicker, CategoryPicker, DatePicker, ReceiptPicker } from './components/Pickers'
+import { ReceiptIcon, RepeatIcon } from '@/ui/Icon'
 import { useAccounts, useCategories, useLastUsedAccountId } from './hooks/usePickers'
 import { saveDraft } from './db'
 import {

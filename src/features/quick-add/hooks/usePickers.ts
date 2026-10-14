@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/db'
 import type { Account, Category, CategoryKind, Id } from '@/db/types'
+import { orderCategories } from '@/features/transactions/categories'
 
 /** Spending accounts first, cards last — Dexie's own order is by uuid. */
 const TYPE_ORDER: Record<Account['type'], number> = { cash: 0, ewallet: 1, bank: 2, credit: 3 }
@@ -32,13 +33,12 @@ export function useLastUsedAccountId(): Id | undefined {
  * children — the order the chips appear in.
  */
 export function useCategories(kind: CategoryKind): Category[] | undefined {
-  return useLiveQuery(async () => {
-    const all = (await db.categories.toArray()).filter((c) => c.kind === kind && !c.archived)
-    const parents = all.filter((c) => c.parentId === undefined).sort((a, b) => a.order - b.order)
-
-    return parents.flatMap((parent) => [
-      parent,
-      ...all.filter((c) => c.parentId === parent.id).sort((a, b) => a.order - b.order),
-    ])
-  }, [kind])
+  return useLiveQuery(
+    async () =>
+      orderCategories(
+        (await db.categories.toArray()).filter((c) => !c.archived),
+        kind,
+      ),
+    [kind],
+  )
 }

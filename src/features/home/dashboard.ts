@@ -21,6 +21,12 @@ import { byContact, isOverdue, isSettled, loanTotals, outstanding } from '@/lib/
 import { paidShare, remainingBalance } from '@/lib/amortization'
 import { daysLeftInMonth, daysSince, monthKey, relativeDay, toDateOnly } from '@/lib/dates'
 import { ratio } from '@/lib/money'
+import {
+  buildLookups,
+  describeTransaction,
+  MUTED_COLOR,
+  subtitle,
+} from '@/features/transactions/describe'
 
 export interface DashboardInput {
   accounts: readonly Account[]
@@ -100,8 +106,6 @@ export interface Dashboard {
   backupAge: number | null
 }
 
-const MUTED = '#5B616B'
-
 const plural = (count: number, one: string, many = `${one}s`) =>
   `${count} ${count === 1 ? one : many}`
 
@@ -119,16 +123,8 @@ export function buildDashboard(input: DashboardInput, today: Date = new Date()):
 
   const month = monthKey(today)
   const todayIso = toDateOnly(today)
-  const categoryById = new Map(categories.map((c) => [c.id, c]))
-  const accountById = new Map(accounts.map((a) => [a.id, a]))
-
-  /** "Food › Groceries" for a subcategory. */
-  const categoryPath = (id: Id | undefined): string | undefined => {
-    const category = id ? categoryById.get(id) : undefined
-    if (!category) return undefined
-    const parent = category.parentId ? categoryById.get(category.parentId) : undefined
-    return parent ? `${parent.name} › ${category.name}` : category.name
-  }
+  const lookups = buildLookups(categories, accounts)
+  const { categoryById } = lookups
 
   // ---- Accounts -----------------------------------------------------------
   const live = accounts.filter((a) => !a.archived)
@@ -214,7 +210,7 @@ export function buildDashboard(input: DashboardInput, today: Date = new Date()):
         rule.mode === 'auto' ? 'Auto-add' : 'Ask first'
       }`,
       day: Number(rule.nextDate.slice(8, 10)),
-      color: categoryById.get(rule.template.categoryId ?? '')?.color ?? MUTED,
+      color: categoryById.get(rule.template.categoryId ?? '')?.color ?? MUTED_COLOR,
     }))
 
   // ---- Recent activity ----------------------------------------------------
@@ -223,31 +219,20 @@ export function buildDashboard(input: DashboardInput, today: Date = new Date()):
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5)
     .map((txn) => {
+      const row = describeTransaction(txn, lookups)
       const when = relativeDay(txn.date, today)
-      const account = accountById.get(txn.accountId)
 
-      if (txn.type === 'transfer') {
-        const to = txn.toAccountId ? accountById.get(txn.toAccountId) : undefined
-        return {
-          id: txn.id,
-          title: `${account?.name ?? 'Account'} → ${to?.name ?? 'Account'}`,
-          subtitle: `Transfer · ${when}`,
-          amount: txn.amount,
-          tone: 'plain' as const,
-          color: account?.color ?? MUTED,
-          tileName: 'Transfer',
-        }
-      }
-
-      const label = categoryPath(txn.categoryId) ?? (txn.loanId ? 'Loan' : 'Uncategorised')
       return {
-        id: txn.id,
-        title: txn.note || label,
-        subtitle: [label, account?.name, when].filter(Boolean).join(' · '),
-        amount: txn.type === 'income' ? txn.amount : -txn.amount,
-        tone: 'auto' as const,
-        color: categoryById.get(txn.categoryId ?? '')?.color ?? MUTED,
-        tileName: categoryById.get(txn.categoryId ?? '')?.name ?? label,
+        id: row.id,
+        title: row.title,
+        // Home is not grouped by day, so each row carries its own date.
+        subtitle: row.isTransfer
+          ? subtitle('Transfer', when)
+          : subtitle(row.categoryPath ?? 'Uncategorised', row.accountName, when),
+        amount: row.amount,
+        tone: row.tone,
+        color: row.color,
+        tileName: row.tileName,
       }
     })
 

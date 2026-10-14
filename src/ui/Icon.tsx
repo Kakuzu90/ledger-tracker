@@ -113,3 +113,37 @@ export const RefreshIcon = (p: IconProps) => (
     <path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6" />
   </Svg>
 )
+
+export const RepeatIcon = (p: IconProps) => (
+  <Svg size={16} {...p}>
+    <path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4" />
+  </Svg>
+)
+
+export const ReceiptIcon = (p: IconProps) => (
+  <Svg size={16} {...p}>
+    <rect x="3" y="6" width="18" height="14" rx="2" />
+    <circle cx="12" cy="13" r="3.5" />
+    <path d="M9 6l1.5-2h3L15 6" />
+  </Svg>
+)
+
+export const CopyIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <rect x="8" y="8" width="12" height="12" rx="2" />
+    <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+  </Svg>
+)
+
+export const SplitIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6" />
+  </Svg>
+)
+
+export const TrashIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+  </Svg>
+)
