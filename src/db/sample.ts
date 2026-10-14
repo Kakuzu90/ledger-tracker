@@ -27,6 +27,7 @@ import type {
   LoanPayment,
   Receipt,
   Recurring,
+  Setting,
   Transaction,
 } from './types'
 import { accountDelta } from '@/lib/balances'
@@ -43,6 +44,7 @@ export interface SampleData {
   goals: Goal[]
   recurring: Recurring[]
   receipts: Receipt[]
+  settings: Setting[]
 }
 
 /** Target balance for each account today; opening balances are solved to match. */
@@ -315,10 +317,14 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
 
       const notes = NOTES[name] ?? NOTES.Other ?? ['Misc']
       const count = Math.min(notes.length, 2 + Math.floor(random() * 4))
+      // Whole pesos read like real entries; the last row absorbs the odd
+      // centavos so the month still totals exactly.
       const amounts = allocateByWeight(
         remaining,
         Array.from({ length: count }, () => 0.5 + random()),
-      )
+      ).map((amount) => Math.round(amount / 100) * 100)
+      const drift = remaining - amounts.reduce((a, b) => a + b, 0)
+      amounts[amounts.length - 1] = (amounts.at(-1) ?? 0) + drift
 
       const payers = PAYERS[name] ?? [['Cash', 1] as [string, number]]
       const payerWeights = payers.map(([, weight]) => weight)
@@ -632,6 +638,17 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
     { name: 'Emergency fund', target: 150_000_00, saved: 60_000_00 },
   ].map((goal) => ({ id: newId(), ...goal, ...stamp() }))
 
+  // Settings travel with the dataset: loading it clears the table, and the
+  // demo is meant to look like a used app, backup nudge and all.
+  const settings: Setting[] = [
+    { key: 'name', value: 'Alex' },
+    { key: 'currency', value: 'PHP' },
+    { key: 'theme', value: 'system' },
+    { key: 'backupReminderDays', value: 30 },
+    { key: 'lockEnabled', value: false },
+    { key: 'lastBackupAt', value: addDays(today, -34).toISOString() },
+  ]
+
   // ---- Solve opening balances so today's balances match the targets --------
   for (const account of accounts) {
     const target = ACCOUNTS.find((a) => a.name === account.name)?.balance ?? 0
@@ -654,6 +671,7 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
     goals,
     recurring,
     receipts: [receipt],
+    settings,
   }
 }
 
@@ -686,6 +704,7 @@ export async function loadSampleData(
     await db.goals.bulkAdd(data.goals)
     await db.recurring.bulkAdd(data.recurring)
     await db.receipts.bulkAdd(data.receipts)
+    await db.settings.bulkPut(data.settings)
   })
 
   return data

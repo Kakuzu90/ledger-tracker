@@ -73,6 +73,8 @@ export function buildDefaultCategories(): Category[] {
 }
 
 export const DEFAULT_SETTINGS: Readonly<Record<string, unknown>> = {
+  /** Shown in the home greeting; empty until the user says who they are. */
+  name: '',
   currency: DEFAULT_CURRENCY,
   theme: 'system',
   /** Days between backup nudges on the home screen. */

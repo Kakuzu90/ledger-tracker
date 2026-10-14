@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    // dexie-react-hooks pulls its own React otherwise, and two copies of
+    // React break every hook in the components that use it.
+    dedupe: ['react', 'react-dom'],
   },
   plugins: [
     react(),

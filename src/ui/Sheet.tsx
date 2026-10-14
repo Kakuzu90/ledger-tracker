@@ -7,11 +7,13 @@ interface SheetProps {
   title: string
   /** Header button to the right of the title. */
   action?: ReactNode
+  /** Fill the screen below the handle, so content can pin to the bottom. */
+  fill?: boolean
   children?: ReactNode
 }
 
 /** Bottom sheet — the QuickAdd container, per design/QuickAdd.dc.html. */
-export function Sheet({ open, onClose, title, action, children }: SheetProps) {
+export function Sheet({ open, onClose, title, action, fill = false, children }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,7 +47,9 @@ export function Sheet({ open, onClose, title, action, children }: SheetProps) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pb-6 pt-2.5 shadow-sheet outline-none"
+        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pb-6 pt-2.5 shadow-sheet outline-none ${
+          fill ? 'h-[calc(100dvh-48px)]' : 'max-h-[calc(100dvh-48px)] overflow-y-auto'
+        }`}
       >
         <div className="h-[5px] w-10 self-center rounded-full bg-border-strong" />
         <div className="flex items-center justify-between">

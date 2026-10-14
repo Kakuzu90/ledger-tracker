@@ -193,3 +193,9 @@ export function allocateByWeight(
 
   return parts
 }
+
+/** Clamps a 0–1 share for progress bars. */
+export function clampShare(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(1, Math.max(0, value))
+}
