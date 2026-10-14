@@ -1,0 +1,107 @@
+/*
+ * Self-hosted so the PWA renders correctly on a cold offline start.
+ * Latin subsets only — every extra subset is precached weight.
+ */
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource/space-grotesk/latin-500.css';
+@import '@fontsource/space-grotesk/latin-600.css';
+@import '@fontsource/space-grotesk/latin-700.css';
+
+@import './styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-bg font-sans text-base text-ink antialiased;
+    margin: 0;
+    overscroll-behavior-y: none;
+  }
+
+  /* Headings and every number use Space Grotesk; numbers are tabular. */
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  /* Stroke icons, matching the mockups' SVG defaults. */
+  svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg;
+  }
+}
+
+@layer components {
+  /* Numerals — always tabular so columns of money line up. */
+  .num {
+    @apply font-heading;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card {
+    @apply rounded-card border border-border bg-surface p-4;
+  }
+
+  .label {
+    @apply text-label uppercase tracking-[.06em] text-muted;
+  }
+
+  .list-row {
+    @apply flex items-center gap-3 border-b border-divider py-3 last:border-b-0;
+  }
+
+  /* 40px leading icon tile used in every list. */
+  .row-icon {
+    @apply flex h-10 w-10 flex-none items-center justify-center rounded-ctl font-heading text-sm font-semibold;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-btn bg-primary px-[18px] font-semibold text-primary-ink;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-btn border border-border-strong bg-surface px-[18px] font-semibold text-ink;
+  }
+
+  /* 44px square icon button in screen headers. */
+  .icon-btn {
+    @apply flex h-touch w-touch items-center justify-center rounded-ctl border border-border bg-surface text-ink;
+  }
+
+  .chip {
+    @apply inline-flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-full border border-border-strong bg-surface px-3.5 text-sm font-medium text-ink;
+  }
+
+  .chip-on {
+    @apply border-contrast bg-contrast text-contrast-ink;
+  }
+
+  .field {
+    @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-base text-ink placeholder:text-muted;
+  }
+
+  .meter {
+    @apply h-2 overflow-hidden rounded-full bg-divider;
+  }
+
+  .meter > i {
+    @apply block h-full rounded-full bg-primary;
+  }
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#0F6E64" />
+    <meta name="description" content="Offline-first personal expense and loan tracker." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Ledger" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Ledger</title>
+    <script>
+      // First-paint theme only. The source of truth is the `theme` row in the
+      // IndexedDB settings table (IndexedDB cannot be read synchronously here);
+      // src/lib/theme.ts keeps this mirror in step. No app data is kept here.
+      try {
+        var t = localStorage.getItem('ledger:theme')
+        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t
+      } catch (e) {
+        /* private mode — fall back to the OS preference */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
