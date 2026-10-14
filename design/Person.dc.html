@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Person ledger</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.pos{color:#0F6E64}.neg{color:#B4501A}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:16px}
+.t1{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.badge{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:99px;font-size:12px;font-weight:600}
+.bar{height:8px;border-radius:99px;background:#E7E9E4;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:#0F6E64}
+.btn{min-height:48px;border-radius:14px;border:0;background:#0F6E64;color:#fff;font:600 15px 'IBM Plex Sans',sans-serif;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn2{min-height:48px;border-radius:14px;border:1px solid #D5D8D2;background:#fff;color:#16181D;font:600 15px 'IBM Plex Sans',sans-serif;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.tl{display:flex;gap:12px;padding:10px 0}
+.tl .d{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 1000px;">
+  <header class="top">
+    <a class="ib" href="Loans.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Juan Dela Cruz</h1>
+    <button class="ib" type="button" aria-label="More options"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button>
+  </header>
+
+  <div style="padding: 0 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+    <section style="text-align: center; padding: 6px 0 2px;">
+      <p class="t2">Juan owes you</p>
+      <p class="n pos" style="margin: 2px 0; font-size: 40px; font-weight: 700;">₱5,500</p>
+      <p class="t2">2 open loans · lent ₱6,500 · repaid ₱1,000</p>
+    </section>
+
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px;">
+      <button class="btn" type="button">Record payment</button>
+      <button class="btn2" type="button"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 3v12M8 7l4-4 4 4"></path></svg>Remind</button>
+      <button class="btn2" type="button"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Settle</button>
+    </div>
+
+    <section class="card" style="border-color: #F1D8C8;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+        <div><p class="t1">Concert tickets</p><p class="t2">Lent Sep 2 from BPI · due Oct 11</p></div>
+        <span class="badge" style="background: #FBE3D3; color: #8A3A10;">Overdue 3 days</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin: 12px 0 6px;"><p class="t2"><span class="n" style="color: #16181D;">₱1,000</span> of ₱3,000 repaid</p><p class="n" style="margin: 0; font-weight: 600;">₱2,000 left</p></div>
+      <div class="bar"><i style="width: 33%;"></i></div>
+    </section>
+
+    <section class="card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+        <div><p class="t1">Phone repair</p><p class="t2">Lent Oct 8 from GCash · no due date</p></div>
+        <span class="badge" style="background: #ECEEE9; color: #3D424A;">Open</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin: 12px 0 6px;"><p class="t2"><span class="n" style="color: #16181D;">₱0</span> of ₱3,500 repaid</p><p class="n" style="margin: 0; font-weight: 600;">₱3,500 left</p></div>
+      <div class="bar"><i style="width: 0%;"></i></div>
+    </section>
+
+    <section class="card" style="background: #F0F4F3; border-color: #D3E3DF;">
+      <p class="t2" style="font-weight: 600; color: #0F5B47; margin-bottom: 6px;">Reminder message</p>
+      <p style="margin: 0 0 12px; font-size: 14px;">Hi Juan! Friendly reminder about the ₱2,000 for the concert tickets that was due Oct 11. Thanks!</p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn" type="button" style="flex: 1;">Share via…</button>
+        <button class="btn2" type="button">Edit text</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="h" style="font-size: 16px; margin: 4px 4px 4px;">History</h2>
+      <div style="padding: 0 4px;">
+        <div class="tl"><span class="d" style="background: #E07A3F;"></span><div style="flex: 1;"><p class="t1">Lent · Phone repair</p><p class="t2">Oct 8 · from GCash</p></div><p class="n" style="margin: 0; font-weight: 600;">₱3,500</p></div>
+        <div class="tl"><span class="d" style="background: #0F6E64;"></span><div style="flex: 1;"><p class="t1">Payment received</p><p class="t2">Oct 5 · into GCash · Concert tickets</p></div><p class="n pos" style="margin: 0; font-weight: 600;">+₱1,000</p></div>
+        <div class="tl"><span class="d" style="background: #E07A3F;"></span><div style="flex: 1;"><p class="t1">Lent · Concert tickets</p><p class="t2">Sep 2 · from BPI</p></div><p class="n" style="margin: 0; font-weight: 600;">₱3,000</p></div>
+      </div>
+      <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 4px; color: #5B616B; text-decoration: none; font-size: 14px;">1 settled loan · ₱800 in Aug<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

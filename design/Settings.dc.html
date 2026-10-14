@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.grp{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:0 16px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;border-bottom:1px solid #EEF0EB;color:inherit;text-decoration:none}
+.row:last-child{border-bottom:0}
+.rl{font-weight:500;margin:0}
+.rv{display:flex;align-items:center;gap:4px;color:#5B616B;font-size:14px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B616B;margin:20px 4px 6px}
+.sw{width:46px;height:28px;border-radius:99px;background:#C9CDC6;position:relative;border:0;flex:none;padding:0}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff}
+.sw.on{background:#0F6E64}.sw.on::after{left:21px}
+.seg{display:flex;background:#ECEEE9;border-radius:10px;padding:3px;gap:2px}
+.seg button{min-height:36px;padding:0 10px;border:0;border-radius:8px;background:none;font:500 13px 'IBM Plex Sans',sans-serif;color:#3D424A}
+.seg button.on{background:#fff;color:#16181D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.t2{font-size:13px;color:#5B616B;margin:0}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 1280px;">
+  <header class="top">
+    <a class="ib" href="Main.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Settings</h1>
+    <span style="width: 44px;"></span>
+  </header>
+
+  <div style="padding: 0 20px 32px;">
+    <section style="background: #EEF6F4; border: 1px solid #CFE5E0; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: #0F6E64;"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"></path></svg>
+      <div style="flex: 1;"><p class="rl" style="font-size: 14px;">Update available · v1.3.0</p><p class="t2">Refresh to get the latest version</p></div>
+      <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 0; background: #0F6E64; color: #fff; font: 600 14px 'IBM Plex Sans', sans-serif;">Refresh</button>
+    </section>
+
+    <p class="lbl">Preferences</p>
+    <div class="grp">
+      <a class="row" href="#"><p class="rl">Currency</p><span class="rv">PHP ₱<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <div class="row"><p class="rl">Theme</p><div class="seg" role="group" aria-label="Theme"><button type="button">Light</button><button type="button">Dark</button><button class="on" type="button">System</button></div></div>
+      <a class="row" href="#"><div><p class="rl">Month starts on</p><p class="t2">Match it to your payday</p></div><span class="rv">1st<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <div class="row"><div><p class="rl">Multiple currencies</p><p class="t2">Per-account currency, manual rates</p></div><button class="sw" type="button" role="switch" aria-checked="false" aria-label="Multiple currencies"></button></div>
+    </div>
+
+    <p class="lbl">Organize</p>
+    <div class="grp">
+      <a class="row" href="Categories.dc.html"><p class="rl">Categories &amp; tags</p><span class="rv">14 · 9<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <a class="row" href="Accounts.dc.html"><p class="rl">Accounts</p><span class="rv">5<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <a class="row" href="Bills.dc.html"><p class="rl">Recurring rules</p><span class="rv">9<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <a class="row" href="#"><p class="rl">Contacts</p><span class="rv">6<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+    </div>
+
+    <p class="lbl">Security</p>
+    <div class="grp">
+      <div class="row"><p class="rl">PIN lock</p><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="PIN lock"></button></div>
+      <div class="row"><p class="rl">Fingerprint / Face unlock</p><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Biometric unlock"></button></div>
+      <a class="row" href="#"><p class="rl">Auto-lock</p><span class="rv">After 1 min<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <div class="row"><div><p class="rl">Hide amounts on open</p><p class="t2">Tap the eye on Home to reveal</p></div><button class="sw" type="button" role="switch" aria-checked="false" aria-label="Hide amounts on open"></button></div>
+    </div>
+
+    <p class="lbl">Notifications</p>
+    <div class="grp">
+      <div class="row"><div><p class="rl">Bill reminders</p><p class="t2">1 day before</p></div><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Bill reminders"></button></div>
+      <div class="row"><div><p class="rl">Loan due reminders</p><p class="t2">Personal and formal loans</p></div><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Loan due reminders"></button></div>
+      <div class="row"><div><p class="rl">Budget alerts</p><p class="t2">At 80% and 100%</p></div><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Budget alerts"></button></div>
+      <div class="row"><div><p class="rl">Daily log nudge</p><p class="t2">8:00 PM</p></div><button class="sw" type="button" role="switch" aria-checked="false" aria-label="Daily log nudge"></button></div>
+    </div>
+
+    <p class="lbl">Data</p>
+    <div class="grp">
+      <a class="row" href="Backup.dc.html"><p class="rl">Backup &amp; export</p><span class="rv" style="color: #8A3A10;">34 days ago<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      <div class="row"><p class="rl">App version</p><span class="rv">1.2.0</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1280}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

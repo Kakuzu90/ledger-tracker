@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Budgets and goals</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.bi{padding:14px 0;border-bottom:1px solid #EEF0EB}
+.bi:last-child{border-bottom:0}
+.bh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.t1{font-weight:500;margin:0;flex:1}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.bar{height:8px;border-radius:99px;background:#E7E9E4;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:#0F6E64}
+.badge{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:99px;font-size:12px;font-weight:600}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:20px 4px 6px}
+.sec a,.sec button{font-size:14px;font-weight:500;color:#0F6E64;text-decoration:none;min-height:44px;display:flex;align-items:center;background:none;border:0;font-family:'IBM Plex Sans',sans-serif;padding:0}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 1120px;">
+  <header class="top">
+    <a class="ib" href="Main.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <button type="button" style="min-height: 44px; border: 0; background: none; display: flex; align-items: center; gap: 6px; font: 600 18px 'Space Grotesk', sans-serif; color: #16181D;">October 2026<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+    <button class="ib" type="button" aria-label="Edit budgets"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+  </header>
+
+  <div style="padding: 0 20px 24px;">
+    <section style="background: #fff; border: 1px solid #E3E5E0; border-radius: 18px; padding: 18px;">
+      <p class="t2">Total budget</p>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 2px 0 10px;">
+        <p class="n" style="margin: 0; font-size: 28px; font-weight: 700;">₱31,480 <span style="font-size: 15px; font-weight: 500; color: #5B616B;">/ ₱40,000</span></p>
+        <p class="n" style="margin: 0; font-weight: 600;">79%</p>
+      </div>
+      <div class="bar" style="height: 10px; position: relative;"><i style="width: 79%;"></i></div>
+      <div style="display: flex; justify-content: space-between; margin-top: 8px;"><p class="t2">₱8,520 left · 17 days</p><p class="t2">On pace for ₱38,900</p></div>
+    </section>
+
+    <div class="sec"><h2 class="h" style="font-size: 16px;">By category</h2><p class="t2">Unbudgeted ₱6,600</p></div>
+    <div class="card">
+      <div class="bi">
+        <div class="bh"><span class="dot" style="background: #4B3A8C;"></span><p class="t1">Bills</p><span class="badge" style="background: #FBE3D3; color: #8A3A10;">Over by ₱200</span></div>
+        <div class="bar"><i style="width: 100%; background: #B4501A;"></i></div>
+        <p class="t2" style="margin-top: 6px;"><span class="n">₱9,200</span> of ₱9,000</p>
+      </div>
+      <div class="bi">
+        <div class="bh"><span class="dot" style="background: #E07A3F;"></span><p class="t1">Food</p><span class="badge" style="background: #FDF1D6; color: #7A5A00;">89% · near limit</span></div>
+        <div class="bar"><i style="width: 89%; background: #D9922B;"></i></div>
+        <p class="t2" style="margin-top: 6px;"><span class="n">₱8,940</span> of ₱10,000</p>
+      </div>
+      <div class="bi">
+        <div class="bh"><span class="dot" style="background: #8A2452;"></span><p class="t1">Shopping</p><p class="t2">79%</p></div>
+        <div class="bar"><i style="width: 79%;"></i></div>
+        <p class="t2" style="margin-top: 6px;"><span class="n">₱3,960</span> of ₱5,000</p>
+      </div>
+      <div class="bi">
+        <div class="bh"><span class="dot" style="background: #1D4E89;"></span><p class="t1">Transport</p><p class="t2">73%</p></div>
+        <div class="bar"><i style="width: 73%;"></i></div>
+        <p class="t2" style="margin-top: 6px;"><span class="n">₱2,180</span> of ₱3,000</p>
+      </div>
+      <div class="bi">
+        <div class="bh"><span class="dot" style="background: #0F6E64;"></span><p class="t1">Health</p><span class="badge" style="background: #ECEEE9; color: #3D424A;">Rollover +₱400</span></div>
+        <div class="bar"><i style="width: 25%;"></i></div>
+        <p class="t2" style="margin-top: 6px;"><span class="n">₱600</span> of ₱2,400 (₱2,000 + ₱400 from Sep)</p>
+      </div>
+    </div>
+
+    <div class="sec"><h2 class="h" style="font-size: 16px;">Savings goals</h2><button type="button">Add goal</button></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+      <section style="background: #fff; border: 1px solid #E3E5E0; border-radius: 18px; padding: 14px;">
+        <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="53 percent saved" style="display: block; margin-bottom: 8px;">
+          <circle cx="32" cy="32" r="26" stroke="#E7E9E4" stroke-width="8"></circle>
+          <circle cx="32" cy="32" r="26" stroke="#0F6E64" stroke-width="8" stroke-dasharray="86.6 163.4" transform="rotate(-90 32 32)"></circle>
+          <text x="32" y="37" text-anchor="middle" style="font: 700 14px 'Space Grotesk', sans-serif; fill: #16181D; stroke: none;">53%</text>
+        </svg>
+        <p style="margin: 0; font-weight: 600;">Japan trip</p>
+        <p class="n" style="margin: 2px 0; font-size: 14px;">₱42,000 / ₱80,000</p>
+        <p class="t2">₱7,600/mo to reach by Mar 2027</p>
+      </section>
+      <section style="background: #fff; border: 1px solid #E3E5E0; border-radius: 18px; padding: 14px;">
+        <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="40 percent saved" style="display: block; margin-bottom: 8px;">
+          <circle cx="32" cy="32" r="26" stroke="#E7E9E4" stroke-width="8"></circle>
+          <circle cx="32" cy="32" r="26" stroke="#1D4E89" stroke-width="8" stroke-dasharray="65.3 98" transform="rotate(-90 32 32)"></circle>
+          <text x="32" y="37" text-anchor="middle" style="font: 700 14px 'Space Grotesk', sans-serif; fill: #16181D; stroke: none;">40%</text>
+        </svg>
+        <p style="margin: 0; font-weight: 600;">Emergency fund</p>
+        <p class="n" style="margin: 2px 0; font-size: 14px;">₱60,000 / ₱150,000</p>
+        <p class="t2">No deadline · +₱5,000 this month</p>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

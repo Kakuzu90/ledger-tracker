@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar view</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.pos{color:#0F6E64}.neg{color:#B4501A}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.seg{display:flex;background:#ECEEE9;border-radius:12px;padding:4px;gap:4px}
+.seg a{flex:1;min-height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Sans',sans-serif;color:#3D424A;text-decoration:none}
+.seg a.on{background:#fff;color:#16181D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.wk{font-size:12px;font-weight:600;color:#5B616B;text-align:center}
+.cell{height:56px;border-radius:10px;border:0;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;font-family:'IBM Plex Sans',sans-serif}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #EEF0EB}
+.li:last-child{border-bottom:0}
+.ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:600 14px 'Space Grotesk',sans-serif;flex:none}
+.grow{flex:1;min-width:0}
+.t1{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.tab{position:absolute;left:0;right:0;bottom:0;height:80px;background:#fff;border-top:1px solid #E3E5E0;display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px}
+.tb{background:none;border:0;min-width:60px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#5B616B}
+.tb.on{color:#0F6E64}
+.fab{width:56px;height:56px;border-radius:18px;background:#0F6E64;color:#fff;border:0;display:flex;align-items:center;justify-content:center;margin-top:-26px;box-shadow:0 8px 20px rgba(15,110,100,.28)}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 844px;">
+  <header class="top">
+    <button class="ib" type="button" aria-label="Previous month"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+    <div style="text-align: center;">
+      <h1 class="h" style="font-size: 20px;">October 2026</h1>
+      <p class="n neg" style="margin: 0; font-size: 13px;">−₱31,480 spent</p>
+    </div>
+    <button class="ib" type="button" aria-label="Next month"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+  </header>
+
+  <div style="padding: 0 16px;">
+    <div class="seg" style="margin: 0 4px 12px;">
+      <a href="Activity.dc.html">List</a>
+      <a class="on" href="Calendar.dc.html" aria-current="page">Calendar</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+      <span class="wk">Mon</span><span class="wk">Tue</span><span class="wk">Wed</span><span class="wk">Thu</span><span class="wk">Fri</span><span class="wk">Sat</span><span class="wk">Sun</span>
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+        <button class="cell" type="button" aria-label="{{c.aria}}" style="background: {{c.bg}}; color: {{c.fg}}; box-shadow: {{c.ring}}; visibility: {{c.vis}};">
+          <span style="font-size: 13px; font-weight: {{c.weight}};">{{c.num}}</span>
+          <span class="n" style="font-size: 10px; font-weight: 600;">{{c.amt}}</span>
+          <span style="width: 5px; height: 5px; border-radius: 50%; background: #4B3A8C; opacity: {{c.dot}};"></span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 6px; margin: 10px 4px 0; font-size: 12px; color: #5B616B;">
+      <span>Less</span>
+      <span style="width: 16px; height: 12px; border-radius: 3px; background: #FBF1EA;"></span>
+      <span style="width: 16px; height: 12px; border-radius: 3px; background: #F6DCCB;"></span>
+      <span style="width: 16px; height: 12px; border-radius: 3px; background: #EDB997;"></span>
+      <span style="width: 16px; height: 12px; border-radius: 3px; background: #B4501A;"></span>
+      <span>More</span>
+      <span style="margin-left: auto; display: flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #4B3A8C;"></span>Bill due</span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 16px 4px 6px;">
+      <h2 class="h" style="font-size: 16px;">Tue, Oct 13</h2>
+      <p class="t2"><span class="n neg">−₱2,145</span> · <span class="n pos">+₱26,000</span></p>
+    </div>
+    <div class="card">
+      <div class="li"><div class="ic" style="background: #FBE3D3; color: #8A3A10;">Gr</div><div class="grow"><p class="t1">SM Supermarket</p><p class="t2">Food › Groceries · Cash</p></div><p class="n neg" style="margin: 0; font-weight: 600;">−₱2,145</p></div>
+      <div class="li"><div class="ic" style="background: #D9EFEA; color: #0F6E64;">In</div><div class="grow"><p class="t1">Salary</p><p class="t2">Income · BPI</p></div><p class="n pos" style="margin: 0; font-weight: 600;">+₱26,000</p></div>
+    </div>
+  </div>
+
+  <nav class="tab" aria-label="Main">
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>Home</button>
+    <button class="tb on" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"></path></svg>Activity</button>
+    <button class="fab" type="button" aria-label="Add transaction"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2;"><path d="M12 5v14M5 12h14"></path></svg></button>
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"></path></svg>Loans</button>
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-9M12 20V4M19 20v-6M3 20h18"></path></svg>Reports</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var spend = {1:10962,2:430,3:2240,4:1150,5:390,6:620,7:4180,8:2900,9:310,10:1460,11:780,12:3410,13:2145,14:503};
+    var bills = {15:1,18:1,20:1,22:1,25:1};
+    var cells = [];
+    var lead = 3;
+    for (var i = 0; i < 35; i++) {
+      var d = i - lead + 1;
+      if (d < 1 || d > 31) {
+        cells.push({ num: '', amt: '', bg: 'transparent', fg: '#16181D', ring: 'none', vis: 'hidden', weight: 400, dot: 0, aria: 'Empty' });
+        continue;
+      }
+      var a = spend[d];
+      var bg = '#FFFFFF', fg = '#16181D';
+      if (a) {
+        if (a < 500) bg = '#FBF1EA';
+        else if (a < 1500) bg = '#F6DCCB';
+        else if (a < 4000) bg = '#EDB997';
+        else { bg = '#B4501A'; fg = '#FFFFFF'; }
+      }
+      var amt = a ? (a >= 1000 ? (Math.round(a / 100) / 10) + 'k' : String(a)) : '';
+      cells.push({
+        num: String(d),
+        amt: amt,
+        bg: bg,
+        fg: fg,
+        ring: d === 13 ? '0 0 0 2px #16181D' : (d === 14 ? 'inset 0 0 0 1.5px #0F6E64' : 'inset 0 0 0 1px #E3E5E0'),
+        vis: 'visible',
+        weight: d === 14 ? 700 : 500,
+        dot: bills[d] ? 1 : 0,
+        aria: 'October ' + d + (a ? ', spent ' + a + ' pesos' : '')
+      });
+    }
+    return { cells: cells };
+  }
+}
+</script>
+</body>
+</html>

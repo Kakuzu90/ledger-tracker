@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Activity</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.m{color:#5B616B}.pos{color:#0F6E64}.neg{color:#B4501A}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B616B;margin:0}
+.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #EEF0EB}
+.li:last-child{border-bottom:0}
+.ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font:600 14px 'Space Grotesk',sans-serif;flex:none}
+.grow{flex:1;min-width:0}
+.t1{font-weight:500;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D5D8D2;background:#fff;color:#16181D;font:500 14px 'IBM Plex Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip.on{background:#16181D;border-color:#16181D;color:#fff}
+.day{display:flex;justify-content:space-between;align-items:baseline;margin:14px 4px 6px}
+.tab{position:absolute;left:0;right:0;bottom:0;height:80px;background:#fff;border-top:1px solid #E3E5E0;display:flex;justify-content:space-around;align-items:flex-start;padding-top:8px}
+.tb{background:none;border:0;min-width:60px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#5B616B}
+.tb.on{color:#0F6E64}
+.fab{width:56px;height:56px;border-radius:18px;background:#0F6E64;color:#fff;border:0;display:flex;align-items:center;justify-content:center;margin-top:-26px;box-shadow:0 8px 20px rgba(15,110,100,.28)}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 844px;">
+  <header class="top">
+    <h1 class="h" style="font-size: 26px;">Activity</h1>
+    <div style="display: flex; gap: 8px;">
+      <a class="ib" href="Calendar.dc.html" aria-label="Calendar view"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></a>
+      <button class="ib" type="button" aria-label="Export CSV"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg></button>
+    </div>
+  </header>
+
+  <div style="padding: 0 20px;">
+    <div style="position: relative;">
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 14px; top: 15px; color: #5B616B;"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <label for="act-search" style="position: absolute; left: -9999px;">Search transactions</label>
+      <input id="act-search" type="search" placeholder="Search notes, merchants, #tags" style="width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid #D5D8D2; background: #fff; padding: 0 14px 0 42px; font: 400 15px 'IBM Plex Sans', sans-serif;">
+    </div>
+    <div style="display: flex; gap: 8px; overflow-x: auto; margin: 12px -20px 0; padding: 0 20px;">
+      <button class="chip on" type="button">Oct 2026</button>
+      <button class="chip" type="button">All accounts</button>
+      <button class="chip" type="button">Category</button>
+      <button class="chip" type="button">Tags</button>
+      <button class="chip" type="button">Amount</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px;">
+      <div><p class="t2">In</p><p class="n pos" style="margin: 0; font-weight: 600;">+₱52,000</p></div>
+      <div><p class="t2">Out</p><p class="n neg" style="margin: 0; font-weight: 600;">−₱31,480</p></div>
+      <div><p class="t2">Net</p><p class="n" style="margin: 0; font-weight: 600;">+₱20,520</p></div>
+    </div>
+
+    <div style="margin-top: 14px; border: 1px dashed #B9BEB6; border-radius: 16px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: #fff;">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"></path></svg>
+      <div class="grow"><p class="t1" style="font-size: 14px;">Spotify · ₱149</p><p class="t2">Recurring · due today</p></div>
+      <button type="button" style="min-height: 44px; padding: 0 10px; border: 0; background: none; font: 500 14px 'IBM Plex Sans', sans-serif; color: #5B616B;">Skip</button>
+      <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 0; background: #0F6E64; color: #fff; font: 600 14px 'IBM Plex Sans', sans-serif;">Confirm</button>
+    </div>
+
+    <div class="day"><p class="lbl">Today</p><p class="n neg" style="margin: 0; font-size: 14px;">−₱503</p></div>
+    <div class="card">
+      <a class="li" href="TxnDetail.dc.html" style="color: inherit; text-decoration: none;"><div class="ic" style="background: #FBE3D3; color: #8A3A10;">Fd</div><div class="grow"><p class="t1">Lunch with team</p><p class="t2">Food · GCash · #work</p></div><p class="n neg" style="margin: 0; font-weight: 600;">−₱289</p></a>
+      <div class="li"><div class="ic" style="background: #DCE8F7; color: #1D4E89;">Tr</div><div class="grow"><p class="t1">Ride to office</p><p class="t2">Transport · GCash</p></div><p class="n neg" style="margin: 0; font-weight: 600;">−₱214</p></div>
+    </div>
+
+    <div class="day"><p class="lbl">Tue, Oct 13</p><p class="n pos" style="margin: 0; font-size: 14px;">+₱23,855</p></div>
+    <div class="card">
+      <div class="li"><div class="ic" style="background: #FBE3D3; color: #8A3A10;">Gr</div><div class="grow"><p class="t1">SM Supermarket</p><p class="t2">Food › Groceries · Cash · 1 receipt</p></div><p class="n neg" style="margin: 0; font-weight: 600;">−₱2,145</p></div>
+      <div class="li"><div class="ic" style="background: #D9EFEA; color: #0F6E64;">In</div><div class="grow"><p class="t1">Salary</p><p class="t2">Income · BPI</p></div><p class="n pos" style="margin: 0; font-weight: 600;">+₱26,000</p></div>
+    </div>
+
+    <div class="day"><p class="lbl">Mon, Oct 12</p><p class="n neg" style="margin: 0; font-size: 14px;">−₱3,410</p></div>
+    <div class="card">
+      <div class="li"><div class="ic" style="background: #ECEEE9; color: #3D424A;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"></path></svg></div><div class="grow"><p class="t1">BPI → GCash</p><p class="t2">Transfer</p></div><p class="n" style="margin: 0; font-weight: 600;">₱2,000</p></div>
+    </div>
+  </div>
+
+  <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 96px; background: #16181D; color: #fff; border-radius: 14px; padding: 6px 8px 6px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 24px rgba(0,0,0,.2);">
+    <span style="font-size: 14px;">Transaction deleted</span>
+    <button type="button" style="min-height: 44px; padding: 0 12px; border: 0; background: none; color: #8FD3C6; font: 600 14px 'IBM Plex Sans', sans-serif;">Undo</button>
+  </div>
+
+  <nav class="tab" aria-label="Main">
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>Home</button>
+    <button class="tb on" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"></path></svg>Activity</button>
+    <button class="fab" type="button" aria-label="Add transaction"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 2.2;"><path d="M12 5v14M5 12h14"></path></svg></button>
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"></path></svg>Loans</button>
+    <button class="tb" type="button"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-9M12 20V4M19 20v-6M3 20h18"></path></svg>Reports</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

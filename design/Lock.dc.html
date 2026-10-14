@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>App lock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#16181D;color:#fff;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.pd{width:14px;height:14px;border-radius:50%;border:2px solid #8E948C}
+.pd.on{background:#fff;border-color:#fff}
+.key{width:76px;height:76px;border-radius:50%;border:0;background:#24272E;color:#fff;font:500 28px 'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;justify-self:center}
+.key.ghost{background:none}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 844px; display: flex; flex-direction: column; align-items: center; padding: 88px 24px 40px;">
+  <div style="width: 64px; height: 64px; border-radius: 20px; background: #0F6E64; display: flex; align-items: center; justify-content: center;">
+    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+  </div>
+  <h1 class="h" style="font-size: 24px; margin-top: 20px;">Welcome back</h1>
+  <p style="margin: 4px 0 0; color: #B4BAB2; font-size: 14px;">Enter your PIN to unlock</p>
+
+  <div aria-label="2 of 4 digits entered" role="status" style="display: flex; gap: 18px; margin: 32px 0 44px;">
+    <span class="pd on"></span><span class="pd on"></span><span class="pd"></span><span class="pd"></span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; width: 100%; max-width: 300px;">
+    <button class="key" type="button">1</button><button class="key" type="button">2</button><button class="key" type="button">3</button>
+    <button class="key" type="button">4</button><button class="key" type="button">5</button><button class="key" type="button">6</button>
+    <button class="key" type="button">7</button><button class="key" type="button">8</button><button class="key" type="button">9</button>
+    <button class="key ghost" type="button" aria-label="Unlock with fingerprint or face" style="color: #8FD3C6;"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 11v4M8 9a4 4 0 0 1 8 0v4a8 8 0 0 1-1 4M5 12a7 7 0 0 1 14-3M8 13c0 3 0 5-1 7M12 19v2"></path></svg></button>
+    <button class="key" type="button">0</button>
+    <button class="key ghost" type="button" aria-label="Delete digit"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12zM13 10l4 4M17 10l-4 4"></path></svg></button>
+  </div>
+
+  <a href="Backup.dc.html" style="margin-top: auto; min-height: 44px; display: flex; align-items: center; color: #B4BAB2; font-size: 14px; text-decoration: underline; text-underline-offset: 3px;">Forgot PIN? Restore from backup</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

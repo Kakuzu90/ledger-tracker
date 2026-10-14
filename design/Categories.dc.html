@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Categories and tags</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.seg{display:flex;background:#ECEEE9;border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:40px;border:0;border-radius:9px;background:none;font:500 14px 'IBM Plex Sans',sans-serif;color:#3D424A}
+.seg button.on{background:#fff;color:#16181D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:0 8px 0 4px}
+.li{display:flex;align-items:center;gap:10px;min-height:60px;border-bottom:1px solid #EEF0EB}
+.li:last-child{border-bottom:0}
+.sub{display:flex;align-items:center;gap:10px;min-height:46px;padding-left:58px;border-bottom:1px solid #EEF0EB;font-size:14px}
+.dh{width:32px;height:44px;border:0;background:none;color:#9AA09A;display:flex;align-items:center;justify-content:center;padding:0;cursor:grab}
+.ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font:600 13px 'Space Grotesk',sans-serif;flex:none}
+.t1{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.tag{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:999px;background:#fff;border:1px solid #D5D8D2;font:500 14px 'IBM Plex Sans',sans-serif;color:#16181D}
+.tag span{font-family:'Space Grotesk',sans-serif;color:#5B616B;font-size:13px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:20px 4px 8px}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 960px;">
+  <header class="top">
+    <a class="ib" href="Settings.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Categories &amp; tags</h1>
+    <button type="button" style="min-height: 44px; padding: 0 12px; border: 1px solid #E3E5E0; border-radius: 12px; background: #fff; font: 500 14px 'IBM Plex Sans', sans-serif; color: #16181D;">Merge</button>
+  </header>
+
+  <div style="padding: 0 20px 24px;">
+    <div class="seg" role="group" aria-label="Category type">
+      <button class="on" type="button">Expense · 11</button>
+      <button type="button">Income · 3</button>
+    </div>
+
+    <p class="t2" style="margin: 12px 4px 8px;">Drag to reorder. Tap to rename, recolor or add subcategories.</p>
+    <div class="card">
+      <div class="li"><button class="dh" type="button" aria-label="Reorder Food"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button><div class="ic" style="background: #FBE3D3; color: #8A3A10;">Fd</div><div style="flex: 1;"><p class="t1">Food</p><p class="t2">2 subcategories · 64 entries</p></div><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M6 15l6-6 6 6"></path></svg></div>
+      <div class="sub"><span style="width: 8px; height: 8px; border-radius: 50%; background: #E07A3F;"></span><span style="flex: 1;">Groceries</span><span class="t2">21</span></div>
+      <div class="sub"><span style="width: 8px; height: 8px; border-radius: 50%; background: #E07A3F;"></span><span style="flex: 1;">Dining out</span><span class="t2">43</span></div>
+      <div class="sub" style="color: #0F6E64; font-weight: 500;"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add subcategory</div>
+      <div class="li"><button class="dh" type="button" aria-label="Reorder Bills"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button><div class="ic" style="background: #E6E1F5; color: #4B3A8C;">Bi</div><div style="flex: 1;"><p class="t1">Bills</p><p class="t2">18 entries</p></div><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M6 9l6 6 6-6"></path></svg></div>
+      <div class="li"><button class="dh" type="button" aria-label="Reorder Transport"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button><div class="ic" style="background: #DCE8F7; color: #1D4E89;">Tr</div><div style="flex: 1;"><p class="t1">Transport</p><p class="t2">37 entries</p></div><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M6 9l6 6 6-6"></path></svg></div>
+      <div class="li"><button class="dh" type="button" aria-label="Reorder Shopping"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button><div class="ic" style="background: #F7E0EA; color: #8A2452;">Sh</div><div style="flex: 1;"><p class="t1">Shopping</p><p class="t2">12 entries</p></div><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M6 9l6 6 6-6"></path></svg></div>
+      <div class="li"><button class="dh" type="button" aria-label="Reorder Health"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="stroke-width: 3;"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path></svg></button><div class="ic" style="background: #DDF0E9; color: #0F5B47;">He</div><div style="flex: 1;"><p class="t1">Health</p><p class="t2">4 entries</p></div><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M6 9l6 6 6-6"></path></svg></div>
+    </div>
+    <button type="button" style="width: 100%; margin-top: 10px; min-height: 48px; border-radius: 14px; border: 1px dashed #B9BEB6; background: none; font: 500 15px 'IBM Plex Sans', sans-serif; color: #16181D; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New category</button>
+
+    <div class="sec"><h2 class="h" style="font-size: 16px;">Tags</h2><p class="t2">Total spent · entries</p></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <button class="tag" type="button">#japan-trip <span>₱18,400 · 12</span></button>
+      <button class="tag" type="button">#work <span>₱3,120 · 9</span></button>
+      <button class="tag" type="button">#household <span>₱6,780 · 14</span></button>
+      <button class="tag" type="button">#weekly <span>₱8,580 · 4</span></button>
+      <button class="tag" type="button">#gifts <span>₱2,450 · 3</span></button>
+      <button class="tag" type="button">#date-night <span>₱4,100 · 5</span></button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Accounts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.neg{color:#B4501A}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #EEF0EB}
+.li:last-child{border-bottom:0}
+.ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.t1{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B616B;margin:18px 4px 6px}
+.bar{height:8px;border-radius:99px;background:#E7E9E4;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:#B4501A}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 960px;">
+  <header class="top">
+    <a class="ib" href="Main.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Accounts</h1>
+    <button class="ib" type="button" aria-label="Add account"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+  </header>
+
+  <div style="padding: 0 20px 24px;">
+    <section style="background: #16181D; color: #fff; border-radius: 20px; padding: 20px;">
+      <p style="margin: 0; font-size: 13px; color: #C9CDC6;">Net worth</p>
+      <p class="n" style="margin: 2px 0 14px; font-size: 34px; font-weight: 700;">₱64,250</p>
+      <div style="display: flex; gap: 20px; font-size: 13px; color: #C9CDC6;">
+        <span>Assets <span class="n" style="color: #fff; font-weight: 600;">₱84,730</span></span>
+        <span>Credit <span class="n" style="color: #F5B48C; font-weight: 600;">−₱20,480</span></span>
+      </div>
+      <button type="button" style="margin-top: 16px; width: 100%; min-height: 48px; border-radius: 12px; border: 0; background: #fff; color: #16181D; font: 600 15px 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"></path></svg>Transfer between accounts</button>
+    </section>
+
+    <p class="lbl">Cash &amp; bank</p>
+    <div class="card">
+      <div class="li"><div class="ic" style="background: #DCE8F7; color: #1D4E89;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z"></path></svg></div><div style="flex: 1;"><p class="t1">BPI Savings</p><p class="t2">Bank</p></div><p class="n" style="margin: 0; font-weight: 600;">₱58,420</p></div>
+      <div class="li"><div class="ic" style="background: #D9EFEA; color: #0F6E64;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"></rect><path d="M11 18h2"></path></svg></div><div style="flex: 1;"><p class="t1">Maya</p><p class="t2">E-wallet</p></div><p class="n" style="margin: 0; font-weight: 600;">₱16,750</p></div>
+      <div class="li"><div class="ic" style="background: #D9EFEA; color: #0F6E64;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"></rect><path d="M11 18h2"></path></svg></div><div style="flex: 1;"><p class="t1">GCash</p><p class="t2">E-wallet</p></div><p class="n" style="margin: 0; font-weight: 600;">₱6,310</p></div>
+      <div class="li"><div class="ic" style="background: #F3EBD5; color: #6B5310;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg></div><div style="flex: 1;"><p class="t1">Cash</p><p class="t2">Wallet</p></div><p class="n" style="margin: 0; font-weight: 600;">₱3,250</p></div>
+    </div>
+
+    <p class="lbl">Credit cards</p>
+    <section style="background: #fff; border: 1px solid #E3E5E0; border-radius: 18px; padding: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="ic" style="background: #F7E0EA; color: #8A2452;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M3 10h18M7 15h4"></path></svg></div>
+        <div style="flex: 1;"><p class="t1">BPI Visa</p><p class="t2">Statement 5th · due 25th</p></div>
+        <p class="n neg" style="margin: 0; font-weight: 600;">−₱20,480</p>
+      </div>
+      <div class="bar" style="margin: 14px 0 6px;"><i style="width: 34%;"></i></div>
+      <div style="display: flex; justify-content: space-between;"><p class="t2">34% of ₱60,000 limit</p><p class="t2"><span class="n" style="color: #16181D; font-weight: 600;">₱39,520</span> available</p></div>
+    </section>
+
+    <a href="#" style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; margin-top: 10px; padding: 0 4px; color: #5B616B; text-decoration: none; font-size: 14px;">2 archived accounts<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

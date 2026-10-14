@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Split expense</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.seg{display:flex;background:#ECEEE9;border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:40px;border:0;border-radius:9px;background:none;font:500 14px 'IBM Plex Sans',sans-serif;color:#3D424A}
+.seg button.on{background:#fff;color:#16181D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.pr{display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid #EEF0EB}
+.pr:last-child{border-bottom:0}
+.pr input{width:22px;height:22px;accent-color:#0F6E64;flex:none;margin:0}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 13px 'Space Grotesk',sans-serif;background:#D9EFEA;color:#0F6E64;flex:none}
+.t2{font-size:13px;color:#5B616B;margin:0}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 844px;">
+  <header class="top">
+    <a class="ib" href="TxnDetail.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Split expense</h1>
+    <span style="width: 44px;"></span>
+  </header>
+
+  <div style="padding: 0 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+    <section style="background: #fff; border: 1px solid #E3E5E0; border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 12px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: #FBE3D3; color: #8A3A10; display: flex; align-items: center; justify-content: center; font: 600 14px 'Space Grotesk', sans-serif;">Fd</div>
+      <div style="flex: 1;"><p style="margin: 0; font-weight: 500;">Team dinner</p><p class="t2">Food · Visa · Oct 10 · you paid</p></div>
+      <p class="n" style="margin: 0; font-size: 20px; font-weight: 700;">₱4,800</p>
+    </section>
+
+    <div class="seg" role="group" aria-label="Split method">
+      <button class="on" type="button">Equally</button>
+      <button type="button">By amount</button>
+      <button type="button">By shares</button>
+    </div>
+
+    <div class="card">
+      <label class="pr"><input type="checkbox" checked><span class="av" style="background: #16181D; color: #fff;">You</span><span style="flex: 1; font-weight: 500;">You</span><span class="n" style="font-weight: 600;">₱1,200</span></label>
+      <label class="pr"><input type="checkbox" checked><span class="av">JD</span><span style="flex: 1; font-weight: 500;">Juan</span><span class="n" style="font-weight: 600;">₱1,200</span></label>
+      <label class="pr"><input type="checkbox" checked><span class="av">MS</span><span style="flex: 1; font-weight: 500;">Maria</span><span class="n" style="font-weight: 600;">₱1,200</span></label>
+      <label class="pr"><input type="checkbox" checked><span class="av">AL</span><span style="flex: 1; font-weight: 500;">Ana</span><span class="n" style="font-weight: 600;">₱1,200</span></label>
+      <label class="pr"><input type="checkbox"><span class="av" style="background: #FBE3D3; color: #8A3A10;">KR</span><span style="flex: 1; font-weight: 500; color: #5B616B;">Ken</span><span class="n" style="color: #5B616B;">—</span></label>
+    </div>
+
+    <button type="button" style="min-height: 48px; border-radius: 14px; border: 1px dashed #B9BEB6; background: none; color: #16181D; font: 500 15px 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add person</button>
+
+    <section style="background: #F0F4F3; border: 1px solid #D3E3DF; border-radius: 16px; padding: 14px 16px;">
+      <p style="margin: 0 0 4px; font-weight: 600; color: #0F5B47;">This will create 3 loans</p>
+      <p class="t2">Juan, Maria and Ana each owe you ₱1,200. Your share of ₱1,200 stays as your Food expense.</p>
+    </section>
+
+    <button type="button" style="min-height: 52px; border-radius: 14px; border: 0; background: #0F6E64; color: #fff; font: 600 16px 'IBM Plex Sans', sans-serif;">Split &amp; create loans</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

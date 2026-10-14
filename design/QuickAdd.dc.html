@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quick add</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.m{color:#5B616B}.pos{color:#0F6E64}.neg{color:#B4501A}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D5D8D2;background:#fff;color:#16181D;font:500 14px 'IBM Plex Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip.on{background:#16181D;border-color:#16181D;color:#fff}
+.seg{display:flex;background:#ECEEE9;border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:40px;border:0;border-radius:9px;background:none;font:500 14px 'IBM Plex Sans',sans-serif;color:#3D424A}
+.seg button.on{background:#fff;color:#16181D;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.in{min-height:48px;border-radius:12px;border:1px solid #D5D8D2;background:#fff;padding:0 14px;font:400 15px 'IBM Plex Sans',sans-serif;color:#16181D;width:100%}
+.btn{min-height:52px;border-radius:14px;border:0;background:#0F6E64;color:#fff;font:600 16px 'IBM Plex Sans',sans-serif;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.key{min-height:52px;border-radius:12px;border:0;background:#fff;color:#16181D;font:600 22px 'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 844px; background: #5E625C;">
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; top: 48px; background: #F6F7F4; border-radius: 24px 24px 0 0; padding: 10px 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="width: 40px; height: 5px; border-radius: 99px; background: #C9CDC6; align-self: center;"></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <button class="ib" type="button" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      <h1 class="h" style="font-size: 18px;">New transaction</h1>
+      <button class="ib" type="button" aria-label="Scan receipt"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"></path></svg></button>
+    </div>
+
+    <div class="seg" role="group" aria-label="Type">
+      <button class="on" type="button">Expense</button>
+      <button type="button">Income</button>
+      <button type="button">Transfer</button>
+    </div>
+
+    <div style="text-align: center; padding: 4px 0;">
+      <p class="n neg" style="margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -.02em;">₱289<span style="color: #9AA09A;">.00</span></p>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <button class="chip on" type="button"><span class="dot" style="background: #E07A3F;"></span>Food</button>
+      <button class="chip" type="button"><span class="dot" style="background: #E07A3F;"></span>Groceries</button>
+      <button class="chip" type="button"><span class="dot" style="background: #1D4E89;"></span>Transport</button>
+      <button class="chip" type="button"><span class="dot" style="background: #4B3A8C;"></span>Bills</button>
+      <button class="chip" type="button"><span class="dot" style="background: #8A2452;"></span>Shopping</button>
+      <button class="chip" type="button"><span class="dot" style="background: #0F6E64;"></span>Health</button>
+      <button class="chip" type="button">More</button>
+    </div>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button class="chip" type="button"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"></rect><path d="M3 10h18"></path></svg>GCash</button>
+      <button class="chip" type="button"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>Today</button>
+      <button class="chip" type="button" aria-label="Repeat"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"></path></svg>Repeat</button>
+      <button class="chip" type="button"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"></rect><circle cx="12" cy="13" r="3.5"></circle><path d="M9 6l1.5-2h3L15 6"></path></svg>Receipt</button>
+    </div>
+
+    <label for="qa-note" style="position: absolute; left: -9999px;">Note and tags</label>
+    <input id="qa-note" class="in" type="text" value="Lunch with team #work" placeholder="Add a note or #tag">
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: auto;">
+      <button class="key" type="button">1</button><button class="key" type="button">2</button><button class="key" type="button">3</button>
+      <button class="key" type="button">4</button><button class="key" type="button">5</button><button class="key" type="button">6</button>
+      <button class="key" type="button">7</button><button class="key" type="button">8</button><button class="key" type="button">9</button>
+      <button class="key" type="button">.</button><button class="key" type="button">0</button>
+      <button class="key" type="button" aria-label="Backspace"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12zM13 10l4 4M17 10l-4 4"></path></svg></button>
+    </div>
+
+    <button class="btn" type="button">Save expense</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

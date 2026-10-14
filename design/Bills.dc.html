@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bills and recurring</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.card{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:4px 16px}
+.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #EEF0EB}
+.li:last-child{border-bottom:0}
+.dt{width:44px;height:44px;border-radius:12px;background:#F6F7F4;border:1px solid #E3E5E0;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;line-height:1.1}
+.dt b{font:700 16px 'Space Grotesk',sans-serif}
+.dt span{font-size:10px;font-weight:600;color:#5B616B;text-transform:uppercase}
+.t1{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.badge{display:inline-flex;align-items:center;min-height:20px;padding:0 7px;border-radius:99px;font-size:11px;font-weight:600}
+.auto{background:#D9EFEA;color:#0F5B47}
+.ask{background:#ECEEE9;color:#3D424A}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B616B;margin:18px 4px 6px}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 1040px;">
+  <header class="top">
+    <a class="ib" href="Main.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Bills &amp; recurring</h1>
+    <button class="ib" type="button" aria-label="New recurring"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+  </header>
+
+  <div style="padding: 0 20px 24px;">
+    <section style="background: #16181D; color: #fff; border-radius: 18px; padding: 16px; display: flex; gap: 12px; align-items: flex-start;">
+      <div style="width: 40px; height: 40px; border-radius: 12px; background: #2A2E35; display: flex; align-items: center; justify-content: center; flex: none;"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21h4"></path></svg></div>
+      <div style="flex: 1;">
+        <p style="margin: 0; font-weight: 600;">Get reminded before bills are due</p>
+        <p style="margin: 2px 0 10px; font-size: 13px; color: #C9CDC6;">We'll notify you 1 day before. You can change this anytime.</p>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #fff; color: #16181D; font: 600 14px 'IBM Plex Sans', sans-serif;">Turn on</button>
+          <button type="button" style="min-height: 44px; padding: 0 12px; border: 0; background: none; color: #C9CDC6; font: 500 14px 'IBM Plex Sans', sans-serif;">Not now</button>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px;">
+      <div style="background: #fff; border: 1px solid #E3E5E0; border-radius: 16px; padding: 14px;"><p class="t2">Next 30 days</p><p class="n" style="margin: 2px 0 0; font-size: 22px; font-weight: 700;">₱34,597</p><p class="t2">7 payments</p></div>
+      <div style="background: #fff; border: 1px solid #E3E5E0; border-radius: 16px; padding: 14px;"><p class="t2">Subscriptions</p><p class="n" style="margin: 2px 0 0; font-size: 22px; font-weight: 700;">₱1,247<span style="font-size: 13px; font-weight: 500; color: #5B616B;">/mo</span></p><p class="t2">₱14,964 a year</p></div>
+    </section>
+
+    <p class="lbl">This week</p>
+    <div class="card">
+      <div class="li"><div class="dt" style="border-color: #0F6E64;"><span>Oct</span><b>14</b></div><div style="flex: 1;"><p class="t1">Spotify</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Today · GCash <span class="badge ask">Ask first</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱149</p></div>
+      <div class="li"><div class="dt"><span>Oct</span><b>15</b></div><div style="flex: 1;"><p class="t1">Rent</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Monthly · BPI <span class="badge auto">Auto</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱15,000</p></div>
+      <div class="li"><div class="dt"><span>Oct</span><b>18</b></div><div style="flex: 1;"><p class="t1">Internet</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Monthly · BPI <span class="badge ask">Ask first</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱1,699</p></div>
+    </div>
+
+    <p class="lbl">Later</p>
+    <div class="card">
+      <div class="li"><div class="dt"><span>Oct</span><b>20</b></div><div style="flex: 1;"><p class="t1">Netflix</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Subscription · Visa <span class="badge auto">Auto</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱549</p></div>
+      <div class="li"><div class="dt"><span>Oct</span><b>22</b></div><div style="flex: 1;"><p class="t1">iCloud storage</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Subscription · Visa <span class="badge auto">Auto</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱149</p></div>
+      <div class="li"><div class="dt"><span>Oct</span><b>25</b></div><div style="flex: 1;"><p class="t1">Car loan #25</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Linked to loan · BPI <span class="badge ask">Ask first</span></p></div><p class="n" style="margin: 0; font-weight: 600;">₱13,651</p></div>
+      <div class="li"><div class="dt"><span>Nov</span><b>2</b></div><div style="flex: 1;"><p class="t1">Electricity</p><p class="t2" style="display: flex; gap: 6px; align-items: center;">Varies · last ₱3,410 <span class="badge ask">Ask first</span></p></div><p class="n" style="margin: 0; font-weight: 600;">~₱3,400</p></div>
+    </div>
+
+    <a href="#" style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; margin-top: 10px; padding: 0 4px; color: #5B616B; text-decoration: none; font-size: 14px;">Manage all 9 recurring rules<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

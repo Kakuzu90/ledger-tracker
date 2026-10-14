@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Backup and data</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.s{box-sizing:border-box;background:#F6F7F4;color:#16181D;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.4;position:relative;overflow:hidden}
+.s *{box-sizing:border-box}
+.s svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.h{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.01em;margin:0}
+.n{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 20px 12px}
+.ib{width:44px;height:44px;border-radius:12px;border:1px solid #E3E5E0;background:#fff;color:#16181D;display:flex;align-items:center;justify-content:center;padding:0}
+.grp{background:#fff;border:1px solid #E3E5E0;border-radius:18px;padding:0 16px}
+.row{display:flex;align-items:center;gap:12px;min-height:62px;border-bottom:1px solid #EEF0EB;color:inherit;text-decoration:none;width:100%;background:none;border-left:0;border-right:0;border-top:0;padding:0;font:inherit;text-align:left}
+.row:last-child{border-bottom:0}
+.ic{width:38px;height:38px;border-radius:11px;background:#ECEEE9;color:#3D424A;display:flex;align-items:center;justify-content:center;flex:none}
+.rl{font-weight:500;margin:0}
+.t2{font-size:13px;color:#5B616B;margin:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5B616B;margin:20px 4px 6px}
+.sw{width:46px;height:28px;border-radius:99px;background:#C9CDC6;position:relative;border:0;flex:none;padding:0}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff}
+.sw.on{background:#0F6E64}.sw.on::after{left:21px}
+.badge{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:99px;font-size:12px;font-weight:600}
+</style>
+</helmet>
+<div class="s" style="width: 390px; height: 1120px;">
+  <header class="top">
+    <a class="ib" href="Settings.dc.html" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 class="h" style="font-size: 18px;">Backup &amp; data</h1>
+    <span style="width: 44px;"></span>
+  </header>
+
+  <div style="padding: 0 20px 32px;">
+    <section style="background: #FDF7F3; border: 1px solid #F1D8C8; border-radius: 18px; padding: 16px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="color: #8A3A10;"><path d="M12 9v4M12 17h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+        <p class="rl" style="color: #8A3A10;">Last backup 34 days ago</p>
+      </div>
+      <p class="t2" style="margin: 6px 0 12px;">Your data is stored only in this browser. Clearing site data or losing this phone erases it.</p>
+      <button type="button" style="width: 100%; min-height: 50px; border-radius: 14px; border: 0; background: #0F6E64; color: #fff; font: 600 15px 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>Back up now</button>
+    </section>
+
+    <p class="lbl">Export</p>
+    <div class="grp">
+      <button class="row" type="button"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Full backup</span><span class="t2" style="display: block;">JSON · everything, restorable</span></span><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M9 6l6 6-6 6"></path></svg></button>
+      <button class="row" type="button"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 10h18M3 15h18M9 4v16"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Transactions</span><span class="t2" style="display: block;">CSV · pick a date range</span></span><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="color: #5B616B;"><path d="M9 6l6 6-6 6"></path></svg></button>
+      <div class="row"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Encrypt backups</span><span class="t2" style="display: block;">Password required to restore</span></span><button class="sw on" type="button" role="switch" aria-checked="true" aria-label="Encrypt backups"></button></div>
+    </div>
+
+    <p class="lbl">Restore</p>
+    <div class="grp" style="padding: 14px 16px;">
+      <button type="button" style="width: 100%; min-height: 48px; border-radius: 12px; border: 1px dashed #B9BEB6; background: #F6F7F4; font: 500 15px 'IBM Plex Sans', sans-serif; color: #16181D; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"></path></svg>Choose backup file</button>
+      <div style="margin-top: 12px; border-radius: 12px; background: #F6F7F4; padding: 12px;">
+        <p class="rl" style="font-size: 14px;">backup-2026-09-10.json</p>
+        <p class="t2">1,284 transactions · 9 loans · 5 accounts</p>
+        <p class="t2" style="margin-top: 4px; color: #8A3A10;">Replaces all current data on this device</p>
+      </div>
+    </div>
+
+    <p class="lbl">Cloud &amp; sync</p>
+    <div class="grp">
+      <button class="row" type="button"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 7 18z"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Google Drive</span><span class="t2" style="display: block;">Not connected</span></span><span style="font-size: 14px; font-weight: 600; color: #0F6E64;">Connect</span></button>
+      <div class="row"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Auto backup weekly</span><span class="t2" style="display: block;">Needs a connected cloud</span></span><button class="sw" type="button" role="switch" aria-checked="false" aria-label="Auto backup weekly"></button></div>
+      <div class="row"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="13" height="10" rx="1.5"></rect><rect x="16" y="8" width="6" height="12" rx="1.5"></rect><path d="M6 18h6"></path></svg></span><span style="flex: 1;"><span class="rl" style="display: block;">Sync across devices</span><span class="t2" style="display: block;">Requires an account</span></span><span class="badge" style="background: #ECEEE9; color: #3D424A;">Later</span></div>
+    </div>
+
+    <p class="lbl">Storage</p>
+    <div class="grp">
+      <div class="row"><span style="flex: 1;"><span class="rl" style="display: block;">Persistent storage</span><span class="t2" style="display: block;">Browser won't auto-clear your data</span></span><span class="badge" style="background: #D9EFEA; color: #0F5B47;">Granted</span></div>
+      <div class="row"><span class="rl" style="flex: 1;">Space used</span><span class="n t2">4.2 MB · 38 receipts</span></div>
+      <a class="row" href="#"><span class="rl" style="flex: 1;">Backup reminder</span><span class="t2">Every 30 days</span></a>
+    </div>
+
+    <button type="button" style="width: 100%; margin-top: 20px; min-height: 50px; border-radius: 14px; border: 1px solid #F1D8C8; background: #FDF7F3; color: #8A3A10; font: 600 15px 'IBM Plex Sans', sans-serif;">Reset all data</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
