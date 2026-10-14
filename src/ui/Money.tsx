@@ -1,4 +1,4 @@
-import { formatMoney, HIDDEN_AMOUNT } from '@/lib/money'
+import { formatMoney, formatMoneyShort, HIDDEN_AMOUNT } from '@/lib/money'
 import type { Centavos } from '@/db/types'
 import { useUIStore } from '@/store/ui'
 
@@ -15,6 +15,8 @@ interface MoneyProps {
   compact?: boolean
   /** Round to whole pesos — for balances too big to care about centavos. */
   whole?: boolean
+  /** `₱31.5k` — for the calendar cells and anywhere else with no room. */
+  short?: boolean
   className?: string
 }
 
@@ -37,9 +39,13 @@ export function Money({
   signed = false,
   compact = false,
   whole = false,
+  short = false,
   className = '',
 }: MoneyProps) {
   const hidden = useUIStore((s) => s.amountsHidden)
+  // Subscribed to, not just read: a currency change has to repaint every
+  // amount on screen, and they all come through here.
+  const currency = useUIStore((s) => s.currency)
   const classes = `num ${toneClass(tone, value)} ${className}`.trim()
 
   if (hidden) {
@@ -50,10 +56,14 @@ export function Money({
     )
   }
 
+  if (short) {
+    return <span className={classes}>{formatMoneyShort(value, currency)}</span>
+  }
+
   const amount = whole ? Math.round(value / 100) * 100 : value
   return (
     <span className={classes}>
-      {formatMoney(amount, { signed, compact: compact || whole })}
+      {formatMoney(amount, { currency, signed, compact: compact || whole })}
     </span>
   )
 }

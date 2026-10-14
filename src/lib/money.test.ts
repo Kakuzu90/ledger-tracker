@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
+  activeCurrency,
   allocateByWeight,
+  CURRENCIES,
+  currencyLabel,
+  currencySymbol,
+  DEFAULT_CURRENCY,
   formatAmount,
   formatMoney,
   formatMoneyShort,
@@ -8,6 +13,7 @@ import {
   formatPercentDelta,
   parseMoney,
   ratio,
+  setActiveCurrency,
   splitEvenly,
   sumMoney,
 } from './money'
@@ -176,5 +182,57 @@ describe('allocateByWeight', () => {
 
   it('keeps the sum exact for a negative total', () => {
     expect(sumMoney(allocateByWeight(-10_000, [1, 2, 3]))).toBe(-10_000)
+  })
+})
+
+describe('the active currency', () => {
+  afterEach(() => setActiveCurrency(DEFAULT_CURRENCY))
+
+  it('starts as the peso', () => {
+    expect(activeCurrency()).toBe('PHP')
+    expect(formatMoney(28_900)).toBe('₱289.00')
+  })
+
+  it('changes what every unqualified amount prints in', () => {
+    setActiveCurrency('USD')
+    expect(formatMoney(28_900)).toBe('$289.00')
+    expect(formatMoneyShort(1_250_000_00)).toBe('$1.2M')
+  })
+
+  it('still honours a currency given at the call site', () => {
+    setActiveCurrency('USD')
+    expect(formatMoney(28_900, { currency: 'EUR' })).toBe('€289.00')
+  })
+
+  it('ignores a code it does not offer, rather than printing it raw', () => {
+    setActiveCurrency('XYZ')
+    expect(activeCurrency()).toBe('PHP')
+  })
+
+  it('offers only currencies with two decimal places', () => {
+    for (const { code } of CURRENCIES) {
+      const digits = new Intl.NumberFormat('en', { style: 'currency', currency: code })
+        .resolvedOptions().minimumFractionDigits
+      expect(digits, code).toBe(2)
+    }
+  })
+})
+
+describe('currencySymbol', () => {
+  it('names the symbol for a code', () => {
+    expect(currencySymbol('PHP')).toBe('₱')
+    expect(currencySymbol('USD')).toBe('$')
+  })
+})
+
+describe('currencyLabel', () => {
+  it('pairs the code with its symbol', () => {
+    expect(currencyLabel('PHP')).toBe('PHP ₱')
+    expect(currencyLabel('USD')).toBe('USD $')
+  })
+
+  it('prints the code once where there is no symbol to add', () => {
+    // en-PH has no glyph for the ringgit, so Intl hands back the code.
+    expect(currencyLabel('MYR')).toBe('MYR')
   })
 })

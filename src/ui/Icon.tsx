@@ -212,3 +212,69 @@ export const ChevronDownIcon = (p: IconProps) => (
     <path d="M6 9l6 6 6-6" />
   </Svg>
 )
+
+export const ChevronUpIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M6 15l6-6 6 6" />
+  </Svg>
+)
+
+/** The six-dot drag handle from design/Categories.dc.html. */
+export const GripIcon = (p: IconProps) => (
+  <Svg size={18} strokeWidth={3} {...p}>
+    <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" />
+  </Svg>
+)
+
+export const FileIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5" />
+  </Svg>
+)
+
+export const TableIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M3 10h18M3 15h18M9 4v16" />
+  </Svg>
+)
+
+export const LockIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </Svg>
+)
+
+export const UploadIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M12 20V9M7 14l5-5 5 5M5 4h14" />
+  </Svg>
+)
+
+export const CloudIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.6 1.5A3.5 3.5 0 0 0 7 18z" />
+  </Svg>
+)
+
+export const SyncIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4" />
+  </Svg>
+)
+
+export const DevicesIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <rect x="2" y="4" width="13" height="10" rx="1.5" />
+    <rect x="16" y="8" width="6" height="12" rx="1.5" />
+    <path d="M6 18h6" />
+  </Svg>
+)
+
+export const TagIcon = (p: IconProps) => (
+  <Svg size={18} {...p}>
+    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
+    <circle cx="7.5" cy="7.5" r="1.2" />
+  </Svg>
+)

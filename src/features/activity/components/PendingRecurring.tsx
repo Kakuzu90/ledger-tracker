@@ -1,7 +1,7 @@
 import type { Recurring, Transaction } from '@/db/types'
-import { formatMoney } from '@/lib/money'
 import { relativeDay } from '@/lib/dates'
 import { RepeatIcon } from '@/ui/Icon'
+import { Money } from '@/ui/Money'
 
 interface PendingRecurringProps {
   transaction: Transaction
@@ -31,7 +31,7 @@ export function PendingRecurring({
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">
-          {transaction.note} · {formatMoney(transaction.amount, { compact: true })}
+          {transaction.note} · <Money value={transaction.amount} compact />
         </p>
         <p className="text-meta text-muted">
           {rule ? 'Recurring' : 'Pending'} · due {when}

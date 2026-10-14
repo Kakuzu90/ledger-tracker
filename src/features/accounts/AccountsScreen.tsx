@@ -4,7 +4,7 @@ import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
 import { ChevronRightIcon, LoansIcon, PlusIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
-import { formatMoney, formatPercent } from '@/lib/money'
+import { formatPercent } from '@/lib/money'
 import type { Account } from '@/db/types'
 import { useAccountsView } from './db'
 import { TYPE_LABEL, type AccountSummary, type CardSummary } from './accounts'
@@ -210,7 +210,7 @@ function CreditCard({
           />
           <div className="flex justify-between">
             <p className="text-meta text-muted">
-              {formatPercent(card.utilization)} of {formatMoney(card.limit, { compact: true })}{' '}
+              {formatPercent(card.utilization)} of <Money value={card.limit} compact />{' '}
               limit
             </p>
             <p className="text-meta text-muted">

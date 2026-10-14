@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildSampleData } from '@/db/sample'
 import type { Goal } from '@/db/types'
 import {
+  alertingLines,
   buildBudgetsView,
   childIdsByParent,
   daysLeftIn,
@@ -256,5 +257,52 @@ describe('recentMonths', () => {
 describe('monthName', () => {
   it('spells a month key out', () => {
     expect(monthName('2026-10')).toBe('October 2026')
+  })
+})
+
+describe('alertingLines', () => {
+  it('picks out the category over its limit and the one close to it', () => {
+    expect(alertingLines(view)).toEqual({
+      overallOver: false,
+      over: ['Bills'],
+      near: ['Food'],
+    })
+  })
+
+  it('has nothing to say about a month with no budgets', () => {
+    expect(alertingLines(build('2026-11'))).toEqual({
+      overallOver: false,
+      over: [],
+      near: [],
+    })
+  })
+
+  it('notices a month that is over even when no single category is', () => {
+    const over = buildBudgetsView(
+      {
+        month: '2026-10',
+        budgets: [
+          { id: 'o', month: '2026-10', categoryId: null, limit: 1_000_00, rollover: false, ...stamps },
+        ],
+        categories: [],
+        transactions: [
+          {
+            id: 't1',
+            type: 'expense',
+            amount: 1_500_00,
+            accountId: 'a',
+            date: '2026-10-02',
+            note: '',
+            tags: [],
+            status: 'posted',
+            ...stamps,
+          },
+        ],
+        goals: [],
+      },
+      TODAY,
+    )
+
+    expect(alertingLines(over)).toMatchObject({ overallOver: true, over: [], near: [] })
   })
 })

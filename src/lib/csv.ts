@@ -3,6 +3,8 @@
  * newline is wrapped in quotes and its own quotes are doubled.
  */
 
+import { downloadText } from './download'
+
 export type CsvValue = string | number | null | undefined
 
 export function escapeCsv(value: CsvValue): string {
@@ -22,15 +24,5 @@ export function toCsv(headers: readonly string[], rows: readonly CsvValue[][]): 
  * the peso sign and any non-ASCII note.
  */
 export function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.append(link)
-  link.click()
-  link.remove()
-
-  URL.revokeObjectURL(url)
+  downloadText(filename, csv, 'text/csv;charset=utf-8', true)
 }

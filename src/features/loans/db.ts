@@ -22,6 +22,10 @@ import type {
 } from '@/db/types'
 import { outstanding } from '@/lib/loans'
 import { formatMoney } from '@/lib/money'
+import { toDateOnly } from '@/lib/dates'
+import { getSetting, setSetting } from '@/db/settings'
+import { loanReminderText, notify } from '@/lib/notifications'
+import { loansDueSoon } from './loans'
 
 export interface LoansData {
   contacts: Contact[]
@@ -327,4 +331,28 @@ export async function deleteLoan(id: Id): Promise<void> {
     await db.transactions.where('loanId').equals(id).delete()
     await db.loans.delete(id)
   })
+}
+
+/**
+ * Raises a notice for a loan coming due, once a day, when the user asked
+ * for it. Same shape as the bill reminder: it fires on open, because that
+ * is the only moment an app with no push server gets.
+ */
+export async function remindAboutLoans(today: Date = new Date()): Promise<boolean> {
+  if (!(await getSetting('loanReminders', false))) return false
+
+  const todayIso = toDateOnly(today)
+  if ((await getSetting<string | null>('lastLoanNotice', null)) === todayIso) return false
+
+  const [contacts, loans, payments] = await Promise.all([
+    db.contacts.toArray(),
+    db.loans.toArray(),
+    db.loanPayments.toArray(),
+  ])
+
+  const due = loansDueSoon({ contacts, loans, payments }, todayIso)
+  if (due.length === 0) return false
+
+  await setSetting('lastLoanNotice', todayIso)
+  return notify('Ledger', loanReminderText(due), 'ledger-loans')
 }

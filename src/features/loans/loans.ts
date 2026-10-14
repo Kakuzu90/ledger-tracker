@@ -7,7 +7,7 @@
  * rules).
  */
 
-import { differenceInCalendarDays, format, parseISO } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
 import type { Centavos, Contact, DateOnly, Id, Loan, LoanPayment } from '@/db/types'
 import { isOverdue, isSettled, loanTotals, outstanding, type LoanTotals } from '@/lib/loans'
 import { paidShare, remainingBalance } from '@/lib/amortization'
@@ -187,4 +187,28 @@ export function buildLoansView(
     settledCount: loans.filter((loan) => isSettled(loan, payments)).length,
     openPersonalCount: openPersonal.length,
   }
+}
+
+/**
+ * Names for the loan reminder: anything due within `days`, and anything
+ * already past its date. A personal loan is named after the person, a formal
+ * one after the loan, because that is what the reader will recognise.
+ */
+export function loansDueSoon(
+  { contacts, loans, payments }: LoansInput,
+  today: DateOnly,
+  days = 1,
+): string[] {
+  const contactById = new Map(contacts.map((contact) => [contact.id, contact]))
+  const horizon = format(addDays(parseISO(today), days), 'yyyy-MM-dd')
+
+  return loans
+    .filter((loan) => loan.dueDate !== undefined && loan.dueDate <= horizon)
+    .filter((loan) => !isSettled(loan, payments))
+    .sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''))
+    .map((loan) =>
+      loan.kind === 'personal'
+        ? (contactById.get(loan.contactId ?? '')?.name ?? loan.note)
+        : loan.note,
+    )
 }

@@ -17,8 +17,8 @@ import { AccountsScreen } from '@/features/accounts/AccountsScreen'
 import { BudgetsScreen } from '@/features/budgets/BudgetsScreen'
 import { BillsScreen } from '@/features/bills/BillsScreen'
 import { SettingsScreen } from '@/features/settings/SettingsScreen'
-import { CategoriesScreen } from '@/features/settings/CategoriesScreen'
-import { BackupScreen } from '@/features/settings/BackupScreen'
+import { CategoriesScreen } from '@/features/categories/CategoriesScreen'
+import { BackupScreen } from '@/features/backup/BackupScreen'
 
 /**
  * Route table mirrors the mockup list in CLAUDE.md.

@@ -8,6 +8,42 @@ import type { Centavos } from '@/db/types'
 export const DEFAULT_CURRENCY = 'PHP'
 export const DEFAULT_LOCALE = 'en-PH'
 
+/**
+ * The currencies the settings screen offers.
+ *
+ * Every one of them has two decimal places, because that is what the storage
+ * model is: an amount is an integer number of hundredths. A zero-decimal
+ * currency like the yen would be stored a hundred times too large, so it is
+ * left off the list rather than quietly mis-stated.
+ */
+export const CURRENCIES: ReadonlyArray<{ code: string; name: string }> = [
+  { code: 'PHP', name: 'Philippine peso' },
+  { code: 'USD', name: 'US dollar' },
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'Pound sterling' },
+  { code: 'SGD', name: 'Singapore dollar' },
+  { code: 'AUD', name: 'Australian dollar' },
+  { code: 'CAD', name: 'Canadian dollar' },
+  { code: 'HKD', name: 'Hong Kong dollar' },
+  { code: 'MYR', name: 'Malaysian ringgit' },
+  { code: 'THB', name: 'Thai baht' },
+  { code: 'INR', name: 'Indian rupee' },
+  { code: 'AED', name: 'UAE dirham' },
+]
+
+/**
+ * The currency every unqualified amount is printed in. It is a module-level
+ * value rather than a parameter on a thousand call sites; the setting is read
+ * once at launch and whenever the user changes it.
+ */
+let active = DEFAULT_CURRENCY
+
+export function setActiveCurrency(code: string): void {
+  active = CURRENCIES.some((currency) => currency.code === code) ? code : DEFAULT_CURRENCY
+}
+
+export const activeCurrency = (): string => active
+
 const formatters = new Map<string, Intl.NumberFormat>()
 
 function formatter(currency: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
@@ -28,9 +64,9 @@ export interface FormatMoneyOptions {
   signed?: boolean
 }
 
-/** `formatMoney(-28900)` → `"−₱289.00"` */
+/** `formatMoney(-28900)` → `"−₱289.00"`, in the active currency. */
 export function formatMoney(amount: Centavos, options: FormatMoneyOptions = {}): string {
-  const { currency = DEFAULT_CURRENCY, compact = false, signed = false } = options
+  const { currency = active, compact = false, signed = false } = options
   const whole = Math.abs(amount) % 100 === 0
   const digits = compact && whole ? 0 : 2
 
@@ -96,7 +132,7 @@ export function sumMoney(amounts: readonly Centavos[]): Centavos {
  * Chart axes and tiles where the full number would not fit: `₱31.5k`.
  * Rounds toward zero so a short label never overstates an amount.
  */
-export function formatMoneyShort(amount: Centavos, currency = DEFAULT_CURRENCY): string {
+export function formatMoneyShort(amount: Centavos, currency = active): string {
   const pesos = Math.abs(amount) / 100
   const sign = amount < 0 ? '−' : ''
   const symbol = currencySymbol(currency)
@@ -119,7 +155,17 @@ export function formatMoneyShort(amount: Centavos, currency = DEFAULT_CURRENCY):
   return `${sign}${symbol}${body}${suffix}`
 }
 
-function currencySymbol(currency: string): string {
+/**
+ * `"PHP ₱"`, but just `"SGD"` where the locale has no symbol of its own and
+ * `Intl` falls back to the code — "SGD SGD" reads like a mistake.
+ */
+export function currencyLabel(code: string = active): string {
+  const symbol = currencySymbol(code)
+  return symbol === code ? code : `${code} ${symbol}`
+}
+
+/** `currencySymbol('PHP')` → `'₱'`. The settings picker prints it. */
+export function currencySymbol(currency: string = active): string {
   const parts = formatter(currency, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,

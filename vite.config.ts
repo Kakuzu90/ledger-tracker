@@ -1,9 +1,15 @@
+import { createRequire } from 'node:module'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// The version the settings screen prints. Read from package.json so there
+// is one place to bump it.
+const { version } = createRequire(import.meta.url)('./package.json') as { version: string }
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(version) },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     // dexie-react-hooks pulls its own React otherwise, and two copies of

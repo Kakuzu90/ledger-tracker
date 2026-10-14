@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Draft } from '@/features/quick-add/draft'
+import { DEFAULT_CURRENCY } from '@/lib/money'
 
 export interface Snack {
   message: string
@@ -20,6 +21,15 @@ interface UIState {
   /** "Hide amounts" toggle in the home header. */
   amountsHidden: boolean
   toggleAmounts: () => void
+  /** Set from the stored preference at launch. */
+  setAmountsHidden: (hidden: boolean) => void
+  /**
+   * The currency every amount prints in. It is a stored preference, mirrored
+   * here so that changing it re-renders the screens rather than waiting for
+   * the next navigation.
+   */
+  currency: string
+  setCurrency: (currency: string) => void
   /** The undo bar above the tab bar. One at a time, newest wins. */
   snack: Snack | null
   showSnack: (snack: Snack) => void
@@ -39,6 +49,9 @@ export const useUIStore = create<UIState>((set) => ({
   closeQuickAdd: () => set({ quickAddOpen: false, quickAddInitial: null }),
   amountsHidden: false,
   toggleAmounts: () => set((s) => ({ amountsHidden: !s.amountsHidden })),
+  setAmountsHidden: (amountsHidden) => set({ amountsHidden }),
+  currency: DEFAULT_CURRENCY,
+  setCurrency: (currency) => set({ currency }),
   snack: null,
   showSnack: (snack) => set({ snack }),
   dismissSnack: () => set({ snack: null }),

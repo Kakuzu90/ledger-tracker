@@ -51,7 +51,7 @@ function Cell({
         {cell.day}
       </span>
       <span className="num text-[10px] font-semibold">
-        {cell.spent > 0 ? formatMoneyShort(cell.spent) : ''}
+        {cell.spent > 0 ? <Money value={cell.spent} short /> : ''}
       </span>
       <span
         aria-hidden="true"

@@ -19,6 +19,10 @@ import type {
   MonthKey,
   Transaction,
 } from '@/db/types'
+import { getSetting, setSetting } from '@/db/settings'
+import { monthKey, toDateOnly } from '@/lib/dates'
+import { budgetAlertText, notify } from '@/lib/notifications'
+import { alertingLines, buildBudgetsView } from './budgets'
 
 export interface BudgetsData {
   budgets: Budget[]
@@ -165,4 +169,33 @@ export async function deleteGoal(id: Id): Promise<Goal> {
 
 export async function restoreGoal(goal: Goal): Promise<void> {
   await db.goals.put(goal)
+}
+
+/**
+ * Raises a notice when a budget is over its limit or getting close, once a
+ * day, when the user asked for it. The threshold is the same one the screen
+ * paints amber, so the alert and the bar never disagree.
+ */
+export async function alertAboutBudgets(today: Date = new Date()): Promise<boolean> {
+  if (!(await getSetting('budgetAlerts', false))) return false
+
+  const todayIso = toDateOnly(today)
+  if ((await getSetting<string | null>('lastBudgetNotice', null)) === todayIso) return false
+
+  const [budgets, categories, transactions, goals] = await Promise.all([
+    db.budgets.toArray(),
+    db.categories.toArray(),
+    db.transactions.toArray(),
+    db.goals.toArray(),
+  ])
+
+  const view = buildBudgetsView(
+    { month: monthKey(today), budgets, categories, transactions, goals },
+    today,
+  )
+  const body = budgetAlertText(alertingLines(view))
+  if (body === '') return false
+
+  await setSetting('lastBudgetNotice', todayIso)
+  return notify('Ledger', body, 'ledger-budgets')
 }

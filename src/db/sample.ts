@@ -32,6 +32,7 @@ import type {
 } from './types'
 import { accountDelta } from '@/lib/balances'
 import { allocateByWeight } from '@/lib/money'
+import { DEFAULT_PREFERENCES } from '@/lib/preferences'
 
 export interface SampleData {
   accounts: Account[]
@@ -651,11 +652,10 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
   // Settings travel with the dataset: loading it clears the table, and the
   // demo is meant to look like a used app, backup nudge and all.
   const settings: Setting[] = [
-    { key: 'name', value: 'Alex' },
-    { key: 'currency', value: 'PHP' },
-    { key: 'theme', value: 'system' },
-    { key: 'backupReminderDays', value: 30 },
-    { key: 'lockEnabled', value: false },
+    ...Object.entries({ ...DEFAULT_PREFERENCES, name: 'Alex' }).map(([key, value]) => ({
+      key,
+      value,
+    })),
     { key: 'lastBackupAt', value: addDays(today, -34).toISOString() },
   ]
 

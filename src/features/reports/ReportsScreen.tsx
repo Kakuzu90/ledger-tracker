@@ -7,7 +7,6 @@ import { Sheet } from '@/ui/Sheet'
 import { Segmented } from '@/ui/Segmented'
 import { DownloadIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
-import { formatMoneyShort } from '@/lib/money'
 import { toDateOnly } from '@/lib/dates'
 import { buildLookups } from '@/features/transactions/describe'
 import { transactionsToCsv } from '@/features/activity/csv'
@@ -398,7 +397,7 @@ function Stat({
   return (
     <div className="rounded-ctl bg-surface p-3 text-center">
       <p className="text-meta text-muted">{label}</p>
-      <p className="num font-semibold" title={formatMoneyShort(value)}>
+      <p className="num font-semibold">
         <Money value={value} tone={tone} whole />
       </p>
     </div>

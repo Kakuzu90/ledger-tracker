@@ -6,7 +6,8 @@ import { Snackbar } from '@/ui/Snackbar'
 import { loadTheme } from '@/lib/theme'
 import { requestPersistentStorage } from '@/lib/storage'
 import { bootstrapDatabase } from '@/db/bootstrap'
-import { remindAboutBills, runSchedule } from '@/features/bills/db'
+import { runSchedule } from '@/features/bills/db'
+import { applyStartupPreferences, runReminders } from '@/features/settings/db'
 
 export function App() {
   useEffect(() => {
@@ -17,11 +18,16 @@ export function App() {
     void (async () => {
       // Default categories and settings; sample data in dev.
       await bootstrapDatabase()
+      // Currency and "hide amounts on open", which have to be in force
+      // before the first screen prints a number.
+      await applyStartupPreferences()
       // Everything that came due while the app was closed. Auto rules post,
       // confirm rules land in Activity waiting for a yes. Safe to run twice:
       // a rule moves on in the same transaction that materialises it.
       await runSchedule()
-      await remindAboutBills()
+      // Bills, loans and budgets — each one only if it was switched on, and
+      // at most once a day.
+      await runReminders()
     })()
   }, [])
 

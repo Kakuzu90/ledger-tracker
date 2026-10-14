@@ -56,13 +56,14 @@ sample data in production; that stays an explicit action.
 
 **Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
 **Accounts**, the **Loans** hub, a **person's ledger**, **New loan**, a
-**formal loan**, **Split**, **Bills & recurring**, **Budgets** and
-**Reports** are built (`src/features/{home,quick-add,activity,transactions,
-accounts,loans,split,bills,budgets,reports}`).
+**formal loan**, **Split**, **Bills & recurring**, **Budgets**, **Reports**,
+**Settings**, **Categories & tags** and **Backup & data** are built
+(`src/features/{home,quick-add,activity,transactions,accounts,loans,split,
+bills,budgets,reports,settings,categories,backup}`).
 They all follow the same split: a pure module holds the logic (`dashboard.ts`,
 `draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`, `bills.ts`,
-`budgets.ts`, `reports.ts`), a `db.ts` holds the Dexie
-queries and writes, and the components only render. That is what makes the
+`budgets.ts`, `reports.ts`, `settings.ts`, `categories.ts`, `backup.ts`), a
+`db.ts` holds the Dexie queries and writes, and the components only render. That is what makes the
 figures testable — `dashboard.test.ts` asserts the home cards against the
 sample data, so a change that breaks the arithmetic fails the suite rather
 than the screen.
@@ -110,6 +111,23 @@ balance after 24 of 60 payments on the ₱650,000 car loan is ₱426,161.50 ever
 time, and ₱2,000 extra a month finishes it five months sooner for ₱9,550 less
 interest.
 
+Settings is the stored preferences, read through `readPreferences` in
+`src/lib/preferences.ts`, which falls back to a default for any value that is
+not the type it should be — a restored file or an older version cannot take a
+screen down with one bad row. Rows the app cannot honour yet carry a "Later"
+badge instead of a switch that does nothing.
+
+Categories & tags is the only screen that rewrites rows the rest of the app
+reads. Reordering, merging and the tag edits are each one Dexie transaction
+that hands back enough to undo it. Dragging is pointer-based, not HTML5
+drag-and-drop, which never fires on a touchscreen; the handle answers the
+arrow keys too.
+
+Backup & data is the only copy of the ledger that survives a cleared browser,
+so the file format lives on its own in `src/lib/backup.ts` — it carries every
+table including the receipt blobs, refuses anything it cannot vouch for, and
+can wrap the whole thing in AES-GCM under a PBKDF2 key when the user asks.
+
 ## Notes for the next change
 
 - **Money** is integer centavos end to end. `src/lib/money.ts` parses from
@@ -151,8 +169,8 @@ interest.
   thinking keeps the month still in progress out of "leanest month".
 - **Reports is a lazy route.** Recharts is about a third of the bundle and
   only that screen draws a chart, so it loads on demand: the main chunk is
-  633 kB instead of 990 kB, and the service worker still precaches both so
-  offline is unaffected.
+  684 kB instead of a megabyte, and the service worker still precaches both
+  so offline is unaffected.
 - **A fourth colour: `warning`.** The budget mockup distinguishes "near the
   limit" from "over it", and negative alone cannot carry both without every
   budget reading as blown. It lives with the other tokens in
@@ -171,8 +189,14 @@ interest.
   a toggle in the rule form. The v1 schema has no field for it, and a
   threshold on the amount would quietly reclassify a cheap utility bill.
 - **Reminders fire on open, not on a schedule.** There is no server to push
-  from, so `remindAboutBills` raises one system notice a day for anything due
-  within a day, and the banner's copy says exactly that.
+  from, so `runReminders` in `src/features/settings/db.ts` raises at most one
+  system notice a day per kind — bills, loans and budget alerts, each behind
+  its own switch — and the copy on both screens says exactly that. The one
+  reminder the mockup asks for and cannot be built is the 8pm daily nudge; it
+  carries a "Later" badge, because nothing can wake a PWA at a set time.
+- **Switching a reminder on asks the browser first.** Storing `true` for a
+  notice the browser will never show is a setting that lies; the toggles are
+  disabled outright, with the reason in the hint, where permission is denied.
 - **A loan payment is never deleted from the transaction.**
   `deleteTransaction` refuses rows that carry one; `deletePayment` is the way
   back, and it removes the payment, its transaction and the settled flag it
@@ -184,6 +208,40 @@ interest.
   split loan books no transaction of its own — counting it again would double
   the peso. The loans carry `splitFromTxnId`, which is what lets the Split
   screen show an existing split and unpick it while no one has paid.
+- **A preference has to be made true, not just stored.** `savePreference`
+  applies the theme and the currency as it writes them, and
+  `applyStartupPreferences` puts the stored ones into force at launch, before
+  the first screen prints a number.
+- **Currency is a label, not a conversion.** Changing it re-prints every
+  amount; it does not touch a stored figure, and the picker says so. Only
+  two-decimal currencies are offered, because an amount *is* an integer
+  number of hundredths — the yen would be stored a hundred times too large.
+  Every amount on screen goes through `src/ui/Money.tsx`, which subscribes to
+  the choice; that is also what keeps "hide amounts" covering all of them.
+- **A category with history is archived, not deleted.** `removeCategory`
+  deletes one nothing points at and archives the rest, so an entry from two
+  years ago keeps its name instead of turning into "Uncategorised".
+- **Merging adds budget limits together.** Two budgets for the same month
+  cannot both stand, and the user budgeted that much for the spending either
+  way. `mergeCategories` returns every row it touched so `undoMerge` can put
+  the lot back — a merge rewrites history, and discovering it was wrong with
+  no way out is not acceptable.
+- **A backup is refused unless it is understood.** `parseBackup` returns a
+  sentence to show rather than a half-read envelope: restoring a file we only
+  half recognise would wipe the real data to put back rubbish. Restoring is
+  a replace, not a merge — nothing could tell a restored duplicate from a
+  real one.
+- **Encryption is AES-GCM under PBKDF2-SHA256** (210k iterations, a fresh
+  salt and IV per file). The password is never stored, which the screen says
+  before the toggle goes on. GCM fails closed, so a wrong password and a
+  tampered file give the same answer — and they mean the same thing to the
+  reader.
+- **A receipt that cannot be read does not stop the backup.** It is counted
+  and reported instead; losing a photo is worth far less than losing the
+  ledger over it.
+- **The lock screen is not built.** `src/features/lock/LockOverlay.tsx` is a
+  placeholder and is not mounted, so the PIN, biometric and auto-lock rows in
+  Settings are badged "Later" rather than wired to nothing.
 - **Theme** is a `data-theme` attribute on `<html>` over CSS variables in
   `src/styles/tokens.css`; Tailwind colours all resolve through them. The
   preference lives in the IndexedDB `settings` table — `localStorage` holds a

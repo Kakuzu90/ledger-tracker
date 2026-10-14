@@ -177,3 +177,25 @@ export function recentMonths(today: Date = new Date(), count = 12): MonthKey[] {
 
 export const monthName = (month: MonthKey): string =>
   format(monthStart(month), 'MMMM yyyy')
+
+export interface BudgetAlerts {
+  /** The month as a whole has gone past its limit. */
+  overallOver: boolean
+  /** Categories past their limit, biggest spend first. */
+  over: string[]
+  /** Categories close to it. */
+  near: string[]
+}
+
+/**
+ * What a budget alert would be about. The overall budget is kept apart from
+ * the categories: a month can be over without any single category being, if
+ * the spending fell outside every budget.
+ */
+export function alertingLines(view: BudgetsView): BudgetAlerts {
+  return {
+    overallOver: view.overall?.status === 'over',
+    over: view.categories.filter((row) => row.status === 'over').map((row) => row.name),
+    near: view.categories.filter((row) => row.status === 'near').map((row) => row.name),
+  }
+}

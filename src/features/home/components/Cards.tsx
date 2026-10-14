@@ -6,7 +6,7 @@ import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
 import { CategoryTile } from '@/ui/CategoryTile'
 import { AlertIcon, ChevronRightIcon } from '@/ui/Icon'
-import { formatMoney, formatPercent } from '@/lib/money'
+import { formatPercent } from '@/lib/money'
 import { relativeDay } from '@/lib/dates'
 
 /** Card header with a link on the right. */
@@ -84,7 +84,7 @@ export function BudgetCard({ budget, monthLabel }: { budget: BudgetSummary; mont
         <p className="num text-xl font-semibold">
           <Money value={budget.spent} compact />
           <span className="ml-1 text-sm font-normal text-muted">
-            of {formatMoney(budget.limit, { compact: true })}
+            of <Money value={budget.limit} compact />
           </span>
         </p>
         <p className="text-meta text-muted">{formatPercent(budget.share)}</p>
@@ -92,13 +92,15 @@ export function BudgetCard({ budget, monthLabel }: { budget: BudgetSummary; mont
       <Meter value={budget.share} color={over ? 'rgb(var(--c-negative))' : undefined} />
       <p className="mt-2.5 text-meta text-muted">
         {over ? (
-          <>Over by {formatMoney(-budget.remaining, { compact: true })}</>
+          <>
+            Over by <Money value={-budget.remaining} compact />
+          </>
         ) : (
           <>
-            {formatMoney(budget.remaining, { compact: true })} left
+            <Money value={budget.remaining} compact /> left
             {budget.perDay !== null && (
               <>
-                {' · '}about {formatMoney(budget.perDay, { compact: true })} a day for{' '}
+                {' · '}about <Money value={budget.perDay} compact /> a day for{' '}
                 {budget.daysLeft} {budget.daysLeft === 1 ? 'day' : 'days'}
               </>
             )}

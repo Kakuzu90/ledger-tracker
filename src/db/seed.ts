@@ -6,7 +6,7 @@
 import type { LedgerDB } from './db'
 import { db as defaultDb, newId, stamp } from './db'
 import type { Category, CategoryKind } from './types'
-import { DEFAULT_CURRENCY } from '@/lib/money'
+import { DEFAULT_PREFERENCES } from '@/lib/preferences'
 
 interface CategorySeed {
   name: string
@@ -72,14 +72,13 @@ export function buildDefaultCategories(): Category[] {
   return rows
 }
 
+/**
+ * One row per preference, so the settings screen has something to read on a
+ * fresh install and `ensureSeeded` can fill in a key added by a later
+ * version without touching the ones the user has already set.
+ */
 export const DEFAULT_SETTINGS: Readonly<Record<string, unknown>> = {
-  /** Shown in the home greeting; empty until the user says who they are. */
-  name: '',
-  currency: DEFAULT_CURRENCY,
-  theme: 'system',
-  /** Days between backup nudges on the home screen. */
-  backupReminderDays: 30,
-  lockEnabled: false,
+  ...DEFAULT_PREFERENCES,
 }
 
 export interface SeedResult {

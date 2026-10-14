@@ -5,6 +5,7 @@ import {
   buildLoansView,
   formalRemaining,
   formatRate,
+  loansDueSoon,
   overdueDays,
   selectLoans,
 } from './loans'
@@ -229,5 +230,66 @@ describe('edge cases', () => {
     )
     expect(both.people[0]?.net).toBe(1_800_00)
     expect(both.totals).toEqual({ owedToYou: 3_000_00, youOwe: 1_200_00, net: 1_800_00 })
+  })
+})
+
+describe('loansDueSoon', () => {
+  it('names the person behind an overdue personal loan', () => {
+    expect(loansDueSoon(input, TODAY)).toEqual(['Juan Dela Cruz'])
+  })
+
+  it('reaches further forward when asked to', () => {
+    // Maria's tuition help is due in 16 days, Ken's cash in 22.
+    expect(loansDueSoon(input, TODAY, 20)).toEqual(['Juan Dela Cruz', 'Maria Santos'])
+    expect(loansDueSoon(input, TODAY, 30)).toHaveLength(3)
+  })
+
+  it('leaves out a loan with no due date', () => {
+    // Phone repair and the dinner split never had one.
+    expect(loansDueSoon(input, TODAY, 365)).not.toContain('Ana Lim')
+  })
+
+  it('leaves out a loan that has been settled', () => {
+    const settled = loan({ id: 'l1', dueDate: '2026-10-01', contactId: 'c1' })
+    const contacts: Contact[] = [{ id: 'c1', name: 'Pia', ...stamps }]
+    const payments: LoanPayment[] = [
+      {
+        id: 'p1',
+        loanId: 'l1',
+        amount: 1_000_00,
+        date: '2026-10-02',
+        transactionId: 't1',
+        ...stamps,
+      },
+    ]
+
+    expect(loansDueSoon({ contacts, loans: [settled], payments }, TODAY)).toEqual([])
+    expect(loansDueSoon({ contacts, loans: [settled], payments: [] }, TODAY)).toEqual(['Pia'])
+  })
+
+  it('names a formal loan after the loan, not a person', () => {
+    const formal = loan({
+      id: 'l2',
+      kind: 'formal',
+      direction: 'borrowed',
+      lender: 'BDO',
+      note: 'Car loan',
+      dueDate: '2026-10-14',
+    })
+    expect(loansDueSoon({ contacts: [], loans: [formal], payments: [] }, TODAY)).toEqual([
+      'Car loan',
+    ])
+  })
+
+  it('puts the one due soonest first', () => {
+    const later = loan({ id: 'a', contactId: 'c1', dueDate: '2026-10-15' })
+    const sooner = loan({ id: 'b', contactId: 'c2', dueDate: '2026-10-01' })
+    const contacts: Contact[] = [
+      { id: 'c1', name: 'Later', ...stamps },
+      { id: 'c2', name: 'Sooner', ...stamps },
+    ]
+    expect(
+      loansDueSoon({ contacts, loans: [later, sooner], payments: [] }, TODAY, 7),
+    ).toEqual(['Sooner', 'Later'])
   })
 })
