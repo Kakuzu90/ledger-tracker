@@ -49,6 +49,9 @@ export default {
         label: ['12px', { lineHeight: '1.3', letterSpacing: '.06em', fontWeight: '600' }],
         meta: ['13px', { lineHeight: '1.35' }],
         base: ['15px', { lineHeight: '1.4' }],
+        // Form fields are a point larger than body text on purpose: iOS
+        // Safari zooms the page when a focused control is under 16px.
+        input: ['16px', { lineHeight: '1.4' }],
         title: ['17px', { lineHeight: '1.3' }],
         'screen-sub': ['18px', { lineHeight: '1.3' }],
         screen: ['26px', { lineHeight: '1.2' }],

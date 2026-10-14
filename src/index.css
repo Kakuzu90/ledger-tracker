@@ -46,6 +46,21 @@
   :focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-bg;
   }
+
+  /*
+   * iOS Safari zooms the whole page when a focused control is under 16px,
+   * and the usual answer — `maximum-scale=1` in the viewport meta — buys
+   * that by taking pinch-zoom away from everyone, which fails WCAG 1.4.4.
+   * Sizing the controls fixes the cause instead. This is the floor; `.field`
+   * says the same thing, and the few inputs that set their own size set a
+   * larger one. It matters for the invisible `select` and `date` overlays
+   * behind the Quick Add chips too, which would otherwise inherit 14px.
+   */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
 @layer components {
@@ -107,7 +122,7 @@
   }
 
   .field {
-    @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-base text-ink placeholder:text-muted;
+    @apply min-h-[48px] w-full rounded-ctl border border-border-strong bg-surface px-3.5 text-input text-ink placeholder:text-muted;
   }
 
   /* The three square actions on the transaction detail screen. */
