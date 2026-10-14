@@ -16,7 +16,6 @@ import { SplitScreen } from '@/features/split/SplitScreen'
 import { AccountsScreen } from '@/features/accounts/AccountsScreen'
 import { BudgetsScreen } from '@/features/budgets/BudgetsScreen'
 import { BillsScreen } from '@/features/bills/BillsScreen'
-import { ReportsScreen } from '@/features/reports/ReportsScreen'
 import { SettingsScreen } from '@/features/settings/SettingsScreen'
 import { CategoriesScreen } from '@/features/settings/CategoriesScreen'
 import { BackupScreen } from '@/features/settings/BackupScreen'
@@ -36,7 +35,15 @@ export const router = createBrowserRouter([
           { path: '/activity', element: <ActivityScreen /> },
           { path: '/activity/calendar', element: <CalendarScreen /> },
           { path: '/loans', element: <LoansScreen /> },
-          { path: '/reports', element: <ReportsScreen /> },
+          {
+            // Reports is the only screen that pulls in Recharts — around a
+            // third of the bundle. Loading it on demand keeps that weight
+            // out of every other screen's first paint.
+            path: '/reports',
+            lazy: async () => ({
+              Component: (await import('@/features/reports/ReportsScreen')).ReportsScreen,
+            }),
+          },
         ],
       },
       {

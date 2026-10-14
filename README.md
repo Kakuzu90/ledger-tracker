@@ -56,10 +56,12 @@ sample data in production; that stays an explicit action.
 
 **Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
 **Accounts**, the **Loans** hub, a **person's ledger**, **New loan**, a
-**formal loan**, **Split** and **Bills & recurring** are built
-(`src/features/{home,quick-add,activity,transactions,accounts,loans,split,bills}`).
+**formal loan**, **Split**, **Bills & recurring**, **Budgets** and
+**Reports** are built (`src/features/{home,quick-add,activity,transactions,
+accounts,loans,split,bills,budgets,reports}`).
 They all follow the same split: a pure module holds the logic (`dashboard.ts`,
-`draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`, `bills.ts`), a `db.ts` holds the Dexie
+`draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`, `bills.ts`,
+`budgets.ts`, `reports.ts`), a `db.ts` holds the Dexie
 queries and writes, and the components only render. That is what makes the
 figures testable — `dashboard.test.ts` asserts the home cards against the
 sample data, so a change that breaks the arithmetic fails the suite rather
@@ -89,6 +91,16 @@ Auto rules post straight into the ledger, confirm rules land as pending
 entries in Activity and on Bills. It catches up: three months away from a
 monthly rule posts all three, capped at 60 occurrences a run so a phone left
 in a drawer cannot wake up and write a year of daily rows at once.
+
+Budgets run off `src/lib/budgets.ts`: a limit per category per month, what
+was spent against it, and rollover, which chains back through earlier months
+for as long as the rule held. Savings goals are the one place a running total
+is stored — money set aside is not a transaction, it is a note about intent.
+
+Reports slices the ledger by week, month, year or a custom range, rolls spend
+up to top-level categories, and compares each with the period before. The
+donut and the six-period bar chart are Recharts; the goal rings are a plain
+SVG circle, since one number does not need a chart library.
 
 A formal loan's screen is the amortisation calculator made visible:
 `src/lib/amortization.ts` walks the schedule payment by payment, rounding the
@@ -127,6 +139,24 @@ interest.
   formal loan is the plan the lender wrote; how far through it you are comes
   from how many instalments have been logged. Keeping the two apart is what
   lets the screen show ticks against future rows without inventing history.
+- **A zero budget is no budget.** Clearing a limit deletes the row rather
+  than storing `0`, which would read as "budgeted nothing" and make every
+  peso an overspend.
+- **Rollover carries a surplus, never a debt.** An overspent month carries
+  zero into the next one; compounding a bad month into a worse one is not
+  what the toggle promises.
+- **Averages skip empty periods.** "Avg saved per month" divides by the
+  periods that had activity, not by six — otherwise a year view that reaches
+  back before the ledger existed quietly understates every month. The same
+  thinking keeps the month still in progress out of "leanest month".
+- **Reports is a lazy route.** Recharts is about a third of the bundle and
+  only that screen draws a chart, so it loads on demand: the main chunk is
+  633 kB instead of 990 kB, and the service worker still precaches both so
+  offline is unaffected.
+- **A fourth colour: `warning`.** The budget mockup distinguishes "near the
+  limit" from "over it", and negative alone cannot carry both without every
+  budget reading as blown. It lives with the other tokens in
+  `src/styles/tokens.css`.
 - **The scheduler owns `nextDate` — nothing else writes it.** It materialises
   an occurrence and advances the rule in the same transaction, which is what
   makes running it twice (React's double effect, two tabs, a reload) a no-op

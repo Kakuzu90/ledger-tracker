@@ -24,6 +24,13 @@
   --c-negative-soft: 251 241 234; /* #FBF1EA */
   --c-negative-ink: 255 255 255;
 
+  /* Amber for "close to the limit", which the budget mockup distinguishes
+     from over it. Negative alone cannot carry both without the list reading
+     as if every budget were blown. */
+  --c-warning: 217 146 43; /* #D9922B */
+  --c-warning-soft: 253 241 214; /* #FDF1D6 */
+  --c-warning-ink: 122 90 0; /* #7A5A00 */
+
   /* Inverted surface used by the install banner and active chips. */
   --c-contrast: 22 24 29;
   --c-contrast-ink: 255 255 255;
@@ -55,6 +62,10 @@
     --c-negative-soft: 51 33 15;
     --c-negative-ink: 32 18 8;
 
+    --c-warning: 226 173 90;
+    --c-warning-soft: 52 40 14;
+    --c-warning-ink: 240 206 140;
+
     --c-contrast: 242 243 240;
     --c-contrast-ink: 22 24 29;
     --c-negative-on-contrast: 143 62 10;
@@ -81,6 +92,10 @@
   --c-negative: 224 139 82;
   --c-negative-soft: 51 33 15;
   --c-negative-ink: 32 18 8;
+
+  --c-warning: 226 173 90;
+  --c-warning-soft: 52 40 14;
+  --c-warning-ink: 240 206 140;
 
   --c-contrast: 242 243 240;
   --c-contrast-ink: 22 24 29;
