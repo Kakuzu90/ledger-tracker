@@ -11,6 +11,7 @@ import {
   recordPayment,
   reopenLoans,
   settleLoans,
+  updateLoan,
   type LoanDraft,
 } from './db'
 
@@ -127,6 +128,59 @@ describe('createLoan', () => {
     await expect(createLoan(draft({ principal: 0 }))).rejects.toThrow('how much')
     await expect(createLoan(draft())).rejects.toThrow('who it is with')
     await expect(createLoan(draft({ kind: 'formal' }))).rejects.toThrow('lender')
+  })
+})
+
+describe('updateLoan', () => {
+  it('saves the changes without disturbing the money it moved', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from, moveMoney: true }))
+
+    await updateLoan(id, draft({ contactId, accountId: from, principal: 5_000_00, note: ' Laptop ' }))
+
+    const loan = await db.loans.get(id)
+    expect(loan?.principal).toBe(5_000_00)
+    expect(loan?.note).toBe('Laptop')
+    // The original movement is history; the balance does not jump.
+    expect(await db.transactions.count()).toBe(1)
+    expect(await balance(from)).toBe(7_000_00)
+  })
+
+  it('rewrites a formal loan\'s terms', async () => {
+    const id = await createLoan(
+      draft({
+        kind: 'formal',
+        direction: 'borrowed',
+        lender: 'BDO',
+        principal: 650_000_00,
+        ratePct: 9.5,
+        termMonths: 60,
+        note: 'Car loan',
+      }),
+    )
+
+    await updateLoan(id, {
+      kind: 'formal',
+      direction: 'borrowed',
+      lender: ' BPI ',
+      principal: 600_000_00,
+      ratePct: 8,
+      termMonths: 48,
+      startDate: '2025-01-01',
+      note: 'Car loan',
+    })
+
+    const loan = await db.loans.get(id)
+    expect(loan).toMatchObject({ lender: 'BPI', ratePct: 8, termMonths: 48 })
+  })
+
+  it('still insists on an amount and a lender', async () => {
+    const contactId = await createContact('Juan')
+    const id = await createLoan(draft({ contactId }))
+
+    await expect(updateLoan(id, draft({ principal: 0 }))).rejects.toThrow('how much')
+    await expect(updateLoan(id, draft({ kind: 'formal' }))).rejects.toThrow('lender')
   })
 })
 

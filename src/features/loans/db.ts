@@ -75,6 +75,31 @@ export function usePersonData(contactId: Id | undefined): PersonData | undefined
   }, [contactId])
 }
 
+export interface FormalLoanData {
+  /** null once the loan has been deleted. */
+  loan: Loan | null
+  payments: LoanPayment[]
+  accounts: Account[]
+}
+
+export function useFormalLoan(loanId: Id | undefined): FormalLoanData | undefined {
+  return useLiveQuery(async () => {
+    if (!loanId) return { loan: null, payments: [], accounts: [] }
+
+    const [loan, payments, accounts] = await Promise.all([
+      db.loans.get(loanId),
+      db.loanPayments.where('loanId').equals(loanId).toArray(),
+      db.accounts.toArray(),
+    ])
+
+    return {
+      loan: loan ?? null,
+      payments: payments.sort((a, b) => (a.installmentNo ?? 0) - (b.installmentNo ?? 0)),
+      accounts,
+    }
+  }, [loanId])
+}
+
 export async function createContact(name: string, phone?: string): Promise<Id> {
   const trimmed = name.trim()
   if (trimmed === '') throw new Error('Give the person a name')
@@ -155,6 +180,27 @@ export async function createLoan(draft: LoanDraft): Promise<Id> {
   })
 
   return loan.id
+}
+
+/**
+ * Edits a loan in place. The principal movement it may have booked is left
+ * alone: that transaction is history, and rewriting it would quietly move an
+ * account balance under the user.
+ */
+export async function updateLoan(id: Id, draft: LoanDraft): Promise<void> {
+  if (draft.principal <= 0) throw new Error('Enter how much the loan is for')
+  if (draft.kind === 'formal' && !draft.lender?.trim()) throw new Error('Name the lender')
+
+  const fields: Partial<LoanDraft> = { ...draft }
+  // A toggle about the original movement; it is not a field on the loan.
+  delete fields.moveMoney
+
+  await db.loans.update(id, {
+    ...fields,
+    note: draft.note.trim(),
+    ...(draft.lender ? { lender: draft.lender.trim() } : {}),
+    ...touch(),
+  })
 }
 
 export interface PaymentInput {

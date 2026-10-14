@@ -116,3 +116,101 @@ export function loanCost(
     payments: rows.length,
   }
 }
+
+/**
+ * The schedule from a loan already part-way through: the balance that is
+ * actually left, and the payment the lender actually takes.
+ *
+ * `schedule()` above always starts from the original principal. This one
+ * starts from wherever the loan is now, which is what the detail screen and
+ * the extra-payment simulator need.
+ *
+ * Returns an empty schedule when the payment cannot clear the month's
+ * interest — the balance would grow forever, and the caller should say so
+ * rather than render a table that never ends.
+ */
+export function remainingSchedule(
+  balance: Centavos,
+  annualRatePct: number,
+  payment: Centavos,
+  firstNumber = 1,
+): Installment[] {
+  if (balance <= 0 || payment <= 0) return []
+
+  const rate = monthlyRate(annualRatePct)
+  if (payment <= Math.round(balance * rate)) return []
+
+  const rows: Installment[] = []
+  let left = balance
+
+  // A payment that clears the interest always shrinks the balance, so this
+  // terminates; the cap is only a guard against a pathological rate.
+  for (let n = firstNumber; left > 0 && rows.length < 1200; n++) {
+    const interest = Math.round(left * rate)
+    const due = Math.min(payment, left + interest)
+    const principal = due - interest
+    left -= principal
+    rows.push({ n, payment: due, interest, principal, balance: left })
+  }
+
+  return rows
+}
+
+/** Interest handed over across the first `paymentsMade` instalments. */
+export function interestPaid(
+  principal: Centavos,
+  annualRatePct: number,
+  termMonths: number,
+  paymentsMade: number,
+): Centavos {
+  return schedule(principal, annualRatePct, termMonths)
+    .slice(0, Math.max(0, paymentsMade))
+    .reduce((total, row) => total + row.interest, 0)
+}
+
+export interface ExtraPaymentEffect {
+  /** Instalments left at the contracted payment. */
+  basePayments: number
+  /** Instalments left paying `extra` more each month. */
+  payments: number
+  /** How many sooner the loan finishes. */
+  monthsSaved: number
+  baseInterest: Centavos
+  interest: Centavos
+  interestSaved: Centavos
+  /** False when the contracted payment does not even cover the interest. */
+  amortises: boolean
+}
+
+/**
+ * What paying `extra` on top of each instalment does to a loan that is
+ * already running — the "what if I pay extra?" card.
+ *
+ * Both sides are walked from today's balance, so the answer is about the
+ * money still to come rather than the loan as originally written.
+ */
+export function extraPaymentEffect(
+  balance: Centavos,
+  annualRatePct: number,
+  payment: Centavos,
+  extra: Centavos,
+): ExtraPaymentEffect {
+  const base = remainingSchedule(balance, annualRatePct, payment)
+  const faster = remainingSchedule(balance, annualRatePct, payment + Math.max(0, extra))
+
+  const sum = (rows: readonly Installment[]) =>
+    rows.reduce((total, row) => total + row.interest, 0)
+
+  const baseInterest = sum(base)
+  const interest = sum(faster)
+
+  return {
+    basePayments: base.length,
+    payments: faster.length,
+    monthsSaved: Math.max(0, base.length - faster.length),
+    baseInterest,
+    interest,
+    interestSaved: Math.max(0, baseInterest - interest),
+    amortises: base.length > 0,
+  }
+}

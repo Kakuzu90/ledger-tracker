@@ -55,11 +55,11 @@ sample data in production; that stays an explicit action.
 ## Screens
 
 **Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**,
-**Accounts**, the **Loans** hub, a **person's ledger**, **New loan** and
-**Split** are built
+**Accounts**, the **Loans** hub, a **person's ledger**, **New loan**, a
+**formal loan** and **Split** are built
 (`src/features/{home,quick-add,activity,transactions,accounts,loans,split}`).
 They all follow the same split: a pure module holds the logic (`dashboard.ts`,
-`draft.ts`, `loans.ts`, `person.ts`, `split.ts`), a `db.ts` holds the Dexie
+`draft.ts`, `loans.ts`, `person.ts`, `formal.ts`, `split.ts`), a `db.ts` holds the Dexie
 queries and writes, and the components only render. That is what makes the
 figures testable — `dashboard.test.ts` asserts the home cards against the
 sample data, so a change that breaks the arithmetic fails the suite rather
@@ -82,6 +82,14 @@ Split turns one expense into a loan per person. Repayments go through
 `recordPayment`, which writes the `loanPayments` row *and* the transaction
 that mirrors it, and closes the loan when nothing is left.
 
+A formal loan's screen is the amortisation calculator made visible:
+`src/lib/amortization.ts` walks the schedule payment by payment, rounding the
+interest each month the way a lender does, and `formal.ts` turns that into the
+table, the stats and the extra-payment simulator. All of it is derived — the
+balance after 24 of 60 payments on the ₱650,000 car loan is ₱426,161.50 every
+time, and ₱2,000 extra a month finishes it five months sooner for ₱9,550 less
+interest.
+
 ## Notes for the next change
 
 - **Money** is integer centavos end to end. `src/lib/money.ts` parses from
@@ -100,10 +108,17 @@ that mirrors it, and closes the loan when nothing is left.
   and a card's "Pay this card" also fills in the destination. Paying a card
   is just a transfer into it, so the debt drops and net worth does not move.
 - **Formal loans** need amortisation for their remaining balance; `outstanding()`
-  is principal less payments, which is only right at 0%. `loanTotals()` covers
+  is principal less payments, which is only right at 0%. `schedule()` runs
+  from the original principal, `remainingSchedule()` from where the loan
+  actually is — the simulator needs the second one, or it would answer a
+  question about a loan the user no longer has. `loanTotals()` covers
   personal loans only, matching the cards in Loans.dc.html. For the same
   reason `recordPayment` caps a *personal* loan at what it is owed but lets a
   formal one take more — the extra is interest, not principal.
+- **The schedule is the contract, the balance is the record.** The table on a
+  formal loan is the plan the lender wrote; how far through it you are comes
+  from how many instalments have been logged. Keeping the two apart is what
+  lets the screen show ticks against future rows without inventing history.
 - **A loan payment is never deleted from the transaction.**
   `deleteTransaction` refuses rows that carry one; `deletePayment` is the way
   back, and it removes the payment, its transaction and the settled flag it

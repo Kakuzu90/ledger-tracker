@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { loanCost, monthlyPayment, paidShare, remainingBalance, schedule } from './amortization'
+import {
+  extraPaymentEffect,
+  interestPaid,
+  loanCost,
+  monthlyPayment,
+  paidShare,
+  remainingBalance,
+  remainingSchedule,
+  schedule,
+} from './amortization'
 
 // The car loan from design/Loans.dc.html: ₱650,000 at 9.5% over 60 months.
 const CAR = [650_000_00, 9.5, 60] as const
@@ -98,5 +107,116 @@ describe('loanCost', () => {
     expect(loanCost(...CAR, 5_000_00).totalInterest).toBeLessThan(
       loanCost(...CAR).totalInterest,
     )
+  })
+})
+
+// Where the car loan actually stands on the detail screen: 24 of 60 paid.
+const BALANCE = remainingBalance(...CAR, 24)
+const INSTALMENT = monthlyPayment(...CAR)
+
+describe('remainingSchedule', () => {
+  const rows = remainingSchedule(BALANCE, 9.5, INSTALMENT)
+
+  it('runs out the instalments that are left, not the whole term', () => {
+    expect(rows).toHaveLength(36)
+  })
+
+  it('picks up where the original schedule left off', () => {
+    const whole = schedule(...CAR)
+    expect(rows[0]?.interest).toBe(whole[24]?.interest)
+    expect(rows[0]?.balance).toBe(whole[24]?.balance)
+  })
+
+  it('finishes at exactly zero without overpaying', () => {
+    expect(rows.at(-1)?.balance).toBe(0)
+    expect(rows.at(-1)!.payment).toBeLessThanOrEqual(INSTALMENT)
+  })
+
+  it('numbers the rows from where the loan is', () => {
+    expect(remainingSchedule(BALANCE, 9.5, INSTALMENT, 25)[0]?.n).toBe(25)
+  })
+
+  it('clears sooner when the payment is larger', () => {
+    expect(remainingSchedule(BALANCE, 9.5, INSTALMENT + 5_000_00)).toHaveLength(26)
+  })
+
+  it('refuses a payment that cannot cover the interest', () => {
+    // ₱426k at 9.5% accrues about ₱3,374 a month.
+    expect(remainingSchedule(BALANCE, 9.5, 3_000_00)).toEqual([])
+  })
+
+  it('is empty for a loan with nothing left', () => {
+    expect(remainingSchedule(0, 9.5, INSTALMENT)).toEqual([])
+    expect(remainingSchedule(BALANCE, 9.5, 0)).toEqual([])
+  })
+
+  it('divides the balance evenly at 0%', () => {
+    const free = remainingSchedule(27_000_00, 0, 4_500_00)
+    expect(free).toHaveLength(6)
+    expect(free.every((row) => row.interest === 0)).toBe(true)
+  })
+})
+
+describe('interestPaid', () => {
+  it('adds up what the first 24 payments cost in interest', () => {
+    expect(interestPaid(...CAR, 24)).toBe(103_790_54)
+  })
+
+  it('is nothing before the first payment', () => {
+    expect(interestPaid(...CAR, 0)).toBe(0)
+    expect(interestPaid(...CAR, -3)).toBe(0)
+  })
+
+  it('tops out at the whole cost of the loan', () => {
+    expect(interestPaid(...CAR, 99)).toBe(loanCost(...CAR).totalInterest)
+  })
+
+  it('is nothing at all at 0%', () => {
+    expect(interestPaid(54_000_00, 0, 12, 6)).toBe(0)
+  })
+})
+
+describe('extraPaymentEffect', () => {
+  const effect = extraPaymentEffect(BALANCE, 9.5, INSTALMENT, 2_000_00)
+
+  it('finishes the car loan five months sooner on ₱2,000 a month', () => {
+    expect(effect.basePayments).toBe(36)
+    expect(effect.payments).toBe(31)
+    expect(effect.monthsSaved).toBe(5)
+  })
+
+  it('works out the interest that buys back', () => {
+    // The mockup prints ≈ ₱9,540 against this slider position.
+    expect(effect.interestSaved).toBe(9_550_13)
+    expect(effect.baseInterest - effect.interest).toBe(effect.interestSaved)
+  })
+
+  it('changes nothing with no extra', () => {
+    const none = extraPaymentEffect(BALANCE, 9.5, INSTALMENT, 0)
+    expect(none.monthsSaved).toBe(0)
+    expect(none.interestSaved).toBe(0)
+  })
+
+  it('saves more the more you pay', () => {
+    const small = extraPaymentEffect(BALANCE, 9.5, INSTALMENT, 500_00)
+    const large = extraPaymentEffect(BALANCE, 9.5, INSTALMENT, 10_000_00)
+    expect(large.monthsSaved).toBeGreaterThan(small.monthsSaved)
+    expect(large.interestSaved).toBeGreaterThan(small.interestSaved)
+  })
+
+  it('treats a negative extra as none', () => {
+    expect(extraPaymentEffect(BALANCE, 9.5, INSTALMENT, -5_000_00).monthsSaved).toBe(0)
+  })
+
+  it('saves no interest at 0% — only time', () => {
+    const free = extraPaymentEffect(27_000_00, 0, 4_500_00, 4_500_00)
+    expect(free.monthsSaved).toBe(3)
+    expect(free.interestSaved).toBe(0)
+  })
+
+  it('says so when the payment never clears the interest', () => {
+    const stuck = extraPaymentEffect(BALANCE, 9.5, 3_000_00, 0)
+    expect(stuck.amortises).toBe(false)
+    expect(stuck.basePayments).toBe(0)
   })
 })
