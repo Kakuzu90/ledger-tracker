@@ -4,21 +4,24 @@ import { QuickAddSheet } from '@/features/quick-add/QuickAddSheet'
 import { UpdateBanner } from '@/ui/UpdateBanner'
 import { Snackbar } from '@/ui/Snackbar'
 import { loadTheme } from '@/lib/theme'
-import { requestPersistentStorage } from '@/lib/storage'
 import { bootstrapDatabase } from '@/db/bootstrap'
 import { runSchedule } from '@/features/bills/db'
-import { applyStartupPreferences, runReminders } from '@/features/settings/db'
+import {
+  applyStartupPreferences,
+  askForPersistenceOnce,
+  runReminders,
+} from '@/features/settings/db'
 import { LockOverlay } from '@/features/lock/LockOverlay'
 import { markAway, resolveLockOnLaunch, shouldLockOnReturn } from '@/features/lock/db'
+import { parseLaunchAction, withoutLaunchAction } from '@/lib/launch'
 import { useLockStore } from '@/store/lock'
+import { useUIStore } from '@/store/ui'
 
 export function App() {
   const status = useLockStore((s) => s.status)
 
   useEffect(() => {
     void loadTheme()
-    // Asked once on first launch; the browser remembers the grant.
-    void requestPersistentStorage()
 
     void (async () => {
       // Before anything else, and before anything is drawn: whether this
@@ -30,6 +33,9 @@ export function App() {
 
       // Default categories and settings; sample data in dev.
       await bootstrapDatabase()
+      // Ask the browser not to evict the ledger. There is no server copy,
+      // so this is the difference between losing data and not.
+      await askForPersistenceOnce()
       // Currency and "hide amounts on open", which have to be in force
       // before the first screen prints a number.
       await applyStartupPreferences()
@@ -72,6 +78,23 @@ export function App() {
       window.removeEventListener('pagehide', onHidden)
     }
   }, [])
+
+  /**
+   * The manifest's "Add an expense" shortcut. It is a parameter rather than
+   * a route because Quick Add is a sheet, and it waits for the lock: a
+   * shortcut should not open the sheet behind a PIN prompt.
+   */
+  useEffect(() => {
+    if (status !== 'open') return
+
+    const action = parseLaunchAction(window.location.search)
+    if (!action) return
+
+    // Spent once. Left in place, a refresh would reopen the sheet and the
+    // address bar would keep an instruction that has already been carried out.
+    window.history.replaceState(null, '', withoutLaunchAction(window.location.href))
+    useUIStore.getState().openQuickAdd({ type: action.type })
+  }, [status])
 
   // Nothing at all until the lock has had its say. One blank frame beats
   // painting a dashboard and covering it a moment later.

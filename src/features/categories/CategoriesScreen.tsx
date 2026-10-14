@@ -292,7 +292,10 @@ export function CategoriesScreen() {
       )}
 
       {merging && selected.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-screen gap-3 border-t border-border bg-surface p-4">
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-screen gap-3 border-t border-border bg-surface p-4"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
           <p className="flex-1 self-center text-meta text-muted">{selected.size} selected</p>
           <button
             type="button"

@@ -16,9 +16,6 @@ import { SplitScreen } from '@/features/split/SplitScreen'
 import { AccountsScreen } from '@/features/accounts/AccountsScreen'
 import { BudgetsScreen } from '@/features/budgets/BudgetsScreen'
 import { BillsScreen } from '@/features/bills/BillsScreen'
-import { SettingsScreen } from '@/features/settings/SettingsScreen'
-import { CategoriesScreen } from '@/features/categories/CategoriesScreen'
-import { BackupScreen } from '@/features/backup/BackupScreen'
 
 /**
  * Route table mirrors the mockup list in CLAUDE.md.
@@ -57,9 +54,28 @@ export const router = createBrowserRouter([
           { path: '/accounts', element: <AccountsScreen /> },
           { path: '/budgets', element: <BudgetsScreen /> },
           { path: '/bills', element: <BillsScreen /> },
-          { path: '/settings', element: <SettingsScreen /> },
-          { path: '/settings/categories', element: <CategoriesScreen /> },
-          { path: '/settings/backup', element: <BackupScreen /> },
+          // Settings and the two screens under it are reached deliberately
+          // and rarely, so they are not worth carrying in the chunk that
+          // every first paint downloads.
+          {
+            path: '/settings',
+            lazy: async () => ({
+              Component: (await import('@/features/settings/SettingsScreen')).SettingsScreen,
+            }),
+          },
+          {
+            path: '/settings/categories',
+            lazy: async () => ({
+              Component: (await import('@/features/categories/CategoriesScreen'))
+                .CategoriesScreen,
+            }),
+          },
+          {
+            path: '/settings/backup',
+            lazy: async () => ({
+              Component: (await import('@/features/backup/BackupScreen')).BackupScreen,
+            }),
+          },
           { path: '*', element: <NotFound /> },
         ],
       },

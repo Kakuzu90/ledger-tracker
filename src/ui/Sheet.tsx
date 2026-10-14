@@ -47,7 +47,10 @@ export function Sheet({ open, onClose, title, action, fill = false, children }: 
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pb-6 pt-2.5 shadow-sheet outline-none ${
+        // Installed on a phone with a home indicator, the last button in a
+        // sheet would otherwise sit under it.
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pt-2.5 shadow-sheet outline-none ${
           fill ? 'h-[calc(100dvh-48px)]' : 'max-h-[calc(100dvh-48px)] overflow-y-auto'
         }`}
       >

@@ -21,7 +21,11 @@ import {
 } from '@/lib/backup'
 import { base64ToBytes, blobToBytes, bytesToBase64 } from '@/lib/bytes'
 import { readPreferences } from '@/lib/preferences'
-import { estimateStorage, requestPersistentStorage } from '@/lib/storage'
+import {
+  estimateStorage,
+  isStoragePersisted,
+  requestPersistentStorage,
+} from '@/lib/storage'
 import type { StorageFacts } from './backup'
 
 export interface BackupData {
@@ -51,16 +55,24 @@ export function useBackupData(): BackupData | undefined {
 
 /** What the browser will say about the space in use, and whether it is safe. */
 export async function readStorageFacts(receipts: number): Promise<StorageFacts> {
-  const estimate = await estimateStorage()
-  const persisted =
-    'storage' in navigator && navigator.storage.persisted
-      ? await navigator.storage.persisted().catch(() => false)
-      : false
+  const [estimate, persisted] = await Promise.all([
+    estimateStorage(),
+    isStoragePersisted(),
+  ])
 
   return { usage: estimate?.usage ?? null, receipts, persisted }
 }
 
-export const askForPersistentStorage = requestPersistentStorage
+/**
+ * The Storage row's button. Unlike the once-a-day ask at launch this always
+ * asks, because the user just pressed it — and it records a yes so the
+ * launch stops asking.
+ */
+export async function askForPersistentStorage(): Promise<boolean> {
+  const granted = await requestPersistentStorage()
+  if (granted) await setSetting('storagePersisted', true)
+  return granted
+}
 
 export interface BackupBundle {
   data: BackupTables

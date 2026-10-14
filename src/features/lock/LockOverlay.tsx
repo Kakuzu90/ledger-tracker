@@ -80,7 +80,10 @@ export function LockOverlay() {
   const dots = Math.max(DOTS, filled)
 
   return (
-    <div className="flex min-h-dvh flex-col items-center bg-lock px-6 pb-10 pt-[88px] text-lock-ink">
+    <div
+      className="flex min-h-dvh flex-col items-center bg-lock px-6 pt-[88px] text-lock-ink"
+      style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom))' }}
+    >
       <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-lock-tile text-lock-ink">
         <LockIcon size={30} />
       </div>

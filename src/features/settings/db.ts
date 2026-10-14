@@ -6,7 +6,7 @@
 
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/db'
-import { setSetting } from '@/db/settings'
+import { getSetting, setSetting } from '@/db/settings'
 import type { Timestamp } from '@/db/types'
 import {
   readPreferences,
@@ -14,6 +14,8 @@ import {
   type Preferences,
 } from '@/lib/preferences'
 import { setActiveCurrency } from '@/lib/money'
+import { requestPersistentStorage } from '@/lib/storage'
+import { toDateOnly } from '@/lib/dates'
 import { applyTheme } from '@/lib/theme'
 import { notificationState, type NotificationState } from '@/lib/notifications'
 import { useUIStore } from '@/store/ui'
@@ -93,6 +95,28 @@ export async function applyStartupPreferences(): Promise<Preferences> {
   if (preferences.hideAmountsOnOpen) ui.setAmountsHidden(true)
 
   return preferences
+}
+
+/**
+ * Asks the browser to keep the ledger out of the eviction pool — once a day
+ * at most, until it says yes.
+ *
+ * Not once per install: Chrome decides on engagement, so the first ask on a
+ * brand-new install is the one most likely to be refused, and never trying
+ * again would leave the data evictable forever. Not every launch either,
+ * because Firefox puts a permission prompt on screen for it. The Backup
+ * screen has a button for asking on purpose, which ignores this.
+ */
+export async function askForPersistenceOnce(today: Date = new Date()): Promise<boolean> {
+  if (await getSetting('storagePersisted', false)) return true
+
+  const todayIso = toDateOnly(today)
+  if ((await getSetting<string | null>('storageAskedOn', null)) === todayIso) return false
+
+  await setSetting('storageAskedOn', todayIso)
+  const granted = await requestPersistentStorage()
+  if (granted) await setSetting('storagePersisted', true)
+  return granted
 }
 
 export interface ReminderResult {

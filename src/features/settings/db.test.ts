@@ -1,10 +1,15 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@/db/db'
 import { loadSampleData } from '@/db/sample'
 import { setSetting } from '@/db/settings'
 import { activeCurrency, DEFAULT_CURRENCY, setActiveCurrency } from '@/lib/money'
 import { useUIStore } from '@/store/ui'
-import { applyStartupPreferences, runReminders, savePreference } from './db'
+import {
+  applyStartupPreferences,
+  askForPersistenceOnce,
+  runReminders,
+  savePreference,
+} from './db'
 
 const TODAY = new Date(2026, 9, 14)
 
@@ -111,5 +116,76 @@ describe('runReminders', () => {
     await runReminders(TODAY)
     expect(await db.settings.get('lastLoanNotice')).toBeUndefined()
     expect(await db.settings.get('lastBudgetNotice')).toBeUndefined()
+  })
+})
+
+describe('askForPersistenceOnce', () => {
+  const withStorage = (persisted: boolean, granted: boolean) => {
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      storage: {
+        persisted: () => Promise.resolve(persisted),
+        persist: () => Promise.resolve(granted),
+      },
+    })
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('asks, and remembers a yes', async () => {
+    withStorage(false, true)
+
+    expect(await askForPersistenceOnce(TODAY)).toBe(true)
+    expect(await db.settings.get('storagePersisted')).toMatchObject({ value: true })
+  })
+
+  it('does not ask twice in a day after a no', async () => {
+    // Firefox puts a permission prompt on screen for this.
+    let asks = 0
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      storage: {
+        persisted: () => Promise.resolve(false),
+        persist: () => {
+          asks += 1
+          return Promise.resolve(false)
+        },
+      },
+    })
+
+    await askForPersistenceOnce(TODAY)
+    await askForPersistenceOnce(TODAY)
+    expect(asks).toBe(1)
+  })
+
+  it('tries again the next day, since the browser may have changed its mind', async () => {
+    withStorage(false, false)
+    await askForPersistenceOnce(TODAY)
+
+    withStorage(false, true)
+    expect(await askForPersistenceOnce(new Date(2026, 9, 15))).toBe(true)
+  })
+
+  it('stops asking once it has been granted', async () => {
+    await setSetting('storagePersisted', true)
+    let asks = 0
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      storage: {
+        persisted: () => Promise.resolve(true),
+        persist: () => {
+          asks += 1
+          return Promise.resolve(true)
+        },
+      },
+    })
+
+    expect(await askForPersistenceOnce(new Date(2027, 0, 1))).toBe(true)
+    expect(asks).toBe(0)
+  })
+
+  it('says no, quietly, in a browser without the API', async () => {
+    vi.stubGlobal('navigator', { ...navigator, storage: undefined })
+    expect(await askForPersistenceOnce(TODAY)).toBe(false)
   })
 })

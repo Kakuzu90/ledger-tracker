@@ -23,6 +23,23 @@ import {
   type Slice,
 } from './reports'
 
+/** The trend is in months for a custom range, which has no cadence of its own. */
+const PERIOD_SUFFIX: Record<PeriodKind, string> = {
+  week: '/wk',
+  month: '/mo',
+  year: '/yr',
+  custom: '/mo',
+}
+
+const PERIOD_NOUN: Record<PeriodKind, string> = {
+  week: 'week',
+  month: 'month',
+  year: 'year',
+  custom: 'month',
+}
+
+const plural = (count: number, noun: string) => `${noun}${count === 1 ? '' : 's'}`
+
 export function ReportsScreen() {
   const data = useReportsData()
   const showSnack = useUIStore((s) => s.showSnack)
@@ -33,6 +50,8 @@ export function ReportsScreen() {
   const [to, setTo] = useState(() => toDateOnly(today))
   const [picking, setPicking] = useState(false)
   const [reviewing, setReviewing] = useState(false)
+
+  const trendKind: PeriodKind = kind === 'custom' ? 'month' : kind
 
   const view = useMemo(
     () =>
@@ -116,21 +135,22 @@ export function ReportsScreen() {
             </div>
             <Trend view={view} />
             <p className="mt-2.5 text-meta text-muted">
-              Avg saved{' '}
-              <Money value={view.averageSaved} whole className="font-semibold text-ink" />
-              {kind === 'week' ? '/wk' : kind === 'year' ? '/yr' : '/mo'} over{' '}
-              {view.periodsCounted}{' '}
-              {kind === 'week'
-                ? view.periodsCounted === 1
-                  ? 'week'
-                  : 'weeks'
-                : kind === 'year'
-                  ? view.periodsCounted === 1
-                    ? 'year'
-                    : 'years'
-                  : view.periodsCounted === 1
-                    ? 'month'
-                    : 'months'}
+              {view.periodsCounted === 0 ? (
+                // A fresh install has nothing to average, and "over 0 months"
+                // reads like a bug rather than an empty ledger.
+                'Nothing recorded yet.'
+              ) : (
+                <>
+                  Avg saved{' '}
+                  <Money
+                    value={view.averageSaved}
+                    whole
+                    className="font-semibold text-ink"
+                  />
+                  {PERIOD_SUFFIX[trendKind]} over {view.periodsCounted}{' '}
+                  {plural(view.periodsCounted, PERIOD_NOUN[trendKind])}
+                </>
+              )}
             </p>
           </section>
 
