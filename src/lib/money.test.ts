@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { formatAmount, formatMoney, parseMoney, splitEvenly } from './money'
+import {
+  allocateByWeight,
+  formatAmount,
+  formatMoney,
+  formatMoneyShort,
+  formatPercent,
+  formatPercentDelta,
+  parseMoney,
+  ratio,
+  splitEvenly,
+  sumMoney,
+} from './money'
 
 describe('formatMoney', () => {
   it('formats centavos with the currency symbol', () => {
@@ -74,5 +85,96 @@ describe('splitEvenly', () => {
 
   it('rejects a part count below one', () => {
     expect(() => splitEvenly(100, 0)).toThrow(RangeError)
+  })
+})
+
+describe('sumMoney', () => {
+  it('adds centavos', () => {
+    expect(sumMoney([28900, 21400, -1000])).toBe(49300)
+  })
+
+  it('is zero for nothing', () => {
+    expect(sumMoney([])).toBe(0)
+  })
+})
+
+describe('formatMoneyShort', () => {
+  it.each([
+    [31_480_00, '₱31.4k'],
+    [426_178_00, '₱426k'],
+    [1_250_000_00, '₱1.2M'],
+    [84_900, '₱849'],
+    [-20_480_00, '\u2212₱20.4k'],
+  ])('shortens %i', (amount, expected) => {
+    expect(formatMoneyShort(amount)).toBe(expected)
+  })
+
+  it('truncates rather than rounding up, so a label never overstates', () => {
+    // 31,999.99 is not "₱32.0k" — that would read as more money than there is.
+    expect(formatMoneyShort(31_999_99)).toBe('₱31.9k')
+  })
+})
+
+describe('formatPercent', () => {
+  it('rounds to whole percent by default', () => {
+    expect(formatPercent(0.787)).toBe('79%')
+  })
+
+  it('takes a digit count', () => {
+    expect(formatPercent(0.787, 1)).toBe('78.7%')
+  })
+
+  it('renders an em dash for a non-finite ratio', () => {
+    expect(formatPercent(Number.NaN)).toBe('—')
+  })
+})
+
+describe('formatPercentDelta', () => {
+  it.each([
+    [8_940_00, 7_982_00, '+12%'],
+    [6_600_00, 7_174_00, '\u22128%'],
+    [1000, 1000, '0%'],
+    [500, 0, 'new'],
+    [0, 0, '0%'],
+  ])('compares %i to %i', (current, previous, expected) => {
+    expect(formatPercentDelta(current, previous)).toBe(expected)
+  })
+})
+
+describe('ratio', () => {
+  it('divides', () => {
+    expect(ratio(31_480_00, 40_000_00)).toBeCloseTo(0.787)
+  })
+
+  it('treats a zero whole as zero, not Infinity', () => {
+    expect(ratio(500, 0)).toBe(0)
+  })
+})
+
+describe('allocateByWeight', () => {
+  it('splits in proportion and sums back exactly', () => {
+    const parts = allocateByWeight(10_000_00, [1, 2, 3])
+    expect(parts).toEqual([166_667, 333_333, 500_000])
+    expect(sumMoney(parts)).toBe(10_000_00)
+  })
+
+  it('falls back to an even split when every weight is zero', () => {
+    expect(allocateByWeight(1000, [0, 0, 0])).toEqual([334, 333, 333])
+  })
+
+  it('handles a single weight', () => {
+    expect(allocateByWeight(4321, [7])).toEqual([4321])
+  })
+
+  it('returns nothing for no weights', () => {
+    expect(allocateByWeight(1000, [])).toEqual([])
+  })
+
+  it('rejects negative weights', () => {
+    expect(() => allocateByWeight(1000, [1, -1])).toThrow(RangeError)
+  })
+
+  it('keeps the sum exact for a negative total', () => {
+    expect(sumMoney(allocateByWeight(-10_000, [1, 2, 3]))).toBe(-10_000)
   })
 })

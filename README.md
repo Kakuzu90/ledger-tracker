@@ -35,10 +35,34 @@ e2e/            Playwright specs
 scripts/        build-time helpers (PWA icon generation)
 ```
 
+## Data
+
+`bootstrapDatabase()` runs on every launch. It seeds the default categories
+(11 expense, 3 income, two under Food) and default settings into an empty
+database, and never touches values the user has since changed.
+
+In **dev only**, an empty database also gets the demo dataset from
+`src/db/sample.ts`. It is deterministic and built around *today*, and it
+reproduces the figures in the mockups — ₱64,250 net worth, ₱52,000 in against
+₱31,480 out this month, ₱12,500 owed to the user, nine recurring rules —
+so the screens have realistic data to render. `src/db/sample.test.ts` asserts
+those figures, which means a change that breaks the arithmetic fails the suite.
+
+Opening balances are *solved* from the generated history rather than written
+by hand, so computed balances land exactly on their targets. Nothing loads
+sample data in production; that stays an explicit action.
+
 ## Notes for the next change
 
 - **Money** is integer centavos end to end. `src/lib/money.ts` parses from
-  digits rather than `Number(x) * 100`, which drifts.
+  digits rather than `Number(x) * 100`, which drifts, and splits with
+  `allocateByWeight` so parts sum back exactly.
+- **Computed, never stored**: balances live in `src/lib/balances.ts`, loan
+  remainders in `src/lib/loans.ts`. Transfers and loan principal are movements,
+  not income or expense, so they are excluded from month totals.
+- **Formal loans** need amortisation for their remaining balance; `outstanding()`
+  is principal less payments, which is only right at 0%. `loanTotals()` covers
+  personal loans only, matching the cards in Loans.dc.html.
 - **Theme** is a `data-theme` attribute on `<html>` over CSS variables in
   `src/styles/tokens.css`; Tailwind colours all resolve through them. The
   preference lives in the IndexedDB `settings` table — `localStorage` holds a

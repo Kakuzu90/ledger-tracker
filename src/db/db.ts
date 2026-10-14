@@ -26,8 +26,9 @@ export class LedgerDB extends Dexie {
   goals!: EntityTable<Goal, 'id'>
   settings!: EntityTable<Setting, 'key'>
 
-  constructor() {
-    super('ledger')
+  /** The name is a parameter so tests can open throwaway databases. */
+  constructor(name = 'ledger') {
+    super(name)
 
     // Indexes only — unindexed fields are stored all the same.
     this.version(1).stores({
