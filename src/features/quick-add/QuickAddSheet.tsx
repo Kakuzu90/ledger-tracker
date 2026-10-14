@@ -29,16 +29,23 @@ const TYPES: ReadonlyArray<{ value: TransactionType; label: string }> = [
 export function QuickAddSheet() {
   const open = useUIStore((s) => s.quickAddOpen)
   const session = useUIStore((s) => s.quickAddSession)
+  const initial = useUIStore((s) => s.quickAddInitial)
   const close = useUIStore((s) => s.closeQuickAdd)
 
   // Keyed on the session so each open starts from a clean draft, rather than
   // resetting state from an effect.
-  return open ? <QuickAddForm key={session} onClose={close} /> : null
+  return open ? <QuickAddForm key={session} initial={initial} onClose={close} /> : null
 }
 
-function QuickAddForm({ onClose }: { onClose: () => void }) {
+function QuickAddForm({
+  initial,
+  onClose,
+}: {
+  initial: Partial<Draft> | null
+  onClose: () => void
+}) {
   const today = useMemo(() => new Date(), [])
-  const [draft, setDraft] = useState<Draft>(() => emptyDraft(today))
+  const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(today), ...initial }))
   const [saving, setSaving] = useState(false)
   const [showProblem, setShowProblem] = useState(false)
 

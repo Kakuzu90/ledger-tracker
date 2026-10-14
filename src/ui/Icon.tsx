@@ -147,3 +147,37 @@ export const TrashIcon = (p: IconProps) => (
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
   </Svg>
 )
+
+export const BankIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z" />
+  </Svg>
+)
+
+export const PhoneIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <rect x="6" y="2" width="12" height="20" rx="2.5" />
+    <path d="M11 18h2" />
+  </Svg>
+)
+
+export const CashIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2.5" />
+  </Svg>
+)
+
+export const CardIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <rect x="3" y="6" width="18" height="13" rx="2" />
+    <path d="M3 10h18M7 15h4" />
+  </Svg>
+)
+
+export const ArchiveIcon = (p: IconProps) => (
+  <Svg size={20} {...p}>
+    <rect x="3" y="4" width="18" height="5" rx="1.5" />
+    <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+  </Svg>
+)

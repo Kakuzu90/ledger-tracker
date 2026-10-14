@@ -44,7 +44,7 @@ export function TabBar() {
       <button
         type="button"
         aria-label="Add transaction"
-        onClick={openQuickAdd}
+        onClick={() => openQuickAdd()}
         className="-mt-[26px] flex h-14 w-14 items-center justify-center rounded-[18px] bg-primary text-primary-ink shadow-fab"
       >
         <PlusIcon size={26} strokeWidth={2.2} />

@@ -54,8 +54,9 @@ sample data in production; that stays an explicit action.
 
 ## Screens
 
-**Home**, **Quick Add**, **Activity**, **Calendar** and **Transaction detail**
-are built (`src/features/{home,quick-add,activity,transactions}`). Both follow the same split: a pure module holds the logic
+**Home**, **Quick Add**, **Activity**, **Calendar**, **Transaction detail**
+and **Accounts** are built
+(`src/features/{home,quick-add,activity,transactions,accounts}`). Both follow the same split: a pure module holds the logic
 (`dashboard.ts`, `draft.ts`), a `db.ts` holds the Dexie queries and writes, and
 the components only render. That is what makes the figures testable —
 `dashboard.test.ts` asserts the home cards against the sample data, so a change
@@ -84,6 +85,10 @@ included, so no orphaned blob is left behind.
   principal is borrowed or lent rather than earned or spent. Home, Activity's
   in/out strip, the day nets and the calendar heatmap all defer to it, so a
   month reads the same figure wherever you look at it.
+- **Transfers are entered through Quick Add**, not a second form. The
+  Accounts screen opens it pre-set (`openQuickAdd({ type: 'transfer' })`),
+  and a card's "Pay this card" also fills in the destination. Paying a card
+  is just a transfer into it, so the debt drops and net worth does not move.
 - **Formal loans** need amortisation for their remaining balance; `outstanding()`
   is principal less payments, which is only right at 0%. `loanTotals()` covers
   personal loans only, matching the cards in Loans.dc.html.

@@ -27,6 +27,10 @@
   /* Inverted surface used by the install banner and active chips. */
   --c-contrast: 22 24 29;
   --c-contrast-ink: 255 255 255;
+  /* Negative figures printed on that inverted surface — #F5B48C, the value
+     the mockups use on the dark net-worth card. A mix of the negative token
+     cannot serve both themes, since the surface flips with them. */
+  --c-negative-on-contrast: 245 180 140;
 
   color-scheme: light;
 }
@@ -53,6 +57,7 @@
 
     --c-contrast: 242 243 240;
     --c-contrast-ink: 22 24 29;
+    --c-negative-on-contrast: 143 62 10;
 
     color-scheme: dark;
   }
@@ -79,6 +84,7 @@
 
   --c-contrast: 242 243 240;
   --c-contrast-ink: 22 24 29;
+  --c-negative-on-contrast: 143 62 10;
 
   color-scheme: dark;
 }

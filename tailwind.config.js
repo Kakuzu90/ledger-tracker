@@ -27,6 +27,7 @@ export default {
         'negative-ink': token('c-negative-ink'),
         contrast: token('c-contrast'),
         'contrast-ink': token('c-contrast-ink'),
+        'negative-on-contrast': token('c-negative-on-contrast'),
       },
       fontFamily: {
         sans: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
