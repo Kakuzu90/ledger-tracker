@@ -166,6 +166,33 @@
     @apply flex items-center gap-3 border-b border-divider py-3 last:border-b-0;
   }
 
+  /*
+   * The tab bar's cradle for the add button.
+   *
+   * A mask rather than a border-radius trick, because the shape is
+   * concave. Three layers: a fixed-width SVG holding the curve, centred,
+   * and a plain fill either side of it — so the notch keeps its size and
+   * the bar still stretches to whatever width it is given. A single
+   * stretched SVG would squash the circle on a narrow phone.
+   *
+   * The curve is a 38px cradle centred on the bar's top edge, with short
+   * cubic shoulders either side so it eases into the edge rather than
+   * meeting it at a corner.
+   */
+  .tab-cradle {
+    --cradle: 120px;
+    --cradle-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' viewBox='0 0 120 80'%3E%3Cpath fill='%23000' d='M0 0h12c5 0 8.6 1.4 10.6 4.6A38 38 0 0 0 97.4 4.6C99.4 1.4 103 0 108 0h12v80H0Z'/%3E%3C/svg%3E");
+
+    -webkit-mask-image: var(--cradle-svg), linear-gradient(#000, #000), linear-gradient(#000, #000);
+    mask-image: var(--cradle-svg), linear-gradient(#000, #000), linear-gradient(#000, #000);
+    -webkit-mask-size: var(--cradle) 100%, calc(50% - var(--cradle) / 2) 100%, calc(50% - var(--cradle) / 2) 100%;
+    mask-size: var(--cradle) 100%, calc(50% - var(--cradle) / 2) 100%, calc(50% - var(--cradle) / 2) 100%;
+    -webkit-mask-position: top center, top left, top right;
+    mask-position: top center, top left, top right;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+
   /* 40px leading icon tile used in every list. */
   .row-icon {
     @apply flex h-10 w-10 flex-none items-center justify-center rounded-ctl font-heading text-sm font-semibold;
