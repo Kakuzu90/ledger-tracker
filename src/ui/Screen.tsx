@@ -1,15 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeftIcon } from './Icon'
-
-/*
- * A route change swaps the whole screen but leaves focus on the link that
- * was clicked, so a screen reader says nothing and a keyboard user carries
- * on from a control that is no longer there. Moving focus to the new title
- * is the usual answer. The first paint is exempt: nothing was navigated
- * from, and stealing focus on load would fight the browser.
- */
-let navigated = false
 
 interface ScreenProps {
   /** Large title for tab screens, compact centred title for sub-screens. */
@@ -29,30 +20,6 @@ interface ScreenProps {
  */
 export function Screen({ title, eyebrow, back = false, actions, children }: ScreenProps) {
   const navigate = useNavigate()
-  const heading = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    if (!navigated) {
-      navigated = true
-      return
-    }
-
-    const element = heading.current
-    if (!element) return
-
-    /*
-     * The tabindex is added for the moment it takes to move focus and
-     * dropped again on the way out. Left on permanently, a tap on the
-     * title would focus it too and draw a ring around a heading nobody
-     * was interacting with.
-     */
-    element.setAttribute('tabindex', '-1')
-    element.focus()
-
-    const drop = () => element.removeAttribute('tabindex')
-    element.addEventListener('blur', drop, { once: true })
-    return () => element.removeEventListener('blur', drop)
-  }, [])
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-screen">
@@ -70,9 +37,7 @@ export function Screen({ title, eyebrow, back = false, actions, children }: Scre
 
         <div className={back ? 'grow text-center' : 'grow'}>
           {eyebrow && <p className="text-meta text-muted">{eyebrow}</p>}
-          <h1 ref={heading} className={back ? 'text-screen-sub' : 'text-screen'}>
-            {title}
-          </h1>
+          <h1 className={back ? 'text-screen-sub' : 'text-screen'}>{title}</h1>
         </div>
 
         {/* Keeps a centred sub-screen title centred when there are no actions. */}
