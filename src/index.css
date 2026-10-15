@@ -21,6 +21,24 @@
   }
 
   /*
+   * No scrollbars anywhere, the way a phone app has none. Content clipped
+   * at the edge of a rail or a sheet is the affordance instead, which is
+   * what the platform relies on too.
+   *
+   * `scrollbar-width` is not inherited, so it has to be set on everything
+   * rather than on the root.
+   */
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  /*
    * Allowing pinch-zoom (no `maximum-scale` in the viewport meta) also
    * re-allows double-tap-to-zoom, and a browser that is watching for a
    * second tap holds the first one back. On the PIN keypad that is fatal:
@@ -128,20 +146,6 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-  }
-
-  /*
-   * Scrolls, but without drawing a bar. For the chip rails, which are a
-   * few pixels taller than their content: a scrollbar there reads as a
-   * stray rule under the row rather than as an affordance. Only for rows
-   * whose overflow is already obvious from a chip cut off at the edge.
-   */
-  .no-scrollbar {
-    scrollbar-width: none;
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
   }
 
   /* Numerals — always tabular so columns of money line up. */
