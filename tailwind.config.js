@@ -75,7 +75,6 @@ export default {
         touch: '44px', // minimum touch target
       },
       boxShadow: {
-        fab: '0 10px 24px rgb(var(--c-fab-to) / .35)',
         sheet: '0 -8px 32px rgb(0 0 0 / .18)',
       },
       maxWidth: {
