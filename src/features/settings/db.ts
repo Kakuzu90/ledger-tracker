@@ -33,13 +33,14 @@ export interface SettingsData {
 
 export function useSettingsData(): SettingsData | undefined {
   return useLiveQuery(async () => {
-    const [settings, categories, accounts, rules, contacts, transactions] =
+    const [settings, categories, accounts, rules, contacts, goals, transactions] =
       await Promise.all([
         db.settings.toArray(),
         db.categories.toArray(),
         db.accounts.toArray(),
         db.recurring.count(),
         db.contacts.count(),
+        db.goals.count(),
         db.transactions.toArray(),
       ])
 
@@ -56,6 +57,7 @@ export function useSettingsData(): SettingsData | undefined {
         accounts: accounts.filter((account) => !account.archived).length,
         rules,
         contacts,
+        goals,
       },
       ...(typeof lastBackup === 'string' ? { lastBackupAt: lastBackup } : {}),
       notifications: notificationState(),

@@ -15,6 +15,7 @@ const counts: SettingsCounts = {
   accounts: 5,
   rules: 9,
   contacts: 6,
+  goals: 3,
 }
 
 const ago = (days: number) =>

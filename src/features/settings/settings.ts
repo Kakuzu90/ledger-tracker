@@ -24,6 +24,8 @@ export interface SettingsCounts {
   accounts: number
   rules: number
   contacts: number
+  /** Savings goals; the budgets themselves are per month, so not counted. */
+  goals: number
 }
 
 export interface SettingsView {
