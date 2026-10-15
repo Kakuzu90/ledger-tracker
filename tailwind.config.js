@@ -10,6 +10,11 @@ export default {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
+      // Phones shorter than an iPhone X — SE, 8, 8 Plus. The Quick Add
+      // sheet is the one screen with enough fixed furniture to care.
+      screens: {
+        short: { raw: '(max-height: 740px)' },
+      },
       colors: {
         bg: token('c-bg'),
         surface: token('c-surface'),

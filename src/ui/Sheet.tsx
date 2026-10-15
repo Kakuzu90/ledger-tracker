@@ -150,7 +150,7 @@ export function Sheet({
         // Installed on a phone with a home indicator, the last button in a
         // sheet would otherwise sit under it.
         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pt-2.5 shadow-sheet outline-none ${
+        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pt-2.5 shadow-sheet outline-none short:gap-2 ${
           fill ? 'h-[calc(100dvh-48px)]' : 'max-h-[calc(100dvh-48px)] overflow-y-auto'
         }`}
       >

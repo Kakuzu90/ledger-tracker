@@ -13,14 +13,17 @@ function BackspaceIcon() {
 
 export function Keypad({ onPress }: { onPress: (key: string) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-3 gap-2 short:gap-1.5">
       {KEYS.map((key) => (
         <button
           key={key}
           type="button"
           aria-label={key === 'backspace' ? 'Backspace' : key}
           onClick={() => onPress(key)}
-          className="flex min-h-[52px] items-center justify-center rounded-ctl bg-surface font-heading text-[22px] font-semibold text-ink active:bg-divider"
+          // 44px is the floor the design sets; the key only shrinks to it
+          // on a short screen, where the rows it buys back are the
+          // difference between seeing the categories and not.
+          className="flex min-h-[52px] items-center justify-center rounded-ctl bg-surface font-heading text-[22px] font-semibold text-ink active:bg-divider short:min-h-touch"
         >
           {key === 'backspace' ? <BackspaceIcon /> : key}
         </button>
@@ -43,10 +46,10 @@ export function AmountDisplay({ input, type }: { input: string; type: Transactio
     type === 'expense' ? 'text-negative' : type === 'income' ? 'text-primary' : 'text-ink'
 
   return (
-    <div className="py-1 text-center">
+    <div className="py-1 text-center short:py-0">
       <p
         aria-hidden="true"
-        className={`num m-0 text-[44px] font-bold tracking-[-.02em] ${tone}`}
+        className={`num m-0 text-[44px] font-bold tracking-[-.02em] short:text-[34px] ${tone}`}
       >
         ₱{grouped}
         <span className="text-muted">.{centavos}</span>

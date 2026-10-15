@@ -206,7 +206,7 @@ function QuickAddForm({
         nothing and Save fell 80px below the fold with no way to reach it.
         Only the action is pinned now, so it is always in sight.
       */}
-      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1">
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 short:gap-2">
         <Segmented
           label="Type"
           options={TYPES}
@@ -285,7 +285,7 @@ function QuickAddForm({
         pinning the note and the amount as well used to push Save off the
         bottom of a sheet that had no overflow to reach it through.
       */}
-      <div className="flex flex-none flex-col gap-3 pt-3">
+      <div className="flex flex-none flex-col gap-3 pt-3 short:gap-2 short:pt-2">
         <Keypad onPress={press} />
 
         {(failure ?? (showProblem && problem ? PROBLEM_MESSAGE[problem] : null)) && (
