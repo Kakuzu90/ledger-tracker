@@ -5,12 +5,11 @@ import { Segmented } from '@/ui/Segmented'
 import { useUIStore } from '@/store/ui'
 import { db } from '@/db/db'
 import type { Id, TransactionType } from '@/db/types'
-import { AmountDisplay, Keypad } from './components/Keypad'
+import { AmountField } from './components/AmountField'
 import { AccountPicker, CategoryPicker, DatePicker, ReceiptPicker } from './components/Pickers'
 import { ReceiptIcon, RepeatIcon } from '@/ui/Icon'
 import { useAccounts, useCategories, useLastUsedAccountId } from './hooks/usePickers'
 import { saveDraft, updateDraft } from './db'
-import { useKeypadKeys } from '@/lib/keypad'
 import {
   changeType,
   draftChanged,
@@ -18,7 +17,7 @@ import {
   emptyDraft,
   hasReceipt,
   PROBLEM_MESSAGE,
-  pressKey,
+  sanitizeAmount,
   SAVE_LABEL,
   validate,
   type Draft,
@@ -154,16 +153,6 @@ function QuickAddForm({
     }
   }
 
-  const press = (key: string) =>
-    setDraft((draft) => ({ ...draft, amountInput: pressKey(draft.amountInput, key) }))
-
-  useKeypadKeys({
-    onKey: press,
-    onBackspace: () => press('backspace'),
-    onSubmit: () => void onSave(),
-    decimal: true,
-  })
-
   const onPickReceipt = (file: File | null) => {
     if (!file) return
     update({
@@ -214,7 +203,11 @@ function QuickAddForm({
           onChange={(type) => setDraft((draft) => changeType(draft, type))}
         />
 
-        <AmountDisplay input={current.amountInput} type={current.type} />
+        <AmountField
+          value={current.amountInput}
+          type={current.type}
+          onChange={(next) => update({ amountInput: sanitizeAmount(next) })}
+        />
 
         {/*
           Account and date come before the categories, not after: below the
@@ -276,18 +269,10 @@ function QuickAddForm({
           onChange={(event) => update({ note: event.target.value })}
           placeholder="Add a note or #tag"
         />
-
       </div>
 
-      {/*
-        Pinned: the keypad and the action. Together they are a fixed ~300px,
-        which leaves room for the scroller even on a 667px phone — where
-        pinning the note and the amount as well used to push Save off the
-        bottom of a sheet that had no overflow to reach it through.
-      */}
+      {/* Pinned: the action, and anything standing between it and saving. */}
       <div className="flex flex-none flex-col gap-3 pt-3 short:gap-2 short:pt-2">
-        <Keypad onPress={press} />
-
         {(failure ?? (showProblem && problem ? PROBLEM_MESSAGE[problem] : null)) && (
           <p role="alert" className="text-center text-meta text-negative">
             {failure ?? (problem ? PROBLEM_MESSAGE[problem] : null)}

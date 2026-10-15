@@ -47,29 +47,22 @@ export function emptyDraft(today: Date = new Date()): Draft {
 const MAX_DECIMALS = 2
 
 /**
- * Applies one keypad press. Guards the things a keypad has to guard: a single
- * decimal point, two decimals, no runaway leading zeros.
+ * Holds typed or pasted text to the same shape the keypad used to
+ * guarantee: digits, at most one dot, at most two decimals, no runaway
+ * leading zeros. `pressKey` only ever saw a single key; a real field can
+ * be pasted into and edited in the middle.
  */
-export function pressKey(input: string, key: string): string {
-  if (key === 'backspace') return input.slice(0, -1)
+export function sanitizeAmount(input: string): string {
+  const digitsAndDots = input.replace(/[^\d.]/g, '')
+  const [whole = '', ...rest] = digitsAndDots.split('.')
 
-  if (key === '.') {
-    if (input.includes('.')) return input
-    return input === '' ? '0.' : `${input}.`
-  }
+  const trimmed = whole.replace(/^0+(?=\d)/, '').slice(0, 9)
+  if (rest.length === 0) return trimmed
 
-  if (!/^\d$/.test(key)) return input
-
-  const [whole = '', fraction] = input.split('.')
-  if (fraction !== undefined) {
-    if (fraction.length >= MAX_DECIMALS) return input
-    return `${whole}.${fraction}${key}`
-  }
-
-  // "0" then "5" is 5, not 05 — but "0" then "." keeps the zero.
-  if (input === '0') return key
-  if (whole.length >= 9) return input
-  return input + key
+  // Everything after the first dot is one fraction; a second dot is dropped
+  // rather than splitting the number in two.
+  const fraction = rest.join('').slice(0, MAX_DECIMALS)
+  return `${trimmed === '' ? '0' : trimmed}.${fraction}`
 }
 
 export const draftAmount = (draft: Draft): Centavos => parseMoney(draft.amountInput) ?? 0
