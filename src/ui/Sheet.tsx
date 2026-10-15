@@ -73,6 +73,18 @@ export function Sheet({
     onClose()
   }, [confirmDiscard, onClose])
 
+  /*
+   * The open effect reads this rather than depending on it. Callers pass
+   * `onClose` inline, so `dismiss` is a new function every render — as a
+   * dependency it tore the effect down and set it up again on each
+   * keystroke, and the setup moves focus to the panel. Typing one letter
+   * into a field in a sheet lost the field.
+   */
+  const latestDismiss = useRef(dismiss)
+  useEffect(() => {
+    latestDismiss.current = dismiss
+  })
+
   useEffect(() => {
     if (!open) return
 
@@ -81,7 +93,7 @@ export function Sheet({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         if (prompt.current) setAsking(false)
-        else dismiss()
+        else latestDismiss.current()
         return
       }
       // While the discard prompt is up it is the modal, not the sheet.
@@ -130,7 +142,7 @@ export function Sheet({
       // opened the sheet rather than restarting at the top of the page.
       opener.current?.focus()
     }
-  }, [open, dismiss])
+  }, [open])
 
   useEffect(() => {
     if (asking) prompt.current?.focus()
