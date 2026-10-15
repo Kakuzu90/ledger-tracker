@@ -30,6 +30,11 @@ Offline-first, single-user, installable PWA. No backend. All data in IndexedDB.
 
 Bottom tabs: Home · Activity · (+ FAB) · Loans · Reports. Sub-screens use a back button and no tab bar.
 
+## UI work
+- **Always invoke the `ui-ux-pro-max` skill before touching the UI** — new screens or components, styling, layout, responsive behaviour, interaction, charts, accessibility, and any review or fix of existing UI. Load it first, then work; do not answer from memory.
+- It does not override anything above. The mockups, the design tokens and the 44px touch target stay authoritative; use the skill for what they do not say.
+- Skip it only for work that changes nothing on screen — pure `src/lib` logic, Dexie schema, tests, tooling.
+
 ## Stack
 - Vite + React + TypeScript (strict)
 - Tailwind CSS (tokens below in `tailwind.config`)

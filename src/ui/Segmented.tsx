@@ -22,7 +22,7 @@ export function Segmented<T extends string>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(option.value)}
-            className={`min-h-[40px] flex-1 rounded-[9px] text-sm font-medium transition-colors ${
+            className={`min-h-touch flex-1 rounded-[9px] text-sm font-medium transition-colors ${
               active ? 'bg-surface text-ink shadow-sm' : 'text-muted'
             }`}
           >

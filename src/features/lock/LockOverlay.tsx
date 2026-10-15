@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useKeypadKeys } from '@/lib/keypad'
 import { LockIcon } from '@/ui/Icon'
 import { cooldownText, PIN_MAX, secondsLeft } from '@/lib/pin'
 import { describeError } from '@/lib/webauthn'
@@ -20,6 +21,7 @@ export function LockOverlay() {
   const [problem, setProblem] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [forgot, setForgot] = useState(false)
+  const [erasing, setErasing] = useState(false)
   const [now, setNow] = useState(() => new Date())
 
   const waiting = secondsLeft(state?.cooldownUntil, now)
@@ -56,6 +58,18 @@ export function LockOverlay() {
     if (next.length === DOTS) void submit(next)
   }
 
+  useKeypadKeys({
+    onKey: onDigit,
+    onBackspace: () => {
+      setProblem(null)
+      setPin((current) => current.slice(0, -1))
+    },
+    onSubmit: () => {
+      if (pin.length > DOTS) void submit(pin)
+    },
+    enabled: !busy && waiting === 0,
+  })
+
   const onBiometric = async () => {
     if (!state?.credential || busy) return
     setBusy(true)
@@ -81,7 +95,7 @@ export function LockOverlay() {
 
   return (
     <div
-      className="flex min-h-dvh flex-col items-center bg-lock px-6 pt-[88px] text-lock-ink"
+      className="flex min-h-dvh flex-col items-center overflow-y-auto bg-lock px-6 pt-[88px] text-lock-ink"
       style={{ paddingBottom: 'calc(2.5rem + env(safe-area-inset-bottom))' }}
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-lock-tile text-lock-ink">
@@ -146,36 +160,103 @@ export function LockOverlay() {
       </button>
 
       {forgot && (
-        <div className="fixed inset-0 z-10 flex flex-col justify-end bg-lock/80 p-5">
-          <div className="rounded-card bg-surface p-5 text-ink">
-            <h2 className="text-screen-sub">There is no way back in</h2>
-            <p className="mt-2 text-meta text-muted">
-              The PIN is not stored — only a one-way hash of it — so it cannot be
-              looked up or reset from here. The way back is the backup file you
-              exported: erase this device's data, then restore it on the empty app.
+        <ForgotPin
+          onClose={() => {
+            setForgot(false)
+            setErasing(false)
+          }}
+          erasing={erasing}
+          onAskErase={() => setErasing(true)}
+          onErase={() => void resetAllData().then(openApp)}
+        />
+      )}
+    </div>
+  )
+}
+
+
+/**
+ * The way out when the PIN is gone. Erasing is irreversible and there is no
+ * copy anywhere else, so it takes two deliberate steps rather than one tap
+ * from a frustrated person — and the panel is a real dialog: labelled,
+ * escapable, and holding focus while it is up.
+ */
+function ForgotPin({
+  onClose,
+  erasing,
+  onAskErase,
+  onErase,
+}: {
+  onClose: () => void
+  erasing: boolean
+  onAskErase: () => void
+  onErase: () => void
+}) {
+  const panel = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    panel.current?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-10 flex flex-col justify-end overflow-y-auto bg-lock/80 p-5">
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgot-title"
+        tabIndex={-1}
+        className="rounded-card bg-surface p-5 text-ink outline-none"
+      >
+        <h2 id="forgot-title" className="text-screen-sub">
+          There is no way back in
+        </h2>
+        <p className="mt-2 text-meta text-muted">
+          The PIN is not stored — only a one-way hash of it — so it cannot be looked up
+          or reset from here. The way back is the backup file you exported: erase this
+          device's data, then restore it on the empty app.
+        </p>
+        <p className="mt-2 text-meta text-muted">
+          Without a backup file, erasing loses the ledger for good.
+        </p>
+
+        {erasing ? (
+          <div role="alertdialog" aria-label="Erase everything on this device?" className="mt-4">
+            <p className="font-medium text-negative">Erase everything on this device?</p>
+            <p className="mt-1 text-meta text-muted">
+              Every entry, account, loan and receipt goes. This cannot be undone.
             </p>
-            <p className="mt-2 text-meta text-muted">
-              Without a backup file, erasing loses the ledger for good.
-            </p>
-            <button
-              type="button"
-              className="btn-secondary mt-4 w-full"
-              onClick={() => setForgot(false)}
-            >
+            <button type="button" className="btn-secondary mt-4 w-full" onClick={onClose}>
               Keep trying
             </button>
             <button
               type="button"
               className="mt-2 min-h-[50px] w-full rounded-btn bg-negative font-semibold text-negative-ink"
-              onClick={() => {
-                void resetAllData().then(openApp)
-              }}
+              onClick={onErase}
+            >
+              Yes, erase everything
+            </button>
+          </div>
+        ) : (
+          <>
+            <button type="button" className="btn-secondary mt-4 w-full" onClick={onClose}>
+              Keep trying
+            </button>
+            <button
+              type="button"
+              className="mt-2 min-h-[50px] w-full rounded-btn border border-negative/40 font-semibold text-negative"
+              onClick={onAskErase}
             >
               Erase and start over
             </button>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

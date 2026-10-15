@@ -22,10 +22,7 @@ export function Snackbar() {
   if (!snack) return null
 
   return (
-    <div
-      role="status"
-      className="pointer-events-none fixed inset-x-0 bottom-[96px] z-40 mx-auto flex max-w-screen px-4"
-    >
+    <div role="status" className="flex">
       <div className="pointer-events-auto flex w-full items-center justify-between gap-3 rounded-btn bg-contrast py-1.5 pl-4 pr-2 text-contrast-ink shadow-sheet">
         <span className="text-sm">{snack.message}</span>
         {snack.actionLabel && (
@@ -35,7 +32,7 @@ export function Snackbar() {
               void snack.onAction?.()
               dismiss()
             }}
-            className="min-h-touch px-3 text-sm font-semibold text-primary"
+            className="min-h-touch px-3 text-sm font-semibold text-primary-on-contrast"
           >
             {snack.actionLabel}
           </button>

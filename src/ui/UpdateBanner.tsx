@@ -1,8 +1,12 @@
+import { useEffect } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { CheckIcon, RefreshIcon } from './Icon'
 
 /** How often an installed app looks for a new build. */
 const CHECK_EVERY_MS = 60 * 60 * 1000
+
+/** The "ready offline" notice is news, not a decision; it shows itself out. */
+const OFFLINE_NOTICE_MS = 6000
 
 /**
  * The service worker's two pieces of news.
@@ -43,13 +47,17 @@ export function UpdateBanner() {
     },
   })
 
+  // Unlike the update prompt, which waits for an answer.
+  useEffect(() => {
+    if (!offlineReady) return
+    const timer = setTimeout(() => setOfflineReady(false), OFFLINE_NOTICE_MS)
+    return () => clearTimeout(timer)
+  }, [offlineReady, setOfflineReady])
+
   if (!needRefresh && !offlineReady) return null
 
   return (
-    <div
-      role="status"
-      className="fixed inset-x-0 bottom-[96px] z-40 mx-auto flex max-w-screen items-center gap-3 px-5"
-    >
+    <div role="status" className="pointer-events-auto flex items-center gap-3">
       {needRefresh ? (
         <div className="card flex w-full items-center gap-3 border-contrast bg-contrast text-contrast-ink">
           <RefreshIcon size={20} />

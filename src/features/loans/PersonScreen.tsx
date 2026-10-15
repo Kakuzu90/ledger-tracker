@@ -111,28 +111,31 @@ export function PersonScreen() {
       </section>
 
       {view.open.length > 0 && (
-        <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
-          <button type="button" className="btn-primary !px-2" onClick={() => setPaying({})}>
+        <div className="flex flex-col gap-2">
+          {/*
+            Three across at 390px left the primary label wrapping inside a
+            110px button. The main action takes the full width and the two
+            secondaries share the row below.
+          */}
+          <button type="button" className="btn-primary w-full" onClick={() => setPaying({})}>
             Record payment
           </button>
-          <button
-            type="button"
-            className="btn-secondary !px-2 disabled:opacity-50"
-            disabled={!view.canRemind}
-            onClick={() => setReminding((on) => !on)}
-            aria-expanded={reminding}
-          >
-            <ShareIcon />
-            Remind
-          </button>
-          <button
-            type="button"
-            className="btn-secondary !px-2"
-            onClick={() => void onSettle()}
-          >
-            <CheckIcon />
-            Settle
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className="btn-secondary disabled:opacity-50"
+              disabled={!view.canRemind}
+              onClick={() => setReminding((on) => !on)}
+              aria-expanded={reminding}
+            >
+              <ShareIcon />
+              Remind
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => void onSettle()}>
+              <CheckIcon />
+              Settle
+            </button>
+          </div>
         </div>
       )}
 

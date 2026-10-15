@@ -20,8 +20,19 @@ export interface Draft {
   note: string
   /** Also create a monthly rule for this entry. */
   repeat: boolean
+  /** A newly picked file, waiting to be written. */
   receipt?: { blob: Blob; mime: string; size: number }
+  /**
+   * A receipt already in the table, when editing. Keeping the two apart is
+   * what lets a save tell "leave the photo alone" from "replace it" from
+   * "take it off", without rewriting the blob on every edit.
+   */
+  receiptId?: Id
 }
+
+/** True when the draft has a photo on it, stored or newly picked. */
+export const hasReceipt = (draft: Draft): boolean =>
+  draft.receipt !== undefined || draft.receiptId !== undefined
 
 export function emptyDraft(today: Date = new Date()): Draft {
   return {
@@ -137,6 +148,70 @@ export function draftToTransaction(draft: Draft): NewTransaction {
     tags,
     status: 'posted',
   }
+}
+
+/**
+ * Centavos back to what the keypad would have been holding. Whole amounts
+ * lose the trailing `.00` so that a backspace behaves the way it would
+ * have done on the way in.
+ */
+export function amountToInput(amount: Centavos): string {
+  const whole = Math.trunc(Math.abs(amount) / 100)
+  const fraction = Math.abs(amount) % 100
+  return fraction === 0 ? String(whole) : `${whole}.${String(fraction).padStart(2, '0')}`
+}
+
+/** Puts the tags back into the note, as they were typed. */
+export function toRawNote(note: string, tags: readonly string[]): string {
+  return [note, ...tags.map((tag) => `#${tag}`)].filter((part) => part !== '').join(' ')
+}
+
+/**
+ * The form as it should open for an existing entry — the inverse of
+ * `draftToTransaction`.
+ *
+ * `repeat` is always false: in edit mode the chip is not offered, because
+ * an entry's link to a rule is the rule's business and the detail screen
+ * has "Make recurring" for setting one up.
+ */
+export function draftFromTransaction(transaction: Transaction): Draft {
+  return {
+    type: transaction.type,
+    amountInput: amountToInput(transaction.amount),
+    accountId: transaction.accountId,
+    ...(transaction.toAccountId ? { toAccountId: transaction.toAccountId } : {}),
+    ...(transaction.categoryId ? { categoryId: transaction.categoryId } : {}),
+    date: transaction.date,
+    note: toRawNote(transaction.note, transaction.tags),
+    repeat: false,
+    ...(transaction.receiptId ? { receiptId: transaction.receiptId } : {}),
+  }
+}
+
+/**
+ * Whether the form has moved from what it opened with — what decides if
+ * dismissing it should ask before throwing the edit away.
+ *
+ * Field by field rather than serialising both and comparing the strings.
+ * That is exact and cheap, where a serialised compare depends on key order
+ * and cannot see into a `Blob` — every one of them flattens to the same
+ * `{}`, so one photo swapped for another of the same type and size would
+ * have looked like no change at all.
+ */
+export function draftChanged(a: Draft, b: Draft): boolean {
+  return (
+    a.type !== b.type ||
+    a.amountInput !== b.amountInput ||
+    a.accountId !== b.accountId ||
+    a.toAccountId !== b.toAccountId ||
+    a.categoryId !== b.categoryId ||
+    a.date !== b.date ||
+    a.note !== b.note ||
+    a.repeat !== b.repeat ||
+    a.receiptId !== b.receiptId ||
+    // Identity is the test: a newly picked file is always a new object.
+    a.receipt !== b.receipt
+  )
 }
 
 /** Switching type keeps the amount but drops fields that no longer apply. */

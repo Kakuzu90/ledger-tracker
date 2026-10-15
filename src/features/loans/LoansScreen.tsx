@@ -8,6 +8,7 @@ import { ChevronRightIcon, PlusIcon } from '@/ui/Icon'
 import { toDateOnly } from '@/lib/dates'
 import { useLoansData } from './db'
 import { buildLoansView, FILTERS, type LoanFilter, type FormalRow, type PersonRow } from './loans'
+import { Badge } from '@/ui/Rows'
 import { Avatar } from './components/Avatar'
 
 export function LoansScreen() {
@@ -173,6 +174,9 @@ export function LoansScreen() {
   )
 }
 
+const FORMAL_INTEREST = 'rgb(var(--c-loan-interest))'
+const FORMAL_PLAN = 'rgb(var(--c-loan-plan))'
+
 /** The two-tone bar under the totals, weighted by each side. */
 function Balance({ owedToYou, youOwe }: { owedToYou: number; youOwe: number }) {
   if (owedToYou === 0 && youOwe === 0) return <div className="my-3.5" />
@@ -196,9 +200,7 @@ function PersonLink({ person }: { person: PersonRow }) {
         <span className="flex items-center gap-1.5 text-meta text-muted">
           <span className="truncate">{subtitle}</span>
           {overdueDays > 0 && (
-            <span className="inline-flex min-h-[20px] flex-none items-center rounded-full bg-negative/15 px-2 text-[11px] font-semibold text-negative">
-              Overdue {overdueDays}d
-            </span>
+            <Badge tone="negative">Overdue {overdueDays}d</Badge>
           )}
         </span>
       </span>
@@ -219,8 +221,10 @@ function PersonLink({ person }: { person: PersonRow }) {
 }
 
 function FormalLink({ row }: { row: FormalRow }) {
-  // Interest-bearing loans read blue, 0% instalment plans pink, as in the mockup.
-  const color = (row.loan.ratePct ?? 0) > 0 ? '#1D4E89' : '#8A2452'
+  // Interest-bearing loans read blue, 0% instalment plans pink, as in the
+  // mockup. Tokens rather than fixed hexes: the raw values went straight to
+  // the meter fill, where a navy bar on a dark track was invisible.
+  const color = (row.loan.ratePct ?? 0) > 0 ? FORMAL_INTEREST : FORMAL_PLAN
 
   return (
     <Link to={`/loans/formal/${row.loan.id}`} className="list-row items-start no-underline">

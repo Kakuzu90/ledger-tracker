@@ -3,8 +3,7 @@ import { Screen } from '@/ui/Screen'
 import { Sheet } from '@/ui/Sheet'
 import { Segmented } from '@/ui/Segmented'
 import { Toggle } from '@/ui/Toggle'
-import { Badge, Row, RowGroup } from '@/ui/Rows'
-import { CheckIcon } from '@/ui/Icon'
+import { Badge, ChoiceRow, Row, RowGroup } from '@/ui/Rows'
 import { useUIStore } from '@/store/ui'
 import { CURRENCIES, currencyLabel } from '@/lib/money'
 import { NEAR_LIMIT } from '@/lib/budgets'
@@ -126,20 +125,15 @@ export function SettingsScreen() {
           value={view.currencyLabel}
           onClick={() => setPicking('currency')}
         />
-        <Row
-          label="Theme"
-          chevron={false}
-          value={
-            <div className="w-[196px]">
-              <Segmented
-                label="Theme"
-                options={THEMES}
-                value={prefs.theme}
-                onChange={(theme) => void savePreference('theme', theme)}
-              />
-            </div>
-          }
-        />
+        <div className="border-b border-divider py-3 last:border-b-0">
+          <p className="mb-2 font-medium">Theme</p>
+          <Segmented
+            label="Theme"
+            options={THEMES}
+            value={prefs.theme}
+            onChange={(theme) => void savePreference('theme', theme)}
+          />
+        </div>
         <Row
           label="Month starts on"
           hint="Budgets and reports use calendar months"
@@ -296,21 +290,16 @@ export function SettingsScreen() {
           How long Ledger can sit in the background before it asks again.
           Closing it and opening it afresh always asks.
         </p>
-        <RowGroup>
+        <RowGroup role="radiogroup" aria-label="Auto-lock after">
           {AUTO_LOCKS.map((option) => (
-            <Row
+            <ChoiceRow
               key={option.value}
               label={option.label}
-              chevron={false}
-              onClick={() => {
+              selected={option.value === prefs.autoLock}
+              onSelect={() => {
                 void savePreference('autoLock', option.value)
                 setPicking(null)
               }}
-              value={
-                option.value === prefs.autoLock ? (
-                  <CheckIcon className="text-primary" />
-                ) : undefined
-              }
             />
           ))}
         </RowGroup>
@@ -353,22 +342,17 @@ export function SettingsScreen() {
           offered. Changing this re-labels existing amounts; it does not
           convert them.
         </p>
-        <RowGroup>
+        <RowGroup role="radiogroup" aria-label="Currency">
           {CURRENCIES.map((currency) => (
-            <Row
+            <ChoiceRow
               key={currency.code}
               label={currencyLabel(currency.code)}
               hint={currency.name}
-              chevron={false}
-              onClick={() => {
+              selected={currency.code === prefs.currency}
+              onSelect={() => {
                 void savePreference('currency', currency.code)
                 setPicking(null)
               }}
-              value={
-                currency.code === prefs.currency ? (
-                  <CheckIcon className="text-primary" />
-                ) : undefined
-              }
             />
           ))}
         </RowGroup>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis } from 'recharts'
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Screen } from '@/ui/Screen'
 import { Money } from '@/ui/Money'
 import { Sheet } from '@/ui/Sheet'
@@ -85,7 +85,14 @@ export function ReportsScreen() {
     <Screen
       title="Reports"
       actions={
-        <button type="button" className="icon-btn" aria-label="Export CSV" onClick={onExport}>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Export CSV"
+          // Matches the Activity screen: nothing to export, nothing to press.
+          disabled={!view || view.spent === 0}
+          onClick={onExport}
+        >
           <DownloadIcon size={20} />
         </button>
       }
@@ -99,13 +106,17 @@ export function ReportsScreen() {
           <section className="card">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-title font-heading font-semibold">Spending by category</h2>
-              <button
-                type="button"
-                onClick={() => kind === 'custom' && setPicking(true)}
-                className="text-meta text-muted"
-              >
-                {view.range.label}
-              </button>
+              {kind === 'custom' ? (
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  className="flex min-h-touch items-center text-meta font-medium text-primary"
+                >
+                  {view.range.label}
+                </button>
+              ) : (
+                <p className="text-meta text-muted">{view.range.label}</p>
+              )}
             </div>
 
             {view.spent === 0 ? (
@@ -115,12 +126,12 @@ export function ReportsScreen() {
             ) : (
               <>
                 <Donut view={view} />
+                <div className="flex items-center justify-end pb-1">
+                  <p className="text-meta text-muted">Change vs {view.previous.label}</p>
+                </div>
                 {view.slices.map((slice) => (
                   <LegendRow key={slice.name} slice={slice} />
                 ))}
-                <p className="mt-2 text-meta text-muted">
-                  Change vs {view.previous.label}
-                </p>
               </>
             )}
           </section>
@@ -156,7 +167,7 @@ export function ReportsScreen() {
 
           <section className="flex items-center gap-3.5 rounded-card bg-contrast p-[18px] text-contrast-ink">
             <div className="flex-1">
-              <p className="text-label uppercase tracking-[.06em] text-primary">
+              <p className="text-label uppercase tracking-[.06em] text-primary-on-contrast">
                 Year in review
               </p>
               <p className="mb-0.5 mt-1 font-heading text-screen-sub">
@@ -230,7 +241,13 @@ function Key({ color, label }: { color: string; label: string }) {
 
 function Donut({ view }: { view: ReportsView }) {
   return (
-    <div className="relative my-3.5 h-[180px]">
+    <div
+      role="img"
+      aria-label={`Spending by category. ${view.slices
+        .map((slice) => `${slice.name} ${Math.round((slice.amount / view.spent) * 100)}%`)
+        .join(', ')}.`}
+      className="relative my-3.5 h-[180px]"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -296,28 +313,102 @@ function Trend({ view }: { view: ReportsView }) {
   }))
 
   return (
-    <div className="h-[160px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barGap={3}>
-          <XAxis
-            dataKey="label"
-            axisLine={{ stroke: 'rgb(var(--c-border))' }}
-            tickLine={false}
-            tick={{ fill: 'rgb(var(--c-muted))', fontSize: 13 }}
-            interval={0}
-          />
-          <Bar dataKey="income" fill="rgb(var(--c-primary))" radius={[4, 4, 0, 0]} maxBarSize={12} isAnimationActive={false} />
-          <Bar dataKey="expense" radius={[4, 4, 0, 0]} maxBarSize={12} isAnimationActive={false}>
-            {rows.map((row) => (
-              <Cell
-                key={row.key}
-                // The period on screen is picked out, as in the mockup.
-                fill={row.current ? 'rgb(var(--c-negative))' : 'rgb(var(--c-warning))'}
-              />
+    <>
+      <div aria-hidden="true" className="h-[160px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={rows} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barGap={3}>
+            <XAxis
+              dataKey="label"
+              axisLine={{ stroke: 'rgb(var(--c-border))' }}
+              tickLine={false}
+              tick={{ fill: 'rgb(var(--c-muted))', fontSize: 13 }}
+              interval={0}
+            />
+            <Tooltip
+              cursor={{ fill: 'rgb(var(--c-divider))' }}
+              content={<TrendTooltip />}
+              isAnimationActive={false}
+            />
+            <Bar dataKey="income" fill="rgb(var(--c-primary))" radius={[4, 4, 0, 0]} maxBarSize={12} isAnimationActive={false} />
+            <Bar dataKey="expense" radius={[4, 4, 0, 0]} maxBarSize={12} isAnimationActive={false}>
+              {rows.map((row) => (
+                <Cell
+                  key={row.key}
+                  // The period on screen is picked out, as in the mockup.
+                  fill={row.current ? 'rgb(var(--c-negative))' : 'rgb(var(--c-warning))'}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/*
+        The bars carry no numbers — no axis, no labels — so on their own the
+        chart says only "taller than". This is the same data as text, which
+        is what a screen reader, a keyboard and a careful reader all need.
+      */}
+      <details className="mt-1 border-t border-divider pt-1.5">
+        <summary className="flex min-h-touch cursor-pointer list-none items-center text-meta font-medium text-muted">
+          Show these figures
+        </summary>
+        <table className="mt-1 w-full text-meta">
+          <caption className="sr-only">Income and spending by period</caption>
+          <thead>
+            <tr className="text-muted">
+              <th scope="col" className="py-1 text-left font-medium">Period</th>
+              <th scope="col" className="py-1 text-right font-medium">In</th>
+              <th scope="col" className="py-1 text-right font-medium">Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.trend.map((point, index) => (
+              <tr key={index} className="border-t border-divider">
+                <th scope="row" className="py-1.5 text-left font-medium">
+                  {point.label}
+                  {point.current && <span className="sr-only"> (current)</span>}
+                </th>
+                <td className="py-1.5 text-right">
+                  <Money value={point.income} tone="positive" whole />
+                </td>
+                <td className="py-1.5 text-right">
+                  <Money value={point.expense} tone="negative" whole />
+                </td>
+              </tr>
             ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+          </tbody>
+        </table>
+      </details>
+    </>
+  )
+}
+
+/** Tooltip in the app's own type and colours, not Recharts' default card. */
+function TrendTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ dataKey?: string | number; value?: number }>
+  label?: string
+}) {
+  if (!active || !payload?.length) return null
+
+  const read = (key: string) => {
+    const found = payload.find((entry) => entry.dataKey === key)
+    return Math.round((found?.value ?? 0) * 100)
+  }
+
+  return (
+    <div className="rounded-ctl border border-border bg-surface px-2.5 py-1.5 text-meta shadow-sheet">
+      <p className="font-medium">{label}</p>
+      <p>
+        In <Money value={read('income')} tone="positive" whole className="font-semibold" />
+      </p>
+      <p>
+        Out <Money value={read('expense')} tone="negative" whole className="font-semibold" />
+      </p>
     </div>
   )
 }

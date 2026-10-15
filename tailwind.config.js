@@ -39,6 +39,10 @@ export default {
         contrast: token('c-contrast'),
         'contrast-ink': token('c-contrast-ink'),
         'negative-on-contrast': token('c-negative-on-contrast'),
+        'primary-on-contrast': token('c-primary-on-contrast'),
+        event: token('c-event'),
+        'loan-interest': token('c-loan-interest'),
+        'loan-plan': token('c-loan-plan'),
       },
       fontFamily: {
         sans: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],

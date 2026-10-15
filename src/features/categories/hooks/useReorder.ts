@@ -15,6 +15,11 @@ export interface Reorder {
   /** The order to render in: the live one mid-drag, otherwise what came in. */
   order: Id[]
   draggingId: Id | null
+  /**
+   * Where the last keyboard move landed, for a live region. A drag shows
+   * its own result; an arrow press is otherwise silent.
+   */
+  announcement: string
   /** Ref callback for each row, so the hook can measure where they sit. */
   setRow: (id: Id) => (element: HTMLElement | null) => void
   handleProps: (id: Id) => {
@@ -23,10 +28,16 @@ export interface Reorder {
   }
 }
 
-export function useReorder(ids: readonly Id[], commit: (next: Id[]) => void): Reorder {
+export function useReorder(
+  ids: readonly Id[],
+  commit: (next: Id[]) => void,
+  /** Row labels by id, so the announcement can name what moved. */
+  nameOf: (id: Id) => string = () => 'Item',
+): Reorder {
   const rows = useRef(new Map<Id, HTMLElement>())
   const [order, setOrder] = useState<Id[] | null>(null)
   const [draggingId, setDraggingId] = useState<Id | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   // Mirrors of what the window listeners need, so a drag does not have to
   // re-subscribe on every pointer move.
@@ -127,8 +138,9 @@ export function useReorder(ids: readonly Id[], commit: (next: Id[]) => void): Re
       orderRef.current = order ?? [...ids]
       const next = moveWithin(id, orderRef.current.indexOf(id) + step)
       if (next.join() !== key) commit(next)
+      setAnnouncement(`${nameOf(id)}, position ${next.indexOf(id) + 1} of ${next.length}`)
     },
   })
 
-  return { order: live, draggingId, setRow, handleProps }
+  return { order: live, draggingId, announcement, setRow, handleProps }
 }

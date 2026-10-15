@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import type { Transaction } from '@/db/types'
+import { parseMoney } from '@/lib/money'
 import {
+  amountToInput,
   changeType,
   draftAmount,
+  draftChanged,
+  draftFromTransaction,
   draftToTransaction,
   emptyDraft,
+  hasReceipt,
   parseNote,
   pressKey,
+  toRawNote,
   validate,
   type Draft,
 } from './draft'
@@ -193,5 +200,174 @@ describe('draftToTransaction', () => {
 
   it('refuses to build an invalid draft', () => {
     expect(() => draftToTransaction(draft({ amountInput: '' }))).toThrow('Enter an amount')
+  })
+})
+
+describe('amountToInput', () => {
+  it('drops a trailing .00 so a backspace behaves as it did on the way in', () => {
+    expect(amountToInput(1_500_00)).toBe('1500')
+  })
+
+  it('keeps centavos, zero-padded', () => {
+    expect(amountToInput(1_234_56)).toBe('1234.56')
+    expect(amountToInput(10_05)).toBe('10.05')
+    expect(amountToInput(50)).toBe('0.50')
+  })
+
+  it('reads an amount back as the keypad would have built it', () => {
+    for (const centavos of [0, 1, 99, 100, 289_00, 1_234_56, 999_999_99]) {
+      expect(parseMoney(amountToInput(centavos))).toBe(centavos)
+    }
+  })
+})
+
+describe('toRawNote', () => {
+  it('puts the tags back on the end', () => {
+    expect(toRawNote('Lunch with team', ['work'])).toBe('Lunch with team #work')
+  })
+
+  it('leaves a note with no tags alone', () => {
+    expect(toRawNote('Lunch', [])).toBe('Lunch')
+  })
+
+  it('handles a tag-only note without a leading space', () => {
+    expect(toRawNote('', ['work', 'food'])).toBe('#work #food')
+  })
+
+  it('round-trips through parseNote', () => {
+    const { note, tags } = parseNote('Lunch with team #work #food')
+    expect(toRawNote(note, tags)).toBe('Lunch with team #work #food')
+  })
+})
+
+describe('draftFromTransaction', () => {
+  const base = {
+    id: 't1',
+    createdAt: '2026-10-14T00:00:00.000Z',
+    updatedAt: '2026-10-14T00:00:00.000Z',
+  }
+
+  it('is the inverse of draftToTransaction for an expense', () => {
+    const transaction: Transaction = {
+      ...base,
+      type: 'expense',
+      amount: 289_00,
+      accountId: 'gcash',
+      categoryId: 'food',
+      date: '2026-10-14',
+      note: 'Lunch with team',
+      tags: ['work'],
+      status: 'posted',
+    }
+
+    const back = draftToTransaction(draftFromTransaction(transaction))
+    expect(back).toEqual({
+      type: 'expense',
+      amount: 289_00,
+      accountId: 'gcash',
+      categoryId: 'food',
+      date: '2026-10-14',
+      note: 'Lunch with team',
+      tags: ['work'],
+      status: 'posted',
+    })
+  })
+
+  it('carries a transfer’s destination and leaves off the category', () => {
+    const draft = draftFromTransaction({
+      ...base,
+      type: 'transfer',
+      amount: 5_000_00,
+      accountId: 'bpi',
+      toAccountId: 'gcash',
+      date: '2026-10-14',
+      note: '',
+      tags: [],
+      status: 'posted',
+    })
+
+    expect(draft.toAccountId).toBe('gcash')
+    expect(draft.categoryId).toBeUndefined()
+    expect(validate(draft)).toBeNull()
+  })
+
+  it('points at the stored receipt rather than carrying a new file', () => {
+    const draft = draftFromTransaction({
+      ...base,
+      type: 'expense',
+      amount: 100_00,
+      accountId: 'gcash',
+      categoryId: 'food',
+      date: '2026-10-14',
+      note: '',
+      tags: [],
+      receiptId: 'r1',
+      status: 'posted',
+    })
+
+    expect(draft.receiptId).toBe('r1')
+    expect(draft.receipt).toBeUndefined()
+    expect(hasReceipt(draft)).toBe(true)
+  })
+
+  it('never opens with Repeat on — the rule is not the entry’s to set', () => {
+    const draft = draftFromTransaction({
+      ...base,
+      type: 'expense',
+      amount: 149_00,
+      accountId: 'gcash',
+      categoryId: 'bills',
+      date: '2026-10-14',
+      note: 'Spotify',
+      tags: [],
+      recurringId: 'rule-1',
+      status: 'pending',
+    })
+
+    expect(draft.repeat).toBe(false)
+  })
+})
+
+describe('draftChanged', () => {
+  const source: Transaction = {
+    id: 't1',
+    type: 'expense',
+    amount: 289_00,
+    accountId: 'gcash',
+    categoryId: 'food',
+    date: '2026-10-14',
+    note: 'Lunch',
+    tags: [],
+    status: 'posted',
+    createdAt: '2026-10-14T00:00:00.000Z',
+    updatedAt: '2026-10-14T00:00:00.000Z',
+  }
+
+  it('is false for the draft it opened with', () => {
+    const draft = draftFromTransaction(source)
+    expect(draftChanged(draft, draftFromTransaction(source))).toBe(false)
+  })
+
+  it('notices an edited field', () => {
+    const draft = draftFromTransaction(source)
+    expect(draftChanged({ ...draft, amountInput: '300' }, draft)).toBe(true)
+    expect(draftChanged({ ...draft, note: 'Dinner' }, draft)).toBe(true)
+    expect(draftChanged({ ...draft, categoryId: 'transport' }, draft)).toBe(true)
+  })
+
+  it('notices a photo taken off', () => {
+    const withPhoto = draftFromTransaction({ ...source, receiptId: 'r1' })
+    expect(draftChanged({ ...withPhoto, receiptId: undefined }, withPhoto)).toBe(true)
+  })
+
+  it('notices one photo swapped for another of the same type and size', () => {
+    const draft = draftFromTransaction(source)
+    const first = { ...draft, receipt: { blob: new Blob(['a']), mime: 'image/jpeg', size: 1 } }
+    const second = { ...draft, receipt: { blob: new Blob(['b']), mime: 'image/jpeg', size: 1 } }
+
+    // Every Blob serialises to the same `{}`, so with the type and size
+    // matching these two are indistinguishable to a deep compare.
+    expect(JSON.stringify(second)).toBe(JSON.stringify(first))
+    expect(draftChanged(second, first)).toBe(true)
   })
 })

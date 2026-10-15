@@ -27,21 +27,41 @@ function Cell({
   cell,
   selected,
   onSelect,
+  onMove,
 }: {
   cell: DayCell
   selected: boolean
   onSelect: () => void
+  /** Arrow-key movement: ±1 a day, ±7 a week. */
+  onMove: (by: number) => void
 }) {
   const label = `${format(parseISO(cell.date), 'EEEE d MMMM')}${
     cell.spent > 0 ? `, ${formatMoneyShort(cell.spent)} spent` : ', nothing spent'
   }${cell.hasBill ? ', bill due' : ''}`
+
+  const MOVES: Record<string, number> = {
+    ArrowLeft: -1,
+    ArrowRight: 1,
+    ArrowUp: -7,
+    ArrowDown: 7,
+  }
 
   return (
     <button
       type="button"
       aria-label={label}
       aria-pressed={selected}
+      // Only the selected day is a tab stop; the arrows walk the rest. A
+      // grid of 31 sequential stops is not a month anyone wants to cross.
+      tabIndex={selected ? 0 : -1}
+      data-day={cell.date}
       onClick={onSelect}
+      onKeyDown={(event) => {
+        const by = MOVES[event.key]
+        if (by === undefined) return
+        event.preventDefault()
+        onMove(by)
+      }}
       className={`flex h-14 flex-col items-center justify-between rounded-[10px] px-0.5 py-1 ${
         cell.level === 4 ? 'text-negative-ink' : 'text-ink'
       } ${selected ? 'ring-2 ring-ink' : ''} ${cell.isFuture ? 'opacity-50' : ''}`}
@@ -50,14 +70,15 @@ function Cell({
       <span className={`text-[13px] ${cell.isToday ? 'font-bold' : 'font-normal'}`}>
         {cell.day}
       </span>
-      <span className="num text-[10px] font-semibold">
+      <span className="num text-label">
         {cell.spent > 0 ? <Money value={cell.spent} short /> : ''}
       </span>
       <span
         aria-hidden="true"
-        className="h-[5px] w-[5px] rounded-full"
+        className="h-[5px] w-[5px] rounded-full bg-event"
         style={{
-          background: '#4B3A8C',
+          // Separates the marker from whatever heat the cell is carrying.
+          boxShadow: `0 0 0 1.5px ${HEAT[cell.level]}`,
           opacity: cell.hasBill ? 1 : 0,
         }}
       />
@@ -88,6 +109,18 @@ export function CalendarScreen() {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }, [data, selected])
 
+  /** Walks the arrow keys within the month, and follows focus. */
+  const moveSelection = (index: number, by: number) => {
+    const next = grid.cells[index + by]
+    if (!next) return
+    setPicked(next.date)
+    // The cell is the tab stop once selected, so focus has to follow the
+    // selection or the arrows move something the user cannot see.
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-day="${next.date}"]`)?.focus()
+    })
+  }
+
   const goTo = (by: number) => {
     setMonth((current) => shiftMonth(current, by))
     setPicked(null)
@@ -105,7 +138,7 @@ export function CalendarScreen() {
           <ChevronLeftIcon size={20} />
         </button>
         <div className="text-center">
-          <h1 className="text-xl">{format(parseISO(`${month}-01`), 'MMMM yyyy')}</h1>
+          <h1 className="text-screen-sub">{format(parseISO(`${month}-01`), 'MMMM yyyy')}</h1>
           <p className="text-meta">
             <Money value={-grid.totalSpent} tone="negative" compact /> spent
           </p>
@@ -128,33 +161,34 @@ export function CalendarScreen() {
         >
           <Link
             to="/activity"
-            className="flex min-h-[40px] flex-1 items-center justify-center rounded-[9px] text-sm font-medium text-muted no-underline"
+            className="flex min-h-touch flex-1 items-center justify-center rounded-[9px] text-sm font-medium text-muted no-underline"
           >
             List
           </Link>
           <span
             aria-current="page"
-            className="flex min-h-[40px] flex-1 items-center justify-center rounded-[9px] bg-surface text-sm font-medium text-ink shadow-sm"
+            className="flex min-h-touch flex-1 items-center justify-center rounded-[9px] bg-surface text-sm font-medium text-ink shadow-sm"
           >
             Calendar
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div role="grid" aria-label="Spending by day" className="grid grid-cols-7 gap-1">
           {WEEKDAYS.map((day) => (
-            <span key={day} className="text-center text-label text-muted">
+            <span key={day} role="columnheader" className="text-center text-label text-muted">
               {day}
             </span>
           ))}
           {Array.from({ length: grid.leading }, (_, i) => (
             <span key={`blank-${i}`} aria-hidden="true" />
           ))}
-          {grid.cells.map((cell) => (
+          {grid.cells.map((cell, index) => (
             <Cell
               key={cell.date}
               cell={cell}
               selected={cell.date === selected}
               onSelect={() => setPicked(cell.date)}
+              onMove={(by) => moveSelection(index, by)}
             />
           ))}
         </div>
@@ -171,11 +205,7 @@ export function CalendarScreen() {
           ))}
           <span>More</span>
           <span className="ml-auto flex items-center gap-1.5">
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: '#4B3A8C' }}
-            />
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-event" />
             Bill due
           </span>
         </div>
@@ -183,7 +213,7 @@ export function CalendarScreen() {
         {selected && (
           <>
             <div className="mx-1 mb-1.5 mt-4 flex items-baseline justify-between">
-              <h2 className="text-base">{dayHeading(selected, today)}</h2>
+              <h2 className="text-title font-heading font-semibold">{dayHeading(selected, today)}</h2>
               <p className="text-meta text-muted">
                 {dayRows.length === 0 ? (
                   'Nothing'

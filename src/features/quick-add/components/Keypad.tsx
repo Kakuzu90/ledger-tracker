@@ -45,11 +45,19 @@ export function AmountDisplay({ input, type }: { input: string; type: Transactio
   return (
     <div className="py-1 text-center">
       <p
+        aria-hidden="true"
         className={`num m-0 text-[44px] font-bold tracking-[-.02em] ${tone}`}
-        aria-label={`Amount ${formatAmount(Number(`${pesos}.${centavos}`) * 100)}`}
       >
         ₱{grouped}
         <span className="text-muted">.{centavos}</span>
+      </p>
+      {/*
+        `aria-label` on a paragraph is ignored by a good deal of assistive
+        tech, and a keypad press changed nothing it would announce. Real
+        text in a polite live region does both.
+      */}
+      <p role="status" className="sr-only">
+        {`Amount ${formatAmount(Number(`${pesos}.${centavos}`) * 100)}`}
       </p>
     </div>
   )

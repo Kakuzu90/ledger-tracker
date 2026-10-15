@@ -49,9 +49,12 @@ export function Money({
   const classes = `num ${toneClass(tone, value)} ${className}`.trim()
 
   if (hidden) {
+    // `aria-label` is ignored on an element with a generic role, so the
+    // alternative has to be real text the reader can reach.
     return (
-      <span className={classes} aria-label="Amount hidden">
-        {HIDDEN_AMOUNT}
+      <span className={classes}>
+        <span aria-hidden="true">{HIDDEN_AMOUNT}</span>
+        <span className="sr-only">Amount hidden</span>
       </span>
     )
   }
