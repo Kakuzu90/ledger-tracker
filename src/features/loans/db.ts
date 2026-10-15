@@ -18,6 +18,7 @@ import type {
   LoanDirection,
   LoanKind,
   LoanPayment,
+  RateBasis,
   Transaction,
 } from '@/db/types'
 import { outstanding } from '@/lib/loans'
@@ -125,7 +126,9 @@ export interface LoanDraft {
   contactId?: Id
   lender?: string
   principal: Centavos
+  /** Always annual; `rateBasis` says what it was quoted as. */
   ratePct?: number
+  rateBasis?: RateBasis
   termMonths?: number
   startDate: DateOnly
   dueDate?: DateOnly

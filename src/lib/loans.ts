@@ -3,7 +3,7 @@
  * (CLAUDE.md § Data rules).
  */
 
-import type { Centavos, Id, Loan, LoanPayment } from '@/db/types'
+import type { Centavos, Id, Loan, LoanPayment, RateBasis } from '@/db/types'
 import { sumMoney } from './money'
 
 export function repaid(loanId: Id, payments: readonly LoanPayment[]): Centavos {
@@ -83,4 +83,26 @@ export function byContact(
   }
 
   return grouped
+}
+
+/**
+ * Rates are quoted per month by most lenders here and per year by the
+ * amortisation maths, so the form takes one and stores the other.
+ *
+ * Kept as a plain ×12 — the nominal conversion the lender means by "3.95%
+ * a month", not an effective rate, which would compound to a different
+ * number and not match the contract.
+ */
+export const toAnnualRate = (rate: number, basis: RateBasis): number =>
+  basis === 'month' ? rate * 12 : rate
+
+export const fromAnnualRate = (annualRate: number, basis: RateBasis): number =>
+  basis === 'month' ? annualRate / 12 : annualRate
+
+/** "3.95% a month", or "9.5% a year". */
+export function rateLabel(annualRate: number, basis: RateBasis = 'year'): string {
+  const shown = fromAnnualRate(annualRate, basis)
+  // Trailing zeros read as false precision on a rate someone typed.
+  const digits = Number.isInteger(shown) ? 0 : 2
+  return `${shown.toFixed(digits)}% a ${basis}`
 }

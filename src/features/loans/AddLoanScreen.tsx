@@ -10,9 +10,11 @@ import { useUIStore } from '@/store/ui'
 import { parseMoney } from '@/lib/money'
 import { toDateOnly } from '@/lib/dates'
 import { monthlyPayment } from '@/lib/amortization'
-import type { Id, LoanDirection, LoanKind } from '@/db/types'
+import { toAnnualRate } from '@/lib/loans'
+import type { Id, LoanDirection, LoanKind, RateBasis } from '@/db/types'
 import { createContact, createLoan, useLoansData } from './db'
 import { Avatar } from './components/Avatar'
+import { RateField } from './components/RateField'
 
 const KINDS: ReadonlyArray<{ value: LoanKind; label: string }> = [
   { value: 'personal', label: 'Personal' },
@@ -41,6 +43,8 @@ export function AddLoanScreen() {
   const [newName, setNewName] = useState<string | null>(null)
   const [lender, setLender] = useState('')
   const [ratePct, setRatePct] = useState('')
+  // Per month is how loans are quoted here, so it is where the form starts.
+  const [rateBasis, setRateBasis] = useState<RateBasis>('month')
   const [termMonths, setTermMonths] = useState('')
   const [startDate, setStartDate] = useState(toDateOnly(new Date()))
   const [dueDate, setDueDate] = useState('')
@@ -56,7 +60,7 @@ export function AddLoanScreen() {
   const isPersonal = kind === 'personal'
 
   const term = number(termMonths) ?? 0
-  const rate = number(ratePct) ?? 0
+  const rate = toAnnualRate(number(ratePct) ?? 0, rateBasis)
   const instalment = !isPersonal && term > 0 ? monthlyPayment(principal, rate, term) : 0
 
   const onAddContact = async () => {
@@ -77,7 +81,7 @@ export function AddLoanScreen() {
         ...(isPersonal && contactId ? { contactId } : {}),
         ...(isPersonal ? {} : { lender }),
         principal,
-        ...(isPersonal ? {} : { ratePct: rate, termMonths: term }),
+        ...(isPersonal ? {} : { ratePct: rate, rateBasis, termMonths: term }),
         startDate,
         ...(isPersonal && dueDate ? { dueDate } : {}),
         note,
@@ -193,19 +197,14 @@ export function AddLoanScreen() {
 
       {!isPersonal && (
         <div className="flex gap-3">
-          <label className="flex-1">
-            <span className="label">Rate a year</span>
-            <input
-              className="field mt-1"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min={0}
-              value={ratePct}
-              onChange={(event) => setRatePct(event.target.value)}
-              placeholder="9.5"
+          <div className="flex-1">
+            <RateField
+              rate={ratePct}
+              basis={rateBasis}
+              onRate={setRatePct}
+              onBasis={setRateBasis}
             />
-          </label>
+          </div>
           <label className="flex-1">
             <span className="label">Term, months</span>
             <input

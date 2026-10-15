@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { byContact, isOverdue, isSettled, loanTotals, outstanding, repaid, repaidShare } from './loans'
+import {
+  byContact,
+  fromAnnualRate,
+  isOverdue,
+  isSettled,
+  loanTotals,
+  outstanding,
+  rateLabel,
+  repaid,
+  repaidShare,
+  toAnnualRate,
+} from './loans'
 import type { Loan, LoanPayment } from '@/db/types'
 
 const stamps = { createdAt: '2026-10-01T00:00:00.000Z', updatedAt: '2026-10-01T00:00:00.000Z' }
@@ -147,5 +158,35 @@ describe('byContact', () => {
 
   it('skips loans with no contact', () => {
     expect(byContact(loans, payments).size).toBe(2)
+  })
+})
+
+describe('rate basis', () => {
+  it('stores a monthly quote as its nominal annual rate', () => {
+    expect(toAnnualRate(3.95, 'month')).toBeCloseTo(47.4, 10)
+    expect(toAnnualRate(9.5, 'year')).toBe(9.5)
+  })
+
+  it('reads the stored rate back in the unit it was quoted in', () => {
+    expect(fromAnnualRate(47.4, 'month')).toBeCloseTo(3.95, 10)
+    expect(fromAnnualRate(9.5, 'year')).toBe(9.5)
+  })
+
+  it('round-trips, so editing a loan does not drift the rate', () => {
+    for (const rate of [0, 1, 3.95, 7.5, 12.25]) {
+      expect(fromAnnualRate(toAnnualRate(rate, 'month'), 'month')).toBeCloseTo(rate, 10)
+      expect(fromAnnualRate(toAnnualRate(rate, 'year'), 'year')).toBeCloseTo(rate, 10)
+    }
+  })
+
+  it('leaves a 0% plan at zero under either unit', () => {
+    expect(toAnnualRate(0, 'month')).toBe(0)
+    expect(fromAnnualRate(0, 'month')).toBe(0)
+  })
+
+  it('labels a rate the way it was quoted', () => {
+    expect(rateLabel(47.4, 'month')).toBe('3.95% a month')
+    expect(rateLabel(47.4, 'year')).toBe('47.40% a year')
+    expect(rateLabel(12, 'year')).toBe('12% a year')
   })
 })

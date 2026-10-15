@@ -8,7 +8,8 @@
  */
 
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
-import type { Centavos, Contact, DateOnly, Id, Loan, LoanPayment } from '@/db/types'
+import type { Centavos, Contact, DateOnly, Id, Loan, LoanPayment, RateBasis } from '@/db/types'
+import { fromAnnualRate } from '@/lib/loans'
 import { isOverdue, isSettled, loanTotals, outstanding, type LoanTotals } from '@/lib/loans'
 import { paidShare, remainingBalance } from '@/lib/amortization'
 
@@ -64,9 +65,14 @@ export interface LoansInput {
 
 const shortDate = (date: DateOnly): string => format(parseISO(date), 'MMM d')
 
-/** `9.5` → `"9.5%"`, `0` → `"0%"`. */
-export const formatRate = (ratePct: number): string =>
-  `${Number(ratePct.toFixed(2))}%`
+/**
+ * `9.5` → `"9.5%"`. With a monthly basis the stored annual figure is
+ * shown back the way it was quoted: 47.4 stored → `"3.95%/mo"`.
+ */
+export const formatRate = (ratePct: number, basis: RateBasis = 'year'): string => {
+  const shown = fromAnnualRate(ratePct, basis)
+  return `${Number(shown.toFixed(2))}%${basis === 'month' ? '/mo' : ''}`
+}
 
 /** Whole days a loan is past due, as of `today`. 0 when it is not. */
 export function overdueDays(
@@ -167,8 +173,8 @@ export function buildLoansView(
         loan,
         title: loan.lender ? `${loan.note} · ${loan.lender}` : loan.note,
         subtitle: term
-          ? `${formatRate(loan.ratePct ?? 0)} · ${paid} of ${term} paid`
-          : formatRate(loan.ratePct ?? 0),
+          ? `${formatRate(loan.ratePct ?? 0, loan.rateBasis)} · ${paid} of ${term} paid`
+          : formatRate(loan.ratePct ?? 0, loan.rateBasis),
         remaining: formalRemaining(loan, payments),
         share: term ? paidShare(loan.principal, loan.ratePct ?? 0, term, paid) : 0,
       }
