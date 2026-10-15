@@ -55,7 +55,7 @@ export function FilterBar({
   return (
     <>
       {/* Full-bleed so the chips can scroll past the screen padding. */}
-      <div className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-0.5">
+      <div className="no-scrollbar -mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-0.5">
         <Chip active onClick={() => setOpen('month')}>
           {monthLabel(filters.month)}
         </Chip>

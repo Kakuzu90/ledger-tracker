@@ -130,6 +130,20 @@
     border: 0;
   }
 
+  /*
+   * Scrolls, but without drawing a bar. For the chip rails, which are a
+   * few pixels taller than their content: a scrollbar there reads as a
+   * stray rule under the row rather than as an affordance. Only for rows
+   * whose overflow is already obvious from a chip cut off at the edge.
+   */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Numerals — always tabular so columns of money line up. */
   .num {
     @apply font-heading;

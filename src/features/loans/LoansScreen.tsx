@@ -80,7 +80,7 @@ export function LoansScreen() {
             </p>
           </section>
 
-          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5">
+          <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5">
             {FILTERS.map((chip) => {
               const count =
                 chip.value === 'overdue'
