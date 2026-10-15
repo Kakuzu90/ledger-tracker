@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Account, Loan } from '@/db/types'
+import type { Account, Loan, RateBasis } from '@/db/types'
 import { Sheet } from '@/ui/Sheet'
 import { Chip } from '@/ui/Chip'
 import { formatAmount, parseMoney } from '@/lib/money'
 import { useUIStore } from '@/store/ui'
+import { fromAnnualRate, toAnnualRate } from '@/lib/loans'
 import { deleteLoan, updateLoan, type LoanDraft } from '../db'
+import { RateField } from './RateField'
 
 interface FormalLoanFormProps {
   open: boolean
@@ -22,6 +24,7 @@ const toDraft = (loan: Loan): LoanDraft => ({
   note: loan.note,
   ...(loan.lender ? { lender: loan.lender } : {}),
   ...(loan.ratePct !== undefined ? { ratePct: loan.ratePct } : {}),
+  ...(loan.rateBasis !== undefined ? { rateBasis: loan.rateBasis } : {}),
   ...(loan.termMonths !== undefined ? { termMonths: loan.termMonths } : {}),
   ...(loan.accountId ? { accountId: loan.accountId } : {}),
 })
@@ -35,6 +38,14 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
   const navigate = useNavigate()
   const showSnack = useUIStore((s) => s.showSnack)
   const [draft, setDraft] = useState<LoanDraft>(() => toDraft(loan))
+  // The rate is held as typed, in the unit it was quoted in; `draft`
+  // carries the annual figure the schedule needs.
+  const [basis, setBasis] = useState<RateBasis>(loan.rateBasis ?? 'year')
+  const [rate, setRate] = useState(() =>
+    loan.ratePct === undefined
+      ? ''
+      : String(fromAnnualRate(loan.ratePct, loan.rateBasis ?? 'year')),
+  )
   const [problem, setProblem] = useState<string | null>(null)
 
   const live = accounts.filter((account) => !account.archived || account.id === loan.accountId)
@@ -100,19 +111,22 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
       </label>
 
       <div className="flex gap-3">
-        <label className="flex-1">
-          <span className="label">Rate a year</span>
-          <input
-            className="field mt-1"
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min={0}
-            defaultValue={draft.ratePct ?? ''}
-            onChange={(event) => update({ ratePct: number(event.target.value) ?? 0 })}
-            placeholder="9.5"
+        <div className="flex-1">
+          <RateField
+            rate={rate}
+            basis={basis}
+            onRate={(next) => {
+              setRate(next)
+              update({ ratePct: toAnnualRate(number(next) ?? 0, basis) })
+            }}
+            onBasis={(next) => {
+              setBasis(next)
+              // The typed number means a different annual rate under the
+              // other unit; the number stays, what it stands for changes.
+              update({ rateBasis: next, ratePct: toAnnualRate(number(rate) ?? 0, next) })
+            }}
           />
-        </label>
+        </div>
         <label className="flex-1">
           <span className="label">Term, months</span>
           <input

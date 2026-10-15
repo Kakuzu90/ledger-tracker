@@ -10,6 +10,11 @@ export default {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
+      // Phones shorter than an iPhone X — SE, 8, 8 Plus. The Quick Add
+      // sheet is the one screen with enough fixed furniture to care.
+      screens: {
+        short: { raw: '(max-height: 740px)' },
+      },
       colors: {
         bg: token('c-bg'),
         surface: token('c-surface'),
@@ -40,6 +45,8 @@ export default {
         'contrast-ink': token('c-contrast-ink'),
         'negative-on-contrast': token('c-negative-on-contrast'),
         'primary-on-contrast': token('c-primary-on-contrast'),
+        'fab-from': token('c-fab-from'),
+        'fab-to': token('c-fab-to'),
         event: token('c-event'),
         'loan-interest': token('c-loan-interest'),
         'loan-plan': token('c-loan-plan'),
@@ -68,7 +75,6 @@ export default {
         touch: '44px', // minimum touch target
       },
       boxShadow: {
-        fab: '0 8px 20px rgb(var(--c-primary) / .28)',
         sheet: '0 -8px 32px rgb(0 0 0 / .18)',
       },
       maxWidth: {

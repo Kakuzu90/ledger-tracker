@@ -157,6 +157,17 @@ export function SettingsScreen() {
         />
         <Row to="/accounts" label="Accounts" value={counts.accounts} />
         <Row to="/bills" label="Recurring rules" value={counts.rules} />
+        {/*
+          The only other way in is the Home budget card, and that card is
+          not drawn unless an overall budget exists for the month — so
+          without this row a month with no budget had no way to set one.
+        */}
+        <Row
+          to="/budgets"
+          label="Budgets & goals"
+          hint="Monthly limits, rollover, savings"
+          value={counts.goals}
+        />
         <Row
           label="Contacts"
           hint="Added as you record loans"

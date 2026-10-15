@@ -11,7 +11,7 @@ import {
   emptyDraft,
   hasReceipt,
   parseNote,
-  pressKey,
+  sanitizeAmount,
   toRawNote,
   validate,
   type Draft,
@@ -27,46 +27,6 @@ const draft = (over: Partial<Draft> = {}): Draft => ({
   ...over,
 })
 
-describe('pressKey', () => {
-  it('builds a number one press at a time', () => {
-    expect(['2', '8', '9'].reduce(pressKey, '')).toBe('289')
-  })
-
-  it('takes centavos after a decimal point', () => {
-    expect(['2', '8', '9', '.', '5', '0'].reduce(pressKey, '')).toBe('289.50')
-  })
-
-  it('allows only one decimal point', () => {
-    expect(pressKey('289.5', '.')).toBe('289.5')
-  })
-
-  it('stops at two decimals', () => {
-    expect(pressKey('289.50', '7')).toBe('289.50')
-  })
-
-  it('opens with a zero when the point comes first', () => {
-    expect(pressKey('', '.')).toBe('0.')
-  })
-
-  it('does not leave a leading zero', () => {
-    expect(pressKey('0', '5')).toBe('5')
-    expect(pressKey('0', '.')).toBe('0.')
-  })
-
-  it('deletes from the end', () => {
-    expect(pressKey('289.5', 'backspace')).toBe('289.')
-    expect(pressKey('', 'backspace')).toBe('')
-  })
-
-  it('refuses a number nobody will ever enter', () => {
-    expect(pressKey('123456789', '0')).toBe('123456789')
-  })
-
-  it('ignores anything that is not a digit', () => {
-    expect(pressKey('28', 'x')).toBe('28')
-  })
-})
-
 describe('draftAmount', () => {
   it('reads the keypad input as centavos', () => {
     expect(draftAmount(draft({ amountInput: '289' }))).toBe(28_900)
@@ -75,6 +35,48 @@ describe('draftAmount', () => {
 
   it('is zero for an empty keypad', () => {
     expect(draftAmount(draft({ amountInput: '' }))).toBe(0)
+  })
+})
+
+describe('sanitizeAmount', () => {
+  it('keeps a plain number as typed', () => {
+    expect(sanitizeAmount('289')).toBe('289')
+    expect(sanitizeAmount('289.50')).toBe('289.50')
+  })
+
+  it('drops anything that is not a digit or a dot', () => {
+    expect(sanitizeAmount('\u20b12,89a0')).toBe('2890')
+    expect(sanitizeAmount('-50')).toBe('50')
+    expect(sanitizeAmount('1e5')).toBe('15')
+  })
+
+  it('keeps one dot, folding the rest into the fraction', () => {
+    expect(sanitizeAmount('289.5.0')).toBe('289.50')
+    expect(sanitizeAmount('1..2')).toBe('1.2')
+  })
+
+  it('cuts the fraction to two decimals', () => {
+    expect(sanitizeAmount('289.567')).toBe('289.56')
+  })
+
+  it('caps the whole part at nine digits', () => {
+    expect(sanitizeAmount('12345678901')).toBe('123456789')
+  })
+
+  it('strips leading zeros but keeps a lone one before the dot', () => {
+    expect(sanitizeAmount('007')).toBe('7')
+    expect(sanitizeAmount('0')).toBe('0')
+    expect(sanitizeAmount('.5')).toBe('0.5')
+  })
+
+  it('leaves a trailing dot alone so it can still be typed through', () => {
+    expect(sanitizeAmount('289.')).toBe('289.')
+  })
+
+  it('is idempotent', () => {
+    for (const raw of ['289.567', '\u20b11,234.5', '007', '.5', '1..2']) {
+      expect(sanitizeAmount(sanitizeAmount(raw))).toBe(sanitizeAmount(raw))
+    }
   })
 })
 

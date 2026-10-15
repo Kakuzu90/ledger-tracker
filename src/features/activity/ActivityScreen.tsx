@@ -207,7 +207,16 @@ export function ActivityScreen() {
       {data &&
         view?.groups.slice(0, shown).map((group) => (
           <section key={group.date}>
-            <div className="mb-1.5 mt-1 flex items-baseline justify-between px-1">
+            {/*
+              Pins while its own day is on screen and is pushed out by the
+              next one, so the date and running total stay readable in a
+              long scroll. Sticky is bounded by the parent, which is why
+              the heading and its rows share this <section>.
+
+              Full-bleed (`-mx-5`, with the page's own 20px added back to
+              the 4px inset) so rows pass behind it rather than beside it.
+            */}
+            <div className="sticky top-0 z-10 -mx-5 mb-1.5 flex items-baseline justify-between gap-3 bg-bg px-6 py-1.5">
               <h2 className="label">{dayHeading(group.date, today)}</h2>
               <Money
                 value={group.net}
@@ -217,7 +226,12 @@ export function ActivityScreen() {
                 className="text-sm font-medium"
               />
             </div>
-            <div className="card py-1">
+            {/*
+              Keeps a row clear of the pinned heading when focus scrolls it
+              into view — otherwise the heading covers it (WCAG 2.2 focus
+              not obscured).
+            */}
+            <div className="card py-1 [&>a]:scroll-mt-14">
               {group.transactions.map((txn) => {
                 const row = describeTransaction(txn, data.lookups)
                 return <TxnRow key={txn.id} row={row} subtitle={activitySubtitle(row)} />

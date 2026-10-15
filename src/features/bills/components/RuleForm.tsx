@@ -17,6 +17,14 @@ const FREQS: ReadonlyArray<{ value: RecurringFreq; label: string }> = [
   { value: 'yearly', label: 'Yearly' },
 ]
 
+/** The unit the interval counts, singular when there is only one of it. */
+const UNIT: Readonly<Record<RecurringFreq, (interval: number) => string>> = {
+  daily: (n) => (n === 1 ? 'day' : 'days'),
+  weekly: (n) => (n === 1 ? 'week' : 'weeks'),
+  monthly: (n) => (n === 1 ? 'month' : 'months'),
+  yearly: (n) => (n === 1 ? 'year' : 'years'),
+}
+
 const MODES: ReadonlyArray<{ value: RecurringMode; label: string }> = [
   { value: 'confirm', label: 'Ask first' },
   { value: 'auto', label: 'Add it for me' },
@@ -110,22 +118,17 @@ function Form({ onClose, rule, accounts, categories }: RuleFormProps) {
         />
       </label>
 
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <span className="label">Repeats</span>
-          <div className="mt-1.5">
-            <Segmented
-              label="Frequency"
-              options={FREQS}
-              value={draft.freq}
-              onChange={(freq) => update({ freq })}
-            />
-          </div>
-        </div>
-        <label className="w-[84px]">
-          <span className="label">Every</span>
+      <div>
+        <span className="label">Repeats</span>
+        {/*
+          Reads in the order it is spoken: "Every 3 months". The number
+          used to sit to the right of the frequency, so the eye got
+          "Monthly … Every 3" and the bare number named no unit at all.
+        */}
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className="text-sm text-muted">Every</span>
           <input
-            className="field mt-1 text-center"
+            className="field w-[72px] flex-none text-center"
             type="number"
             inputMode="numeric"
             min={1}
@@ -133,7 +136,16 @@ function Form({ onClose, rule, accounts, categories }: RuleFormProps) {
             onChange={(event) => update({ interval: Number(event.target.value) || 1 })}
             aria-label="Interval"
           />
-        </label>
+          <span className="text-sm text-muted">{UNIT[draft.freq](draft.interval)}</span>
+        </div>
+        <div className="mt-2">
+          <Segmented
+            label="Frequency"
+            options={FREQS}
+            value={draft.freq}
+            onChange={(freq) => update({ freq })}
+          />
+        </div>
       </div>
 
       <div className="flex gap-3">

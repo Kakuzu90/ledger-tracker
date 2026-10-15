@@ -107,6 +107,9 @@ export type LoanKind = 'personal' | 'formal'
 export type LoanDirection = 'lent' | 'borrowed'
 export type LoanStatus = 'open' | 'settled'
 
+/** How a rate was quoted. Stored so it can be shown back the same way. */
+export type RateBasis = 'month' | 'year'
+
 export interface Loan extends Row {
   kind: LoanKind
   direction: LoanDirection
@@ -115,8 +118,14 @@ export interface Loan extends Row {
   /** Formal loans name an institution. */
   lender?: string
   principal: Centavos
-  /** Nominal annual rate, percent. */
+  /** Nominal annual rate, percent. Always annual, whatever was typed. */
   ratePct?: number
+  /**
+   * Which unit the rate was entered in. Lenders here quote per month, so
+   * the form takes that and converts; this remembers the quote so the
+   * loan prints "3.95% a month" rather than the 47.4 it is stored as.
+   */
+  rateBasis?: RateBasis
   termMonths?: number
   startDate: DateOnly
   dueDate?: DateOnly

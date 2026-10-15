@@ -5,12 +5,11 @@ import { Segmented } from '@/ui/Segmented'
 import { useUIStore } from '@/store/ui'
 import { db } from '@/db/db'
 import type { Id, TransactionType } from '@/db/types'
-import { AmountDisplay, Keypad } from './components/Keypad'
+import { AmountField } from './components/AmountField'
 import { AccountPicker, CategoryPicker, DatePicker, ReceiptPicker } from './components/Pickers'
 import { ReceiptIcon, RepeatIcon } from '@/ui/Icon'
 import { useAccounts, useCategories, useLastUsedAccountId } from './hooks/usePickers'
 import { saveDraft, updateDraft } from './db'
-import { useKeypadKeys } from '@/lib/keypad'
 import {
   changeType,
   draftChanged,
@@ -18,7 +17,7 @@ import {
   emptyDraft,
   hasReceipt,
   PROBLEM_MESSAGE,
-  pressKey,
+  sanitizeAmount,
   SAVE_LABEL,
   validate,
   type Draft,
@@ -154,16 +153,6 @@ function QuickAddForm({
     }
   }
 
-  const press = (key: string) =>
-    setDraft((draft) => ({ ...draft, amountInput: pressKey(draft.amountInput, key) }))
-
-  useKeypadKeys({
-    onKey: press,
-    onBackspace: () => press('backspace'),
-    onSubmit: () => void onSave(),
-    decimal: true,
-  })
-
   const onPickReceipt = (file: File | null) => {
     if (!file) return
     update({
@@ -199,58 +188,67 @@ function QuickAddForm({
         </label>
       }
     >
-      <Segmented
-        label="Type"
-        options={TYPES}
-        value={current.type}
-        onChange={(type) => setDraft((draft) => changeType(draft, type))}
-      />
-
-      <AmountDisplay input={current.amountInput} type={current.type} />
-
       {/*
-        Account, date and the rest stay pinned above the scroll. They used to
-        sit below the category chips inside it, which on a 375x812 phone put
-        the account — the field that decides which balance moves — entirely
-        off screen behind an inner scrollbar.
+        One scroll region holding everything but the Save button. The
+        keypad used to be pinned too, and on a 375x667 phone the fixed
+        blocks added up past the sheet: the category chips collapsed to
+        nothing and Save fell 80px below the fold with no way to reach it.
+        Only the action is pinned now, so it is always in sight.
       */}
-      <div className="flex flex-none flex-wrap gap-2">
-        <AccountPicker
-          label={current.type === 'transfer' ? 'From' : 'Account'}
-          accounts={accounts ?? []}
-          value={current.accountId}
-          onChange={(accountId) => update({ accountId })}
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 short:gap-2">
+        <Segmented
+          label="Type"
+          options={TYPES}
+          value={current.type}
+          onChange={(type) => setDraft((draft) => changeType(draft, type))}
         />
 
-        {current.type === 'transfer' && (
+        <AmountField
+          value={current.amountInput}
+          type={current.type}
+          onChange={(next) => update({ amountInput: sanitizeAmount(next) })}
+        />
+
+        {/*
+          Account and date come before the categories, not after: below the
+          chips they were off screen behind an inner scrollbar, and the
+          account decides which balance moves.
+        */}
+        <div className="flex flex-none flex-wrap gap-2">
           <AccountPicker
-            label="To"
+            label={current.type === 'transfer' ? 'From' : 'Account'}
             accounts={accounts ?? []}
-            value={current.toAccountId}
-            onChange={(toAccountId) => update({ toAccountId })}
+            value={current.accountId}
+            onChange={(accountId) => update({ accountId })}
           />
-        )}
 
-        <DatePicker value={current.date} onChange={(date) => update({ date })} today={today} />
+          {current.type === 'transfer' && (
+            <AccountPicker
+              label="To"
+              accounts={accounts ?? []}
+              value={current.toAccountId}
+              onChange={(toAccountId) => update({ toAccountId })}
+            />
+          )}
 
-        {!editing && (
-          <Chip active={current.repeat} onClick={() => update({ repeat: !current.repeat })}>
-            <RepeatIcon />
-            {current.repeat ? 'Repeats monthly' : 'Repeat'}
-          </Chip>
-        )}
+          <DatePicker value={current.date} onChange={(date) => update({ date })} today={today} />
 
-        <ReceiptPicker
-          attached={hasReceipt(current)}
-          onPick={onPickReceipt}
-          {...(hasReceipt(current)
-            ? { onClear: () => update({ receipt: undefined, receiptId: undefined }) }
-            : {})}
-        />
-      </div>
+          {!editing && (
+            <Chip active={current.repeat} onClick={() => update({ repeat: !current.repeat })}>
+              <RepeatIcon />
+              {current.repeat ? 'Repeats monthly' : 'Repeat'}
+            </Chip>
+          )}
 
-      {/* Only the category list scrolls; everything else stays put. */}
-      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
+          <ReceiptPicker
+            attached={hasReceipt(current)}
+            onPick={onPickReceipt}
+            {...(hasReceipt(current)
+              ? { onClear: () => update({ receipt: undefined, receiptId: undefined }) }
+              : {})}
+          />
+        </div>
+
         {current.type !== 'transfer' && (
           <CategoryPicker
             categories={categories ?? []}
@@ -258,29 +256,28 @@ function QuickAddForm({
             onChange={(categoryId) => update({ categoryId })}
           />
         )}
-      </div>
 
-      {/* The note stays with the keypad: it is typed, not browsed. */}
-      <div className="flex flex-none flex-col gap-3">
+        {/* The note sits with the keypad: it is typed, not browsed. */}
         <label htmlFor="qa-note" className="sr-only">
           Note and tags
         </label>
         <input
           id="qa-note"
-          className="field"
+          className="field flex-none"
           type="text"
           value={current.note}
           onChange={(event) => update({ note: event.target.value })}
           placeholder="Add a note or #tag"
         />
+      </div>
 
+      {/* Pinned: the action, and anything standing between it and saving. */}
+      <div className="flex flex-none flex-col gap-3 pt-3 short:gap-2 short:pt-2">
         {(failure ?? (showProblem && problem ? PROBLEM_MESSAGE[problem] : null)) && (
           <p role="alert" className="text-center text-meta text-negative">
             {failure ?? (problem ? PROBLEM_MESSAGE[problem] : null)}
           </p>
         )}
-
-        <Keypad onPress={press} />
 
         <button
           type="button"

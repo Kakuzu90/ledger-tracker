@@ -73,6 +73,18 @@ export function Sheet({
     onClose()
   }, [confirmDiscard, onClose])
 
+  /*
+   * The open effect reads this rather than depending on it. Callers pass
+   * `onClose` inline, so `dismiss` is a new function every render — as a
+   * dependency it tore the effect down and set it up again on each
+   * keystroke, and the setup moves focus to the panel. Typing one letter
+   * into a field in a sheet lost the field.
+   */
+  const latestDismiss = useRef(dismiss)
+  useEffect(() => {
+    latestDismiss.current = dismiss
+  })
+
   useEffect(() => {
     if (!open) return
 
@@ -81,7 +93,7 @@ export function Sheet({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         if (prompt.current) setAsking(false)
-        else dismiss()
+        else latestDismiss.current()
         return
       }
       // While the discard prompt is up it is the modal, not the sheet.
@@ -130,7 +142,7 @@ export function Sheet({
       // opened the sheet rather than restarting at the top of the page.
       opener.current?.focus()
     }
-  }, [open, dismiss])
+  }, [open])
 
   useEffect(() => {
     if (asking) prompt.current?.focus()
@@ -139,7 +151,7 @@ export function Sheet({
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div aria-hidden="true" onClick={dismiss} className="absolute inset-0 bg-ink/50" />
       <div
         ref={panel}
@@ -150,7 +162,13 @@ export function Sheet({
         // Installed on a phone with a home indicator, the last button in a
         // sheet would otherwise sit under it.
         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
-        className={`relative mt-12 flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pt-2.5 shadow-sheet outline-none ${
+        /*
+         * Bottom-aligned and only as tall as it needs to be. The wrapper
+         * is a flex row, so without `items-end` the panel inherited
+         * `align-items: stretch` and filled the screen however little was
+         * in it — a five-row filter sat in 764px of sheet.
+         */
+        className={`relative flex w-full max-w-screen flex-col gap-3 rounded-t-[24px] bg-bg px-5 pt-2.5 shadow-sheet outline-none short:gap-2 ${
           fill ? 'h-[calc(100dvh-48px)]' : 'max-h-[calc(100dvh-48px)] overflow-y-auto'
         }`}
       >
