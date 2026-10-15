@@ -45,6 +45,8 @@ export default {
         'contrast-ink': token('c-contrast-ink'),
         'negative-on-contrast': token('c-negative-on-contrast'),
         'primary-on-contrast': token('c-primary-on-contrast'),
+        'fab-from': token('c-fab-from'),
+        'fab-to': token('c-fab-to'),
         event: token('c-event'),
         'loan-interest': token('c-loan-interest'),
         'loan-plan': token('c-loan-plan'),
@@ -73,7 +75,7 @@ export default {
         touch: '44px', // minimum touch target
       },
       boxShadow: {
-        fab: '0 8px 20px rgb(var(--c-primary) / .28)',
+        fab: '0 10px 24px rgb(var(--c-fab-to) / .35)',
         sheet: '0 -8px 32px rgb(0 0 0 / .18)',
       },
       maxWidth: {

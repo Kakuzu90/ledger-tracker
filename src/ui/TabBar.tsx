@@ -45,9 +45,13 @@ export function TabBar() {
         type="button"
         aria-label="Add transaction"
         onClick={() => openQuickAdd()}
-        className="-mt-[26px] flex h-14 w-14 items-center justify-center rounded-[18px] bg-primary text-primary-ink shadow-fab"
+        /*
+          Lifted clear of the bar and ringed in the page background, so the
+          bar reads as cut away around it rather than overlapped.
+        */
+        className="-mt-[28px] flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-fab-from to-fab-to text-white ring-[6px] ring-bg shadow-fab"
       >
-        <PlusIcon size={26} strokeWidth={2.2} />
+        <PlusIcon size={26} strokeWidth={2.4} />
       </button>
       <Tab {...tabs[2]} />
       <Tab {...tabs[3]} />
