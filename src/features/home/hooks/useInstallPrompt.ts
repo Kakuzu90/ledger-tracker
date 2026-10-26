@@ -2,63 +2,77 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/db'
 import { setSetting } from '@/db/settings'
-
-/** Chromium's install prompt event, which TypeScript's DOM lib does not have. */
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
+import {
+  clearStashedPrompt,
+  installOffer,
+  onApple,
+  runningInstalled,
+  stashedPrompt,
+  type BeforeInstallPromptEvent,
+  type InstallOffer,
+} from '@/lib/install'
 
 const DISMISSED_KEY = 'installBannerDismissedAt'
 
 export interface InstallPrompt {
-  /** The browser offered an install and the user has not waved it away. */
-  available: boolean
+  /** What to show: the browser's own prompt, iOS instructions, or nothing. */
+  offer: InstallOffer
   install: () => Promise<void>
   dismiss: () => Promise<void>
 }
 
 /**
- * The home banner only appears where the browser says the app is installable.
- * Safari never fires this event, so the banner stays hidden there rather than
- * showing instructions nobody asked for.
+ * Whether to offer an install, and in which form.
+ *
+ * The `beforeinstallprompt` event is not waited for here: Chromium fires
+ * it long before React mounts, so index.html catches it and this reads
+ * what was stashed, listening only for the custom event that says the
+ * stash changed.
  */
 export function useInstallPrompt(): InstallPrompt {
-  const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(null)
-  const dismissed = useLiveQuery(() => db.settings.get(DISMISSED_KEY), [])
+  const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(stashedPrompt)
+  // `undefined` until the read lands, `null` once it lands and there is
+  // no row — so a banner that was dismissed does not flash on screen for
+  // a frame first.
+  const dismissed = useLiveQuery<string | null, undefined>(
+    async () => ((await db.settings.get(DISMISSED_KEY))?.value as string | undefined) ?? null,
+    [],
+    undefined,
+  )
 
   useEffect(() => {
-    const onPrompt = (e: Event) => {
-      // Keep the event so the banner's button can trigger it later.
-      e.preventDefault()
-      setEvent(e as BeforeInstallPromptEvent)
-    }
-    const onInstalled = () => setEvent(null)
+    const onChange = () => setEvent(stashedPrompt())
+    window.addEventListener('ledger:installable', onChange)
+    return () => window.removeEventListener('ledger:installable', onChange)
+  }, [])
 
-    window.addEventListener('beforeinstallprompt', onPrompt)
-    window.addEventListener('appinstalled', onInstalled)
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt)
-      window.removeEventListener('appinstalled', onInstalled)
-    }
+  const forget = useCallback(async () => {
+    clearStashedPrompt()
+    setEvent(null)
+    await setSetting(DISMISSED_KEY, new Date().toISOString())
   }, [])
 
   const install = useCallback(async () => {
     if (!event) return
     await event.prompt()
     const { outcome } = await event.userChoice
+    // The event is single-use either way; only a refusal starts the
+    // cooling-off period.
+    clearStashedPrompt()
     setEvent(null)
-    if (outcome === 'dismissed') await setSetting(DISMISSED_KEY, new Date().toISOString())
-  }, [event])
+    if (outcome === 'dismissed') await forget()
+  }, [event, forget])
 
-  const dismiss = useCallback(async () => {
-    setEvent(null)
-    await setSetting(DISMISSED_KEY, new Date().toISOString())
-  }, [])
+  const offer: InstallOffer =
+    dismissed === undefined
+      ? 'none'
+      : installOffer({
+          event,
+          apple: onApple(),
+          installed: runningInstalled(),
+          dismissedAt: dismissed ?? undefined,
+          now: new Date(),
+        })
 
-  return {
-    available: event !== null && dismissed === undefined,
-    install,
-    dismiss,
-  }
+  return { offer, install, dismiss: forget }
 }

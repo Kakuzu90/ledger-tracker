@@ -27,6 +27,22 @@
         /* private mode — fall back to the OS preference */
       }
     </script>
+    <script>
+      // Chromium fires `beforeinstallprompt` as soon as the page qualifies,
+      // which is usually before React has mounted — and the event is not
+      // replayed. Catching it here, ahead of the bundle, is the only way the
+      // install banner ever sees it; src/lib/install.ts reads it back.
+      window.__ledgerInstallEvent = null
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault()
+        window.__ledgerInstallEvent = e
+        window.dispatchEvent(new Event('ledger:installable'))
+      })
+      window.addEventListener('appinstalled', function () {
+        window.__ledgerInstallEvent = null
+        window.dispatchEvent(new Event('ledger:installable'))
+      })
+    </script>
   </head>
   <body>
     <div id="root"></div>
