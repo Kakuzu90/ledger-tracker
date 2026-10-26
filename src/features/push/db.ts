@@ -85,6 +85,18 @@ export async function pushState(): Promise<PushState> {
   return permission === 'granted' && (await hasStoredToken()) ? 'on' : 'off'
 }
 
+/**
+ * Whether push is on, answered with browser APIs alone. `pushState`
+ * would do it too, but it loads the Firebase SDK to ask — and the
+ * foreground listener runs on every launch, including the launches of
+ * everyone who never turned push on.
+ */
+export async function pushIsOn(): Promise<boolean> {
+  if (!isFirebaseConfigured() || !VAPID_KEY) return false
+  if (notificationState() !== 'granted') return false
+  return hasStoredToken()
+}
+
 /** The token this browser last registered, if it is still ours. */
 async function hasStoredToken(): Promise<boolean> {
   try {

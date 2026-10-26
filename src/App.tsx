@@ -14,6 +14,7 @@ import {
 } from '@/features/settings/db'
 import { LockOverlay } from '@/features/lock/LockOverlay'
 import { markAway, resolveLockOnLaunch, shouldLockOnReturn } from '@/features/lock/db'
+import { listenForPush, pushIsOn } from '@/features/push/db'
 import { parseLaunchAction, withoutLaunchAction } from '@/lib/launch'
 import { useLockStore } from '@/store/lock'
 import { useUIStore } from '@/store/ui'
@@ -77,6 +78,31 @@ export function App() {
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', onHidden)
+    }
+  }, [])
+
+  /**
+   * A push that arrives while Ledger is on screen never reaches the
+   * service worker — FCM gives it to the focused page instead, and the
+   * page has to show it or it is simply dropped. A snackbar rather than
+   * a system notification: the app is right there being looked at.
+   */
+  useEffect(() => {
+    let stop: (() => void) | undefined
+    let gone = false
+
+    void (async () => {
+      if (!(await pushIsOn())) return
+      const off = await listenForPush((title, body) => {
+        useUIStore.getState().showSnack({ message: body ? `${title} — ${body}` : title })
+      })
+      if (gone) off()
+      else stop = off
+    })()
+
+    return () => {
+      gone = true
+      stop?.()
     }
   }, [])
 
