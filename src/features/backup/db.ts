@@ -9,6 +9,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/db'
 import { clearAll } from '@/db/sample'
+import { queueFullSync } from '@/features/sync/db'
 import { ensureSeeded } from '@/db/seed'
 import { setSetting } from '@/db/settings'
 import type { Receipt, Timestamp } from '@/db/types'
@@ -203,10 +204,17 @@ export async function restoreBackup(envelope: BackupEnvelope): Promise<void> {
 
   // A restored file can be missing a preference a later version added.
   await ensureSeeded(db)
+
+  // Every row in the ledger has just been replaced. The change hooks
+  // did see it, and this makes sure of it.
+  await queueFullSync()
 }
 
 /** Empties the ledger and puts a fresh install back in its place. */
 export async function resetAllData(): Promise<void> {
   await clearAll(db)
   await ensureSeeded(db)
+  // The cleared rows are queued as deletes by the hooks; this re-sends
+  // whatever `ensureSeeded` put back in their place.
+  await queueFullSync()
 }

@@ -15,6 +15,7 @@ import {
 import { LockOverlay } from '@/features/lock/LockOverlay'
 import { markAway, resolveLockOnLaunch, shouldLockOnReturn } from '@/features/lock/db'
 import { listenForPush, pushIsOn, refreshPushWorker } from '@/features/push/db'
+import { startSync } from '@/features/sync/db'
 import { parseLaunchAction, withoutLaunchAction } from '@/lib/launch'
 import { useLockStore } from '@/store/lock'
 import { useUIStore } from '@/store/ui'
@@ -78,6 +79,26 @@ export function App() {
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pagehide', onHidden)
+    }
+  }, [])
+
+  /**
+   * Cloud sync, if it is on. Every write has already gone to IndexedDB
+   * by the time this runs — it only drains what is queued, so a slow
+   * start or no network costs the ledger nothing.
+   */
+  useEffect(() => {
+    let stop: (() => void) | undefined
+    let gone = false
+
+    void startSync().then((off) => {
+      if (gone) off()
+      else stop = off
+    })
+
+    return () => {
+      gone = true
+      stop?.()
     }
   }, [])
 

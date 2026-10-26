@@ -1,6 +1,10 @@
 # Ledger — Personal Expense & Loan Tracker (PWA)
 
-Offline-first, single-user, installable PWA. No backend. All data in IndexedDB.
+Offline-first, single-user, installable PWA. IndexedDB is the source of truth and
+every write lands there first. Firebase is optional and opt-in: FCM push, and a
+one-way cloud copy of the ledger pushed from an outbox when there is a network
+(`src/lib/sync.ts`, `src/db/outbox.ts`, `src/features/sync`). Receipts (Blobs) and
+the `settings` table are never uploaded.
 
 ## Design reference
 - `design/*.dc.html` are **visual mockups** (one file per screen, 390px mobile width). Match their layout, spacing, colors, copy and component patterns.

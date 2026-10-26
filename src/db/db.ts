@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { captureChanges } from './outbox'
 import type {
   Account,
   Budget,
@@ -7,6 +8,7 @@ import type {
   Goal,
   Loan,
   LoanPayment,
+  OutboxEntry,
   Recurring,
   Receipt,
   Setting,
@@ -25,6 +27,8 @@ export class LedgerDB extends Dexie {
   budgets!: EntityTable<Budget, 'id'>
   goals!: EntityTable<Goal, 'id'>
   settings!: EntityTable<Setting, 'key'>
+  /** Local only: rows waiting to go to the cloud. */
+  outbox!: EntityTable<OutboxEntry, 'key'>
 
   /** The name is a parameter so tests can open throwaway databases. */
   constructor(name = 'ledger') {
@@ -45,6 +49,14 @@ export class LedgerDB extends Dexie {
       goals: 'id, deadline',
       settings: 'key',
     })
+
+    // Cloud sync. Nothing in v1 moves, so the upgrade is just the new
+    // table appearing empty.
+    this.version(2).stores({
+      outbox: 'key, queuedAt',
+    })
+
+    captureChanges(this)
   }
 }
 

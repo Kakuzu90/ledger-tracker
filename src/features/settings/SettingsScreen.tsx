@@ -21,6 +21,9 @@ import { PinSheet } from '@/features/lock/components/PinSheet'
 import { useLockStore } from '@/store/lock'
 import { disablePush, enablePush, pushState } from '@/features/push/db'
 import { canEnablePush, PUSH_HINT, type PushState } from '@/features/push/push'
+import { disableSync, enableSync } from '@/features/sync/db'
+import { useSyncRow } from '@/features/sync/hooks'
+import { queuedLabel, SYNC_HINT } from '@/lib/sync'
 import { useSettingsData, savePreference } from './db'
 import { buildSettingsView } from './settings'
 
@@ -48,6 +51,7 @@ export function SettingsScreen() {
   const [asking, setAsking] = useState<'set' | 'remove' | null>(null)
   const [canUseBiometrics, setCanUseBiometrics] = useState(false)
   const [push, setPush] = useState<PushState>('unconfigured')
+  const sync = useSyncRow()
 
   // Whether this device has a fingerprint reader or a face camera the
   // browser will talk to. A USB key is not what the row is offering.
@@ -103,6 +107,15 @@ export function SettingsScreen() {
     const next = on ? await enablePush() : await disablePush()
     setPush(next)
     if (on && next !== 'on') showSnack({ message: PUSH_HINT[next] })
+  }
+
+  const toggleSync = async (on: boolean) => {
+    // Optimistic: the switch is a preference, and turning it on cannot
+    // fail — the first upload can, and the hint below says so when it
+    // does.
+    sync.setEnabled(on)
+    if (on) await enableSync()
+    else await disableSync()
   }
 
   /** Enrolling runs the device's own prompt, which can be declined. */
@@ -274,6 +287,16 @@ export function SettingsScreen() {
 
       <p className="label mt-1">Data</p>
       <RowGroup>
+        <Toggle
+          label="Cloud copy"
+          hint={SYNC_HINT[sync.state]}
+          checked={sync.enabled}
+          disabled={sync.state === 'unconfigured'}
+          onChange={(on) => void toggleSync(on)}
+        />
+        {sync.enabled && (
+          <Row label="Waiting to upload" value={queuedLabel(sync.queued)} chevron={false} />
+        )}
         <Row
           to="/settings/backup"
           label="Backup & export"
@@ -282,6 +305,11 @@ export function SettingsScreen() {
         />
         <Row label="App version" value={view.version} chevron={false} />
       </RowGroup>
+      <p className="px-1 text-meta text-muted">
+        The copy goes up as soon as there is a network, and waits on this
+        device until there is one. Receipt images and this device's own
+        settings — your PIN among them — stay here.
+      </p>
 
       <Sheet
         open={picking === 'name'}

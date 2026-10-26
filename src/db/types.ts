@@ -166,3 +166,17 @@ export interface Setting<T = unknown> {
   key: string
   value: T
 }
+
+/**
+ * A row that has changed and not yet reached the cloud. One entry per
+ * row rather than per edit — see `src/lib/sync.ts`. Local-only, and the
+ * one table that is never itself synced.
+ */
+export interface OutboxEntry {
+  /** `${table}:${rowId}` */
+  key: string
+  table: string
+  rowId: Id
+  op: 'put' | 'delete'
+  queuedAt: Timestamp
+}
