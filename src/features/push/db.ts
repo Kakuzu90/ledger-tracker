@@ -28,12 +28,54 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY
  * Its own scope, deliberately: the app's Workbox worker owns `/`, and
  * two registrations at the same scope replace one another.
  */
+const WORKER_SCOPE = '/firebase-cloud-messaging-push-scope'
+
 async function messagingWorker(): Promise<ServiceWorkerRegistration> {
   const registration = await navigator.serviceWorker.register(
     `/firebase-messaging-sw.js?${firebaseConfigParams()}`,
-    { scope: '/firebase-cloud-messaging-push-scope' },
+    { scope: WORKER_SCOPE },
   )
+  await dropStrayWorkers(registration)
   return activated(registration)
+}
+
+/**
+ * Firebase registers a worker of its own if `getToken` is ever called
+ * without one, and it uses a different scope — so a second messaging
+ * worker can be left behind holding a live subscription, and every
+ * push then arrives twice.
+ */
+async function dropStrayWorkers(keep: ServiceWorkerRegistration): Promise<void> {
+  try {
+    const all = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(
+      all
+        .filter((other) => other.scope !== keep.scope && isMessagingWorker(other))
+        .map((other) => other.unregister()),
+    )
+  } catch {
+    // Not being able to tidy up is no reason to fail turning push on.
+  }
+}
+
+function isMessagingWorker(registration: ServiceWorkerRegistration): boolean {
+  const worker = registration.active ?? registration.waiting ?? registration.installing
+  return worker?.scriptURL.includes('firebase-messaging-sw.js') ?? false
+}
+
+/**
+ * Asks the browser to re-fetch the worker script. Nothing else does:
+ * no page is ever loaded under that scope, so without this a deployed
+ * fix to the worker would not reach a device until it next toggled the
+ * switch.
+ */
+export async function refreshPushWorker(): Promise<void> {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration(WORKER_SCOPE)
+    await registration?.update()
+  } catch {
+    // Offline, most likely. It will be tried again next launch.
+  }
 }
 
 /**
@@ -100,9 +142,7 @@ export async function pushIsOn(): Promise<boolean> {
 /** The token this browser last registered, if it is still ours. */
 async function hasStoredToken(): Promise<boolean> {
   try {
-    const registration = await navigator.serviceWorker.getRegistration(
-      '/firebase-cloud-messaging-push-scope',
-    )
+    const registration = await navigator.serviceWorker.getRegistration(WORKER_SCOPE)
     if (!registration) return false
     const subscription = await registration.pushManager.getSubscription()
     return subscription !== null
@@ -161,9 +201,7 @@ export async function disablePush(): Promise<PushState> {
 
   const { getToken, deleteToken } = await import('firebase/messaging')
   try {
-    const registration = await navigator.serviceWorker.getRegistration(
-      '/firebase-cloud-messaging-push-scope',
-    )
+    const registration = await navigator.serviceWorker.getRegistration(WORKER_SCOPE)
     if (registration) {
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,

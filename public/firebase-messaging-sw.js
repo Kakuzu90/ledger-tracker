@@ -15,6 +15,12 @@
  * from its own origin — acceptable only because this worker never runs
  * without a network: a push cannot arrive offline.
  */
+/* Take over the moment a new version lands. Nothing here holds state
+   worth preserving, and a stale copy of this file is how a push ends
+   up being drawn twice. */
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js')
 

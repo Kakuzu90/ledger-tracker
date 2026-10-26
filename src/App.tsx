@@ -14,7 +14,7 @@ import {
 } from '@/features/settings/db'
 import { LockOverlay } from '@/features/lock/LockOverlay'
 import { markAway, resolveLockOnLaunch, shouldLockOnReturn } from '@/features/lock/db'
-import { listenForPush, pushIsOn } from '@/features/push/db'
+import { listenForPush, pushIsOn, refreshPushWorker } from '@/features/push/db'
 import { parseLaunchAction, withoutLaunchAction } from '@/lib/launch'
 import { useLockStore } from '@/store/lock'
 import { useUIStore } from '@/store/ui'
@@ -93,6 +93,10 @@ export function App() {
 
     void (async () => {
       if (!(await pushIsOn())) return
+      // The push worker sits at a scope no page is ever loaded under,
+      // so this launch is the only chance it gets to pick up a new
+      // version of itself.
+      await refreshPushWorker()
       const off = await listenForPush((title, body) => {
         useUIStore.getState().showSnack({ message: body ? `${title} — ${body}` : title })
       })
