@@ -25,7 +25,13 @@ if (config.projectId) {
   const messaging = firebase.messaging()
 
   messaging.onBackgroundMessage((payload) => {
-    const { title, body } = payload.notification ?? {}
+    /* A message carrying a `notification` block has already been put on
+       screen by the SDK itself before this handler runs — showing it
+       again is how you get two of everything. Only data-only messages
+       are ours to draw, which is what the sender should be sending. */
+    if (payload.notification) return
+
+    const { title, body } = payload.data ?? {}
     if (!title) return
 
     self.registration.showNotification(title, {

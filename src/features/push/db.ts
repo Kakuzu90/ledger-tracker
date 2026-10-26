@@ -220,7 +220,11 @@ export async function listenForPush(
 
   const { onMessage } = await import('firebase/messaging')
   return onMessage(messaging, (payload) => {
-    const { title, body } = payload.notification ?? {}
+    // Data-only is what the sender uses, so that the background worker
+    // is the only thing drawing a notification; `notification` is still
+    // read because that is all the Firebase console can send.
+    const title = payload.data?.title ?? payload.notification?.title
+    const body = payload.data?.body ?? payload.notification?.body
     if (title) show(title, body ?? '')
   })
 }
