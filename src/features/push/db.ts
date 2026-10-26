@@ -90,6 +90,10 @@ export async function enablePush(): Promise<PushState> {
   })
   if (!token) return 'off'
 
+  // The only way to aim a test message at this browser is to paste its
+  // token into the console's sender, and nothing else prints it.
+  if (import.meta.env.DEV) console.info('[push] FCM registration token:\n' + token)
+
   await storeToken(token)
   return 'on'
 }
