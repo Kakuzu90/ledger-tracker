@@ -24,6 +24,18 @@ import { BillsScreen } from '@/features/bills/BillsScreen'
 export const router = createBrowserRouter([
   {
     element: <App />,
+    /*
+      Opening straight at a `lazy` route — /reports, /settings and the
+      two under it — leaves the router with nothing to render until the
+      chunk lands, and it renders `null` and warns about this unless a
+      fallback is given.
+
+      The same empty frame App paints while the lock has its say: a
+      spinner that appears for one frame is worse than a plain one. The
+      theme is already on <html> from the inline script in index.html,
+      so this is the right colour before any of our code has run.
+    */
+    hydrateFallbackElement: <div className="min-h-dvh bg-bg" />,
     children: [
       {
         element: <TabLayout />,
