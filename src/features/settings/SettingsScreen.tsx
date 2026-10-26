@@ -19,6 +19,8 @@ import {
 } from '@/features/lock/db'
 import { PinSheet } from '@/features/lock/components/PinSheet'
 import { useLockStore } from '@/store/lock'
+import { disablePush, enablePush, pushState } from '@/features/push/db'
+import { canEnablePush, PUSH_HINT, type PushState } from '@/features/push/push'
 import { useSettingsData, savePreference } from './db'
 import { buildSettingsView } from './settings'
 
@@ -45,11 +47,18 @@ export function SettingsScreen() {
   const [name, setName] = useState('')
   const [asking, setAsking] = useState<'set' | 'remove' | null>(null)
   const [canUseBiometrics, setCanUseBiometrics] = useState(false)
+  const [push, setPush] = useState<PushState>('unconfigured')
 
   // Whether this device has a fingerprint reader or a face camera the
   // browser will talk to. A USB key is not what the row is offering.
   useEffect(() => {
     void biometricsAvailable().then(setCanUseBiometrics)
+  }, [])
+
+  // Reads where push stands without asking for anything, so opening
+  // Settings never triggers a permission prompt.
+  useEffect(() => {
+    void pushState().then(setPush)
   }, [])
 
   const view = useMemo(() => (data ? buildSettingsView(data, today) : undefined), [data, today])
@@ -88,6 +97,12 @@ export function SettingsScreen() {
       return
     }
     await savePreference(key, true)
+  }
+
+  const togglePush = async (on: boolean) => {
+    const next = on ? await enablePush() : await disablePush()
+    setPush(next)
+    if (on && next !== 'on') showSnack({ message: PUSH_HINT[next] })
   }
 
   /** Enrolling runs the device's own prompt, which can be declined. */
@@ -242,16 +257,19 @@ export function SettingsScreen() {
           disabled={!view.canNotify}
           onChange={(on) => void setReminder('budgetAlerts', on)}
         />
-        <Row
-          label="Daily log nudge"
-          hint="Needs a server to wake the app at a set time"
-          value={<Badge>Later</Badge>}
-          chevron={false}
+        <Toggle
+          label="Push to this device"
+          hint={PUSH_HINT[push]}
+          checked={push === 'on'}
+          disabled={push !== 'on' && !canEnablePush(push)}
+          onChange={(on) => void togglePush(on)}
         />
       </RowGroup>
       <p className="px-1 text-meta text-muted">
-        With no server behind it, Ledger can only check what is due when you
-        open it. Reminders are raised then, at most once a day.
+        Without push, Ledger can only check what is due when you
+        open it. Reminders are raised then, at most once a day. Push
+        reaches this device with Ledger closed, but not while it is
+        offline — nothing can.
       </p>
 
       <p className="label mt-1">Data</p>

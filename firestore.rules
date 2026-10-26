@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Deploy with:  firebase deploy --only firestore:rules
+//
+// The ledger itself still lives in IndexedDB. The only thing here is the
+// push token per device, so the rules are deliberately narrow: nothing
+// is world-readable, and a device can only touch its own rows.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // users/{uid}/devices/{token}
+    //
+    // `uid` comes from anonymous sign-in, so there is no account behind
+    // it — but it is still a uid Firebase issued and signed, which is
+    // what keeps one install out of another's rows.
+    match /users/{uid}/devices/{token} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Anything not named above stays closed, including as this grows.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

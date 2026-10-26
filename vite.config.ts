@@ -16,6 +16,17 @@ export default defineConfig({
     // React break every hook in the components that use it.
     dedupe: ['react', 'react-dom'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Named, so the precache can exclude it by glob. Left to itself
+        // Rollup emits several `index.esm-<hash>.js`, which match
+        // nothing useful.
+        manualChunks: (id) =>
+          /node_modules\/(firebase|@firebase)\//.test(id) ? 'firebase' : undefined,
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -92,6 +103,17 @@ export default defineConfig({
         // why there are no runtimeCaching rules: there is no third party to
         // cache.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        /*
+         * Firebase is the one thing deliberately left out of the
+         * precache. It is only reached if push is switched on, it is
+         * larger than the rest of the app put together, and it cannot
+         * do anything offline anyway — precaching it would make every
+         * cold start pay for a feature most installs never use.
+         *
+         * Its own service worker is excluded for the same reason plus
+         * a better one: a worker should not be precached by a worker.
+         */
+        globIgnores: ['**/firebase-*.js', 'firebase-messaging-sw.js'],
         // Every route is served by the one document; without this, opening
         // /loans offline would ask the network for a page that does not exist.
         navigateFallback: 'index.html',
