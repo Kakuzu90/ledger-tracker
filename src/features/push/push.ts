@@ -10,7 +10,12 @@ export type PushBlocker =
   | 'unsupported' // the browser cannot do web push at all
   | 'denied' // the user said no, and only they can undo it
 
-export type PushState = 'off' | 'on' | PushBlocker
+/**
+ * `failed` is deliberately not a blocker: registering can fail for
+ * reasons that pass — a dropped connection, a worker that lost a race —
+ * and the switch has to stay usable so it can be tried again.
+ */
+export type PushState = 'off' | 'on' | 'failed' | PushBlocker
 
 /**
  * What the Settings row should say. Spelled out rather than inferred in
@@ -20,14 +25,16 @@ export type PushState = 'off' | 'on' | PushBlocker
 export const PUSH_HINT: Readonly<Record<PushState, string>> = {
   on: 'This device will be notified even when Ledger is closed',
   off: 'Get reminders when Ledger is closed',
+  failed: 'Could not register this device. Check your connection and try again',
   unconfigured: 'This build has no Firebase project connected',
   'no-vapid-key': 'Missing the Web Push certificate for this project',
   unsupported: 'This browser cannot receive push. On iOS, install Ledger first',
   denied: 'Blocked in your browser settings',
 }
 
-/** Only `off` can be switched on; the rest are all dead ends. */
-export const canEnablePush = (state: PushState): boolean => state === 'off'
+/** `off` and a failed attempt can be switched on; the rest are dead ends. */
+export const canEnablePush = (state: PushState): boolean =>
+  state === 'off' || state === 'failed'
 
 /**
  * A label for the device row, so a list of tokens is readable later. The

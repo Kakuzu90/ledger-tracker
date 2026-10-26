@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { canEnablePush, describeDevice, PUSH_HINT, PUSH_TTL_SECONDS, type PushState } from './push'
 
 describe('canEnablePush', () => {
-  it('only lets the one state that can be turned on be turned on', () => {
+  it('only lets the states that can be turned on be turned on', () => {
     expect(canEnablePush('off')).toBe(true)
+    // A failed attempt is the one error the user can do something about,
+    // so the switch has to stay live rather than strand them.
+    expect(canEnablePush('failed')).toBe(true)
     for (const blocked of ['on', 'unconfigured', 'no-vapid-key', 'unsupported', 'denied'] as const) {
       expect(canEnablePush(blocked)).toBe(false)
     }
@@ -11,7 +14,15 @@ describe('canEnablePush', () => {
 })
 
 describe('PUSH_HINT', () => {
-  const states: PushState[] = ['on', 'off', 'unconfigured', 'no-vapid-key', 'unsupported', 'denied']
+  const states: PushState[] = [
+    'on',
+    'off',
+    'failed',
+    'unconfigured',
+    'no-vapid-key',
+    'unsupported',
+    'denied',
+  ]
 
   it('says something for every state, so the row is never blank', () => {
     for (const state of states) {

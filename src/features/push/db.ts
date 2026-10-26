@@ -29,10 +29,42 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY
  * two registrations at the same scope replace one another.
  */
 async function messagingWorker(): Promise<ServiceWorkerRegistration> {
-  return navigator.serviceWorker.register(
+  const registration = await navigator.serviceWorker.register(
     `/firebase-messaging-sw.js?${firebaseConfigParams()}`,
     { scope: '/firebase-cloud-messaging-push-scope' },
   )
+  return activated(registration)
+}
+
+/**
+ * `register()` resolves as soon as the worker starts installing, but a
+ * push subscription needs one that is already running — asking too
+ * early fails with "no active Service Worker". On a first visit that is
+ * every time, since there is nothing registered yet to inherit.
+ */
+function activated(
+  registration: ServiceWorkerRegistration,
+): Promise<ServiceWorkerRegistration> {
+  if (registration.active) return Promise.resolve(registration)
+
+  const worker = registration.installing ?? registration.waiting
+  if (!worker) return Promise.resolve(registration)
+
+  return new Promise((resolve, reject) => {
+    const check = () => {
+      if (worker.state === 'activated') {
+        worker.removeEventListener('statechange', check)
+        resolve(registration)
+      } else if (worker.state === 'redundant') {
+        // The script failed to parse or install. Waiting on it would
+        // hang the switch, and nothing else will move it on.
+        worker.removeEventListener('statechange', check)
+        reject(new Error('The push worker could not be installed'))
+      }
+    }
+    worker.addEventListener('statechange', check)
+    check()
+  })
 }
 
 /** Where push stands on this device, without asking for anything. */
@@ -83,19 +115,27 @@ export async function enablePush(): Promise<PushState> {
   const messaging = await getMessaging()
   if (!messaging) return 'unsupported'
 
-  const { getToken } = await import('firebase/messaging')
-  const token = await getToken(messaging, {
-    vapidKey: VAPID_KEY,
-    serviceWorkerRegistration: await messagingWorker(),
-  })
-  if (!token) return 'off'
+  // Registering a worker and reaching Google both fail in ordinary ways
+  // — a dropped connection, a worker that will not install. The switch
+  // has to come back and say so rather than leave a rejected promise.
+  try {
+    const { getToken } = await import('firebase/messaging')
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: await messagingWorker(),
+    })
+    if (!token) return 'failed'
 
-  // The only way to aim a test message at this browser is to paste its
-  // token into the console's sender, and nothing else prints it.
-  if (import.meta.env.DEV) console.info('[push] FCM registration token:\n' + token)
+    // The only way to aim a test message at this browser is to paste its
+    // token into the console's sender, and nothing else prints it.
+    if (import.meta.env.DEV) console.info('[push] FCM registration token:\n' + token)
 
-  await storeToken(token)
-  return 'on'
+    await storeToken(token)
+    return 'on'
+  } catch (error) {
+    if (import.meta.env.DEV) console.warn('[push] could not register', error)
+    return 'failed'
+  }
 }
 
 /**
