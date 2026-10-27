@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useKeypadKeys } from '@/lib/keypad'
 import { LockIcon } from '@/ui/Icon'
-import { cooldownText, PIN_MAX, secondsLeft } from '@/lib/pin'
+import { cooldownText, PIN_LENGTH, secondsLeft } from '@/lib/pin'
 import { describeError } from '@/lib/webauthn'
 import { resetAllData } from '@/features/backup/db'
 import { Keypad } from './components/Keypad'
 import { openApp, tryBiometric, tryPin, useLockState } from './db'
-
-/** The number of digits the dots show before they stop growing. */
-const DOTS = 4
 
 /**
  * The lock (design/Lock.dc.html). It renders instead of the app, not over
@@ -51,11 +48,10 @@ export function LockOverlay() {
     if (busy || waiting > 0) return
     setProblem(null)
 
-    const next = `${pin}${digit}`.slice(0, PIN_MAX)
+    const next = `${pin}${digit}`.slice(0, PIN_LENGTH)
     setPin(next)
-    // Four digits is the usual PIN, so it submits itself; a longer one is
-    // sent with the tick that appears once there is more than that.
-    if (next.length === DOTS) void submit(next)
+    // Every PIN is the same length, so the last digit is the submit.
+    if (next.length === PIN_LENGTH) void submit(next)
   }
 
   useKeypadKeys({
@@ -63,9 +59,6 @@ export function LockOverlay() {
     onBackspace: () => {
       setProblem(null)
       setPin((current) => current.slice(0, -1))
-    },
-    onSubmit: () => {
-      if (pin.length > DOTS) void submit(pin)
     },
     enabled: !busy && waiting === 0,
   })
@@ -90,9 +83,6 @@ export function LockOverlay() {
     if (state && (!state.enabled || !state.hasPin)) void openApp()
   }, [state])
 
-  const filled = Math.max(pin.length, 0)
-  const dots = Math.max(DOTS, filled)
-
   return (
     <div
       className="flex min-h-dvh flex-col items-center overflow-y-auto bg-lock px-6 pt-[88px] text-lock-ink"
@@ -108,14 +98,14 @@ export function LockOverlay() {
 
       <div
         role="status"
-        aria-label={`${filled} of ${dots} digits entered`}
+        aria-label={`${pin.length} of ${PIN_LENGTH} digits entered`}
         className="mb-11 mt-8 flex gap-[18px]"
       >
-        {Array.from({ length: dots }, (_, index) => (
+        {Array.from({ length: PIN_LENGTH }, (_, index) => (
           <span
             key={index}
             className={`h-3.5 w-3.5 rounded-full border-2 ${
-              index < filled ? 'border-lock-ink bg-lock-ink' : 'border-lock-dot'
+              index < pin.length ? 'border-lock-ink bg-lock-ink' : 'border-lock-dot'
             }`}
           />
         ))}
@@ -139,17 +129,6 @@ export function LockOverlay() {
       >
         {waiting > 0 ? cooldownText(waiting) : problem}
       </p>
-
-      {pin.length > DOTS && (
-        <button
-          type="button"
-          className="btn-primary mt-3 w-full max-w-[300px]"
-          disabled={busy || waiting > 0}
-          onClick={() => void submit(pin)}
-        >
-          Unlock
-        </button>
-      )}
 
       <button
         type="button"

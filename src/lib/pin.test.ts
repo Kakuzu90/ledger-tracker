@@ -9,6 +9,7 @@ import {
   FREE_ATTEMPTS,
   hashPin,
   PIN_ITERATIONS,
+  PIN_LENGTH,
   secondsLeft,
   shouldLock,
   verifyPin,
@@ -17,7 +18,7 @@ import {
 describe('checkPin', () => {
   it('accepts an ordinary PIN', () => {
     expect(checkPin('2846')).toBeNull()
-    expect(checkPin('19473628')).toBeNull()
+    expect(checkPin('7391')).toBeNull()
   })
 
   it('wants digits', () => {
@@ -26,21 +27,22 @@ describe('checkPin', () => {
     expect(checkPin('12 4')).toBe('A PIN is digits only')
   })
 
-  it('wants four of them, and not more than eight', () => {
-    expect(checkPin('284')).toBe('At least 4 digits')
-    expect(checkPin('123456789')).toBe('At most 8 digits')
+  it('wants exactly four — the lock screen has four dots and no submit', () => {
+    expect(PIN_LENGTH).toBe(4)
+    expect(checkPin('284')).toBe('A PIN is 4 digits')
+    expect(checkPin('28465')).toBe('A PIN is 4 digits')
   })
 
   it('refuses the same digit over and over', () => {
     expect(checkPin('0000')).toBe('Pick something less guessable than the same digit')
-    expect(checkPin('777777')).toBe('Pick something less guessable than the same digit')
+    expect(checkPin('7777')).toBe('Pick something less guessable than the same digit')
   })
 
   it('refuses a straight run, up or down', () => {
     // A lock that opens to 1234 is decoration.
     expect(checkPin('1234')).toBe('Pick something less guessable than 1234')
     expect(checkPin('9876')).toBe('Pick something less guessable than 9876')
-    expect(checkPin('456789')).toBe('Pick something less guessable than 456789')
+    expect(checkPin('6789')).toBe('Pick something less guessable than 6789')
   })
 
   it('lets a near-run through — the rule is for the obvious ones', () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Sheet } from '@/ui/Sheet'
-import { checkPin, PIN_MAX, PIN_MIN } from '@/lib/pin'
+import { checkPin, PIN_LENGTH } from '@/lib/pin'
 
 interface PinSheetProps {
   onClose: () => void
@@ -12,7 +12,7 @@ interface PinSheetProps {
   onSubmit: (pin: string) => Promise<void>
 }
 
-const digitsOnly = (value: string) => value.replace(/\D/g, '').slice(0, PIN_MAX)
+const digitsOnly = (value: string) => value.replace(/\D/g, '').slice(0, PIN_LENGTH)
 
 /**
  * Setting a PIN, and proving you know the current one.
@@ -34,7 +34,7 @@ export function PinSheet({
   const [busy, setBusy] = useState(false)
 
   const submit = async () => {
-    const rules = choosing ? checkPin(pin) : pin.length < PIN_MIN ? 'Enter your PIN' : null
+    const rules = choosing ? checkPin(pin) : pin.length < PIN_LENGTH ? 'Enter your PIN' : null
     if (rules) {
       setProblem(rules)
       return
@@ -67,6 +67,7 @@ export function PinSheet({
           type="password"
           inputMode="numeric"
           autoComplete="off"
+          maxLength={PIN_LENGTH}
           autoFocus
           value={pin}
           onChange={(event) => setPin(digitsOnly(event.target.value))}
@@ -81,6 +82,7 @@ export function PinSheet({
             type="password"
             inputMode="numeric"
             autoComplete="off"
+            maxLength={PIN_LENGTH}
             value={again}
             onChange={(event) => setAgain(digitsOnly(event.target.value))}
           />
@@ -89,9 +91,9 @@ export function PinSheet({
 
       {choosing && (
         <p className="text-meta text-muted">
-          {PIN_MIN} to {PIN_MAX} digits. It is stored as a one-way hash, so it
-          cannot be looked up or reset — if you forget it, the way back in is a
-          backup file.
+          {PIN_LENGTH} digits — the same {PIN_LENGTH} the lock screen asks for. It is
+          stored as a one-way hash, so it cannot be looked up or reset — if you
+          forget it, the way back in is a backup file.
         </p>
       )}
 

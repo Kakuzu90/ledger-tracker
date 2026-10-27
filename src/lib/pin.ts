@@ -16,8 +16,15 @@
 
 import { base64ToBytes, bytesToBase64, equalBytes } from './bytes'
 
-export const PIN_MIN = 4
-export const PIN_MAX = 8
+/**
+ * Four digits, not a range.
+ *
+ * The lock screen is a row of dots over a keypad (design/Lock.dc.html) and
+ * it submits the moment the last one fills — which only works if both ends
+ * agree on how many there are. A PIN whose length the lock cannot know is a
+ * PIN the lock cannot take.
+ */
+export const PIN_LENGTH = 4
 
 /** Same work factor as the backup key: OWASP's 2023 floor for SHA-256. */
 export const PIN_ITERATIONS = 210_000
@@ -43,8 +50,7 @@ function isRun(pin: string): boolean {
  */
 export function checkPin(pin: string): string | null {
   if (!DIGITS.test(pin)) return 'A PIN is digits only'
-  if (pin.length < PIN_MIN) return `At least ${PIN_MIN} digits`
-  if (pin.length > PIN_MAX) return `At most ${PIN_MAX} digits`
+  if (pin.length !== PIN_LENGTH) return `A PIN is ${PIN_LENGTH} digits`
   if (new Set(pin).size === 1) return 'Pick something less guessable than the same digit'
   if (isRun(pin)) return `Pick something less guessable than ${pin}`
   return null
