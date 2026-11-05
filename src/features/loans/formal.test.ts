@@ -201,3 +201,65 @@ describe('scheduleWindow', () => {
     expect(scheduleWindow(short.schedule)).toHaveLength(3)
   })
 })
+
+/**
+ * A stated instalment is the lender's own figure, which fees and insurance
+ * usually push above the textbook one. It replaces the computed payment and
+ * sets the length of the schedule, since the term the contract names no
+ * longer governs how fast the balance falls.
+ */
+describe('a loan whose monthly payment was entered by hand', () => {
+  const stated = view({ monthlyPayment: 15_000_00 })
+  const computed = view()
+
+  it('uses the stated payment, not the one the rate and term imply', () => {
+    expect(computed.monthly).toBe(13_651_21)
+    expect(stated.monthly).toBe(15_000_00)
+  })
+
+  it('pays the loan off sooner, and says so in the terms', () => {
+    expect(stated.termMonths).toBeLessThan(60)
+    expect(stated.terms).toBe(`BDO · 9.5% a year · ${stated.termMonths} months`)
+    expect(stated.payoffDate).toBeDefined()
+    expect(stated.payoffDate! < computed.payoffDate!).toBe(true)
+  })
+
+  it('leaves less owing after the same number of payments', () => {
+    expect(stated.remaining).toBeLessThan(computed.remaining)
+    expect(stated.interestPaid).toBeLessThan(computed.interestPaid)
+  })
+
+  it('keeps the balance, the share and the table telling one story', () => {
+    const atPaid = stated.schedule[stated.paidCount - 1]
+    expect(atPaid?.balance).toBe(stated.remaining)
+    expect(stated.share).toBeCloseTo(
+      (stated.loan.principal - stated.remaining) / stated.loan.principal,
+    )
+  })
+
+  it('runs the simulator off the stated payment', () => {
+    expect(simulate(stated, 0).basePayments).toBe(stated.termMonths - stated.paidCount)
+  })
+
+  it('works with no term at all — some lenders only quote the instalment', () => {
+    const open = view({ termMonths: undefined, monthlyPayment: 15_000_00 }, 0)
+    expect(open.amortises).toBe(true)
+    expect(open.monthly).toBe(15_000_00)
+    expect(open.remaining).toBe(650_000_00)
+  })
+
+  it('refuses to amortise a payment that cannot cover the interest', () => {
+    // 9.5% on ₱650,000 is about ₱5,146 of interest in month one.
+    const tiny = view({ monthlyPayment: 1_000_00 }, 0)
+    expect(tiny.amortises).toBe(false)
+    expect(tiny.paymentTooSmall).toBe(true)
+    expect(tiny.schedule).toEqual([])
+    // Still offered for logging: the payment is real even if the loan never ends.
+    expect(tiny.monthly).toBe(1_000_00)
+  })
+
+  it('does not cry wolf when no payment was entered', () => {
+    expect(computed.paymentTooSmall).toBe(false)
+    expect(view({ ratePct: undefined, termMonths: undefined }, 0).paymentTooSmall).toBe(false)
+  })
+})

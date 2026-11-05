@@ -127,6 +127,12 @@ export interface Loan extends Row {
    */
   rateBasis?: RateBasis
   termMonths?: number
+  /**
+   * The instalment the lender actually takes, when it is not the one the
+   * textbook amortisation works out — fees, insurance and the lender's own
+   * rounding all push it about. Unset means "compute it from rate and term".
+   */
+  monthlyPayment?: Centavos
   startDate: DateOnly
   dueDate?: DateOnly
   note: string

@@ -7,9 +7,9 @@ import { Toggle } from '@/ui/Toggle'
 import { Money } from '@/ui/Money'
 import { PlusIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
-import { parseMoney } from '@/lib/money'
+import { formatAmount, parseMoney } from '@/lib/money'
 import { toDateOnly } from '@/lib/dates'
-import { monthlyPayment } from '@/lib/amortization'
+import { monthlyPayment, remainingSchedule } from '@/lib/amortization'
 import { toAnnualRate } from '@/lib/loans'
 import type { Id, LoanDirection, LoanKind, RateBasis } from '@/db/types'
 import { createContact, createLoan, useLoansData } from './db'
@@ -46,6 +46,7 @@ export function AddLoanScreen() {
   // Per month is how loans are quoted here, so it is where the form starts.
   const [rateBasis, setRateBasis] = useState<RateBasis>('month')
   const [termMonths, setTermMonths] = useState('')
+  const [paymentInput, setPaymentInput] = useState('')
   const [startDate, setStartDate] = useState(toDateOnly(new Date()))
   const [dueDate, setDueDate] = useState('')
   const [note, setNote] = useState('')
@@ -61,7 +62,12 @@ export function AddLoanScreen() {
 
   const term = number(termMonths) ?? 0
   const rate = toAnnualRate(number(ratePct) ?? 0, rateBasis)
-  const instalment = !isPersonal && term > 0 ? monthlyPayment(principal, rate, term) : 0
+  // What the lender says beats what the arithmetic says.
+  const statedPayment = isPersonal ? 0 : (parseMoney(paymentInput) ?? 0)
+  const computed = !isPersonal && term > 0 ? monthlyPayment(principal, rate, term) : 0
+  const instalment = statedPayment > 0 ? statedPayment : computed
+  const monthsAtStated =
+    statedPayment > 0 ? remainingSchedule(principal, rate, statedPayment).length : 0
 
   const onAddContact = async () => {
     const name = newName?.trim()
@@ -82,6 +88,7 @@ export function AddLoanScreen() {
         ...(isPersonal ? {} : { lender }),
         principal,
         ...(isPersonal ? {} : { ratePct: rate, rateBasis, termMonths: term }),
+        ...(statedPayment > 0 ? { monthlyPayment: statedPayment } : {}),
         startDate,
         ...(isPersonal && dueDate ? { dueDate } : {}),
         note,
@@ -220,6 +227,25 @@ export function AddLoanScreen() {
         </div>
       )}
 
+      {!isPersonal && (
+        <label className="block">
+          <span className="label">Monthly payment · optional</span>
+          <input
+            className="field mt-1"
+            type="text"
+            inputMode="decimal"
+            value={paymentInput}
+            onChange={(event) => setPaymentInput(event.target.value)}
+            placeholder={computed > 0 ? formatAmount(computed) : '0.00'}
+            aria-describedby="payment-hint"
+          />
+          <span id="payment-hint" className="mt-1 block text-meta text-muted">
+            What the lender actually bills, if it is not the figure above — fees and
+            insurance usually push it up. Leave it blank to use the computed one.
+          </span>
+        </label>
+      )}
+
       <div className="flex gap-3">
         <label className="flex-1">
           <span className="label">{isPersonal ? 'Date' : 'First payment'}</span>
@@ -285,9 +311,14 @@ export function AddLoanScreen() {
       ) : (
         instalment > 0 && (
           <p className="rounded-[16px] border border-primary/30 bg-primary-soft p-3.5 text-meta text-muted">
-            About <Money value={instalment} whole className="font-semibold text-ink" /> a
-            month over {term} months. Log each payment from the loan and it posts to the
-            account above.
+            {statedPayment > 0 ? 'Paying ' : 'About '}
+            <Money value={instalment} whole className="font-semibold text-ink" /> a month
+            {statedPayment > 0
+              ? monthsAtStated > 0
+                ? ` clears it in ${monthsAtStated} ${monthsAtStated === 1 ? 'month' : 'months'}.`
+                : ' does not cover the interest, so the balance would never fall.'
+              : ` over ${term} months.`}{' '}
+            Log each payment from the loan and it posts to the account above.
           </p>
         )
       )}

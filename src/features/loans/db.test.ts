@@ -131,6 +131,39 @@ describe('createLoan', () => {
   })
 })
 
+describe('the lender\'s own instalment', () => {
+  const formal = (over: Partial<LoanDraft> = {}) =>
+    draft({
+      kind: 'formal',
+      direction: 'borrowed',
+      lender: 'BDO',
+      principal: 650_000_00,
+      ratePct: 9.5,
+      termMonths: 60,
+      note: 'Car loan',
+      ...over,
+    })
+
+  it('is stored when given, and left off when it is not', async () => {
+    const withIt = await createLoan(formal({ monthlyPayment: 15_000_00 }))
+    const without = await createLoan(formal())
+
+    expect((await db.loans.get(withIt))?.monthlyPayment).toBe(15_000_00)
+    expect((await db.loans.get(without))?.monthlyPayment).toBeUndefined()
+  })
+
+  it('is removed again when the field is cleared', async () => {
+    // Clearing has to delete the key, not store a zero — a stored zero
+    // would read as "the lender bills nothing" rather than "work it out".
+    const id = await createLoan(formal({ monthlyPayment: 15_000_00 }))
+    await updateLoan(id, formal({ monthlyPayment: undefined }))
+
+    const loan = await db.loans.get(id)
+    expect(loan).toBeDefined()
+    expect('monthlyPayment' in loan!).toBe(false)
+  })
+})
+
 describe('updateLoan', () => {
   it('saves the changes without disturbing the money it moved', async () => {
     const contactId = await createContact('Juan')

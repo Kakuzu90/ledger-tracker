@@ -6,6 +6,7 @@ import { Chip } from '@/ui/Chip'
 import { formatAmount, parseMoney } from '@/lib/money'
 import { useUIStore } from '@/store/ui'
 import { fromAnnualRate, toAnnualRate } from '@/lib/loans'
+import { monthlyPayment } from '@/lib/amortization'
 import { deleteLoan, updateLoan, type LoanDraft } from '../db'
 import { RateField } from './RateField'
 
@@ -26,6 +27,7 @@ const toDraft = (loan: Loan): LoanDraft => ({
   ...(loan.ratePct !== undefined ? { ratePct: loan.ratePct } : {}),
   ...(loan.rateBasis !== undefined ? { rateBasis: loan.rateBasis } : {}),
   ...(loan.termMonths !== undefined ? { termMonths: loan.termMonths } : {}),
+  ...(loan.monthlyPayment !== undefined ? { monthlyPayment: loan.monthlyPayment } : {}),
   ...(loan.accountId ? { accountId: loan.accountId } : {}),
 })
 
@@ -46,10 +48,16 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
       ? ''
       : String(fromAnnualRate(loan.ratePct, loan.rateBasis ?? 'year')),
   )
+  // Held as typed so the field can be emptied back to "work it out for me",
+  // which a number alone cannot express.
+  const [payment, setPayment] = useState(() =>
+    loan.monthlyPayment === undefined ? '' : formatAmount(loan.monthlyPayment),
+  )
   const [problem, setProblem] = useState<string | null>(null)
 
   const live = accounts.filter((account) => !account.archived || account.id === loan.accountId)
   const update = (patch: Partial<LoanDraft>) => setDraft((current) => ({ ...current, ...patch }))
+  const computed = monthlyPayment(draft.principal, draft.ratePct ?? 0, draft.termMonths ?? 0)
 
   const number = (raw: string): number | undefined => {
     if (raw.trim() === '') return undefined
@@ -140,6 +148,29 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
           />
         </label>
       </div>
+
+      <label className="block">
+        <span className="label">Monthly payment · optional</span>
+        <input
+          className="field mt-1"
+          type="text"
+          inputMode="decimal"
+          value={payment}
+          onChange={(event) => {
+            setPayment(event.target.value)
+            const amount = parseMoney(event.target.value)
+            // Dexie's `update` deletes a key set to undefined, which is
+            // exactly what clearing the field should do.
+            update({ monthlyPayment: amount && amount > 0 ? amount : undefined })
+          }}
+          placeholder={computed > 0 ? formatAmount(computed) : '0.00'}
+          aria-describedby="edit-payment-hint"
+        />
+        <span id="edit-payment-hint" className="mt-1 block text-meta text-muted">
+          What the lender actually bills. Clear it to go back to the figure worked out
+          from the rate and term.
+        </span>
+      </label>
 
       <label className="block">
         <span className="label">First payment</span>

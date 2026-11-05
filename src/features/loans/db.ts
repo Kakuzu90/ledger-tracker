@@ -130,6 +130,8 @@ export interface LoanDraft {
   ratePct?: number
   rateBasis?: RateBasis
   termMonths?: number
+  /** The lender's own instalment, overriding the computed one. */
+  monthlyPayment?: Centavos
   startDate: DateOnly
   dueDate?: DateOnly
   note: string

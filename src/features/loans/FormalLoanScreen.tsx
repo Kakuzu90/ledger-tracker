@@ -109,6 +109,13 @@ export function FormalLoanScreen() {
         </p>
       )}
 
+      {view.paymentTooSmall && (
+        <p className="rounded-card border border-negative/40 bg-surface p-3.5 text-meta text-negative">
+          The monthly payment on this loan does not cover its monthly interest, so the
+          balance would never fall. Check the figure on the lender&rsquo;s statement.
+        </p>
+      )}
+
       {view.amortises && !view.settled && (
         <Simulator view={view} extra={extra} onExtra={setExtra} />
       )}

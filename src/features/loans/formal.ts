@@ -12,10 +12,8 @@ import { addMonths, format, parseISO } from 'date-fns'
 import type { Account, Centavos, DateOnly, Loan, LoanPayment } from '@/db/types'
 import {
   extraPaymentEffect,
-  interestPaid,
   monthlyPayment,
-  paidShare,
-  remainingBalance,
+  remainingSchedule,
   schedule,
   type ExtraPaymentEffect,
   type Installment,
@@ -57,6 +55,12 @@ export interface FormalView {
    * drawing a schedule that never ends.
    */
   amortises: boolean
+  /**
+   * The lender's instalment was entered and it is too small to cover the
+   * monthly interest, so the balance would only grow. Worth saying out
+   * loud: it is far more likely to be a typo than a real loan.
+   */
+  paymentTooSmall: boolean
   schedule: ScheduleRow[]
 }
 
@@ -84,42 +88,60 @@ export function buildFormalView(
   const term = loan.termMonths ?? 0
   const rate = loan.ratePct ?? 0
 
-  const rows = schedule(loan.principal, rate, term)
+  // Two ways to get a schedule. With the lender's own instalment the
+  // length falls out of the arithmetic — their payment is rarely the one
+  // the term implies, and following it is the whole point of entering it.
+  // Without it, the term is what sets the payment.
+  const fixed = loan.monthlyPayment ?? 0
+  const rows =
+    fixed > 0
+      ? remainingSchedule(loan.principal, rate, fixed)
+      : schedule(loan.principal, rate, term)
   const amortises = rows.length > 0
+  const paymentTooSmall = fixed > 0 && rows.length === 0 && loan.principal > 0
 
+  // Everything below reads off those rows rather than recomputing, so the
+  // figures agree with the table whichever way it was built.
   const remaining = amortises
-    ? remainingBalance(loan.principal, rate, term, paidCount)
+    ? paidCount === 0
+      ? loan.principal
+      : (rows[paidCount - 1]?.balance ?? 0)
     : outstanding(loan, mine)
 
+  const instalments = amortises ? rows.length : term
   const settled = loan.status === 'settled' || remaining === 0
   const nextNumber = paidCount + 1
-  const nextDue = !settled && nextNumber <= term ? dueOn(loan.startDate, nextNumber) : undefined
+  const nextDue =
+    !settled && nextNumber <= instalments ? dueOn(loan.startDate, nextNumber) : undefined
   const accountName = accounts.find((account) => account.id === loan.accountId)?.name
 
   return {
     loan,
     terms: [
       loan.lender,
-      term > 0 && `${formatRate(rate)} a year`,
-      term > 0 && `${term} months`,
+      instalments > 0 && `${formatRate(rate)} a year`,
+      instalments > 0 && `${instalments} months`,
     ]
       .filter(Boolean)
       .join(' · '),
     ...(accountName ? { accountName } : {}),
     remaining,
-    share: amortises ? paidShare(loan.principal, rate, term, paidCount) : 0,
+    share: loan.principal > 0 ? (loan.principal - remaining) / loan.principal : 0,
     paidCount,
-    termMonths: term,
-    monthly: amortises ? monthlyPayment(loan.principal, rate, term) : 0,
-    interestPaid: amortises ? interestPaid(loan.principal, rate, term, paidCount) : 0,
+    termMonths: instalments,
+    // The lender's figure wins wherever it was given, including when it
+    // is too small to amortise — the Log button still has to offer it.
+    monthly: fixed > 0 ? fixed : amortises ? monthlyPayment(loan.principal, rate, term) : 0,
+    interestPaid: rows
+      .slice(0, paidCount)
+      .reduce((total, row) => total + row.interest, 0),
     ...(nextDue ? { nextDue, nextLabel: format(parseISO(nextDue), 'MMMM') } : {}),
     nextNumber,
-    ...(amortises && !settled
-      ? { payoffDate: dueOn(loan.startDate, term) }
-      : {}),
+    ...(amortises && !settled ? { payoffDate: dueOn(loan.startDate, instalments) } : {}),
     overdue: nextDue !== undefined && nextDue < today,
     settled,
     amortises,
+    paymentTooSmall,
     schedule: rows.map((row) => {
       const date = dueOn(loan.startDate, row.n)
       return {
