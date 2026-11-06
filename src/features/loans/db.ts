@@ -216,10 +216,16 @@ export interface PaymentInput {
   loanId: Id
   amount: Centavos
   date: DateOnly
-  /** The account the money lands in, or leaves from. */
-  accountId: Id
+  /** The account the money lands in, or leaves from. Only needed to post. */
+  accountId?: Id
   /** Formal loans number their instalments. */
   installmentNo?: number
+  /**
+   * Move the money through `accountId` as well. On by default — a payment
+   * logged as it happens should hit the balance. Off when catching up on
+   * one that already did, where posting it would deduct it a second time.
+   */
+  postToAccount?: boolean
 }
 
 /**
@@ -243,27 +249,34 @@ export async function recordPayment(input: PaymentInput): Promise<Id> {
     }
 
     const received = loan.direction === 'lent'
-    const transaction: Transaction = {
-      id: newId(),
-      type: received ? 'income' : 'expense',
-      amount: input.amount,
-      accountId: input.accountId,
-      date: input.date,
-      note: `Repayment · ${loan.note}`,
-      tags: [],
-      loanId: loan.id,
-      status: 'posted',
-      ...stamp(),
+    let transactionId: Id | undefined
+
+    if (input.postToAccount ?? true) {
+      if (!input.accountId) throw new Error('Choose an account for the money')
+      const transaction: Transaction = {
+        id: newId(),
+        type: received ? 'income' : 'expense',
+        amount: input.amount,
+        accountId: input.accountId,
+        date: input.date,
+        note: `Repayment · ${loan.note}`,
+        tags: [],
+        loanId: loan.id,
+        status: 'posted',
+        ...stamp(),
+      }
+      await db.transactions.add(transaction)
+      transactionId = transaction.id
     }
-    await db.transactions.add(transaction)
 
     const payment: LoanPayment = {
       id: newId(),
       loanId: loan.id,
       amount: input.amount,
       date: input.date,
-      accountId: input.accountId,
-      transactionId: transaction.id,
+      ...(input.accountId ? { accountId: input.accountId } : {}),
+      // The loan is paid down either way; only the account is spared.
+      ...(transactionId ? { transactionId } : {}),
       ...(input.installmentNo !== undefined ? { installmentNo: input.installmentNo } : {}),
       ...stamp(),
     }
@@ -288,7 +301,8 @@ export async function deletePayment(paymentId: Id): Promise<void> {
     if (!payment) return
 
     await db.loanPayments.delete(payment.id)
-    await db.transactions.delete(payment.transactionId)
+    // Nothing to undo on the account when it was never posted there.
+    if (payment.transactionId) await db.transactions.delete(payment.transactionId)
 
     const loan = await db.loans.get(payment.loanId)
     if (loan?.status === 'settled') {

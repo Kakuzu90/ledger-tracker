@@ -147,8 +147,12 @@ export interface LoanPayment extends Row {
   amount: Centavos
   date: DateOnly
   accountId?: Id
-  /** Every payment mirrors into a transaction. */
-  transactionId: Id
+  /**
+   * The transaction this payment posted. Unset when the money had already
+   * left the account outside the ledger and the payment was logged for the
+   * record only — posting it then would take it out twice.
+   */
+  transactionId?: Id
   /** 1-based installment number for formal loans. */
   installmentNo?: number
 }

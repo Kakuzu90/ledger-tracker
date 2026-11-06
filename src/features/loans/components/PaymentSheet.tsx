@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Sheet } from '@/ui/Sheet'
 import { Chip } from '@/ui/Chip'
 import { Money } from '@/ui/Money'
+import { Toggle } from '@/ui/Toggle'
 import { formatAmount, parseMoney } from '@/lib/money'
 import { toDateOnly } from '@/lib/dates'
 import type { Account, Id } from '@/db/types'
@@ -44,6 +45,7 @@ function Form({ onClose, loans, accounts, loanId }: PaymentSheetProps) {
     selected?.loan.accountId ?? live[0]?.id,
   )
   const [date, setDate] = useState(toDateOnly(new Date()))
+  const [postToAccount, setPostToAccount] = useState(true)
   const [problem, setProblem] = useState<string | null>(null)
 
   const pickLoan = (row: LoanCard) => {
@@ -55,7 +57,7 @@ function Form({ onClose, loans, accounts, loanId }: PaymentSheetProps) {
   const received = selected?.loan.direction === 'lent'
 
   const onSave = async () => {
-    if (!selected || !accountId) {
+    if (!selected || (postToAccount && !accountId)) {
       setProblem('Choose an account for the money')
       return
     }
@@ -65,7 +67,8 @@ function Form({ onClose, loans, accounts, loanId }: PaymentSheetProps) {
         loanId: selected.loan.id,
         amount,
         date,
-        accountId,
+        ...(accountId ? { accountId } : {}),
+        postToAccount,
       })
       onClose()
       showSnack({
@@ -143,10 +146,20 @@ function Form({ onClose, loans, accounts, loanId }: PaymentSheetProps) {
         />
       </label>
 
-      <p className="text-meta text-muted">
-        This also adds {received ? 'income to' : 'an expense on'}{' '}
-        {live.find((account) => account.id === accountId)?.name ?? 'the account'}.
-      </p>
+      <div className="rounded-ctl border border-border px-3.5">
+        <Toggle
+          checked={postToAccount}
+          onChange={setPostToAccount}
+          label={received ? 'Put it into the account' : 'Take it from the account'}
+          hint={
+            postToAccount
+              ? `Adds ${received ? 'income to' : 'an expense on'} ${
+                  live.find((account) => account.id === accountId)?.name ?? 'the account'
+                }`
+              : 'The money already changed hands outside the ledger'
+          }
+        />
+      </div>
 
       {problem && (
         <p role="alert" className="text-center text-meta text-negative">

@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns'
 import { Screen } from '@/ui/Screen'
 import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
+import { Toggle } from '@/ui/Toggle'
 import { EditIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
 import { formatPercent } from '@/lib/money'
@@ -43,6 +44,9 @@ export function FormalLoanScreen() {
   const [editing, setEditing] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [logging, setLogging] = useState(false)
+  // Sticky while the screen is open, because catching up on a loan means
+  // logging several past instalments in a row, none of which should post.
+  const [postToAccount, setPostToAccount] = useState(true)
 
   // The loan was deleted from the edit sheet, or never existed.
   useEffect(() => {
@@ -60,7 +64,9 @@ export function FormalLoanScreen() {
   const { loan } = view
 
   const onLog = async () => {
-    if (!loan.accountId || !view.nextDue) {
+    if (!view.nextDue) return
+    // Only the posting needs somewhere to post to.
+    if (postToAccount && !loan.accountId) {
       setProblem('Choose an account for this loan first')
       return
     }
@@ -71,8 +77,9 @@ export function FormalLoanScreen() {
         loanId: loan.id,
         amount: view.monthly,
         date: view.nextDue,
-        accountId: loan.accountId,
+        ...(loan.accountId ? { accountId: loan.accountId } : {}),
         installmentNo: view.nextNumber,
+        postToAccount,
       })
       showSnack({
         message: `Payment ${view.nextNumber} logged`,
@@ -101,7 +108,13 @@ export function FormalLoanScreen() {
         </button>
       }
     >
-      <Summary view={view} onLog={() => void onLog()} logging={logging} />
+      <Summary
+        view={view}
+        onLog={() => void onLog()}
+        logging={logging}
+        postToAccount={postToAccount}
+        onPostToAccount={setPostToAccount}
+      />
 
       {problem && (
         <p role="alert" className="text-center text-meta text-negative">
@@ -155,10 +168,14 @@ function Summary({
   view,
   onLog,
   logging,
+  postToAccount,
+  onPostToAccount,
 }: {
   view: FormalView
   onLog: () => void
   logging: boolean
+  postToAccount: boolean
+  onPostToAccount: (on: boolean) => void
 }) {
   return (
     <section className="card">
@@ -204,20 +221,30 @@ function Summary({
         </p>
       ) : (
         <>
+          <div className="mt-3.5 rounded-ctl border border-border px-3.5">
+            <Toggle
+              checked={postToAccount}
+              onChange={onPostToAccount}
+              label="Take it from the account"
+              hint={
+                postToAccount
+                  ? view.accountName
+                    ? `Adds an expense to ${view.accountName}`
+                    : 'Set an account on this loan so the payment posts somewhere'
+                  : 'Already paid outside the ledger — the balance stays as it is'
+              }
+            />
+          </div>
+
           <button
             type="button"
             onClick={onLog}
             disabled={logging || view.monthly <= 0}
-            className="btn-primary mt-3.5 min-h-[50px] w-full disabled:opacity-50"
+            className="btn-primary mt-2.5 min-h-[50px] w-full disabled:opacity-50"
           >
             Log {view.nextLabel ?? 'the next'} payment ·
             <Money value={view.monthly} whole className="!text-primary-ink" />
           </button>
-          <p className="mt-2 text-center text-meta text-muted">
-            {view.accountName
-              ? `Also adds an expense to ${view.accountName}`
-              : 'Set an account on this loan so the payment posts somewhere'}
-          </p>
         </>
       )}
     </section>

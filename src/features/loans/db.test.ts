@@ -252,7 +252,7 @@ describe('recordPayment', () => {
     })
 
     const payment = await db.loanPayments.get(paymentId)
-    const linked = await db.transactions.get(payment!.transactionId)
+    const linked = await db.transactions.get(payment!.transactionId!)
     expect(linked?.type).toBe('income')
     expect(linked?.loanId).toBe(loanId)
     expect(linked?.note).toBe('Repayment · Phone repair')
@@ -383,6 +383,98 @@ describe('settleLoans', () => {
     await reopenLoans(await settleLoans([a]))
 
     expect((await db.loans.get(a))?.status).toBe('open')
+  })
+})
+
+/**
+ * Catching up on instalments that were paid months ago must not move the
+ * balance — the money left the account at the time, and posting it now
+ * would take it out twice.
+ */
+describe('a payment logged without posting it', () => {
+  it('pays the loan down but leaves the balance alone', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from, moveMoney: false }))
+
+    const paymentId = await recordPayment({
+      loanId: id,
+      amount: 500_00,
+      date: '2026-09-12',
+      accountId: from,
+      postToAccount: false,
+    })
+
+    expect(await balance(from)).toBe(10_000_00)
+    expect(await db.transactions.count()).toBe(0)
+
+    const payment = await db.loanPayments.get(paymentId)
+    expect(payment?.amount).toBe(500_00)
+    expect(payment?.transactionId).toBeUndefined()
+  })
+
+  it('still counts against what is owed', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from, principal: 1_000_00 }))
+
+    await recordPayment({ loanId: id, amount: 400_00, date: '2026-09-12', postToAccount: false })
+
+    const loan = await db.loans.get(id)
+    const payments = await db.loanPayments.where('loanId').equals(id).toArray()
+    expect(outstanding(loan!, payments)).toBe(600_00)
+  })
+
+  it('settles the loan when it clears the rest, same as a posted one', async () => {
+    const contactId = await createContact('Juan')
+    const id = await createLoan(draft({ contactId, principal: 1_000_00 }))
+
+    await recordPayment({ loanId: id, amount: 1_000_00, date: '2026-09-12', postToAccount: false })
+
+    expect((await db.loans.get(id))?.status).toBe('settled')
+  })
+
+  it('undoes cleanly, with no transaction to chase', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, principal: 1_000_00 }))
+    const paymentId = await recordPayment({
+      loanId: id,
+      amount: 1_000_00,
+      date: '2026-09-12',
+      postToAccount: false,
+    })
+
+    await deletePayment(paymentId)
+
+    expect(await db.loanPayments.count()).toBe(0)
+    expect((await db.loans.get(id))?.status).toBe('open')
+    expect(await balance(from)).toBe(10_000_00)
+  })
+
+  it('posts by default, so the ordinary payment is unchanged', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from, moveMoney: false }))
+
+    const paymentId = await recordPayment({
+      loanId: id,
+      amount: 500_00,
+      date: '2026-09-12',
+      accountId: from,
+    })
+
+    expect((await db.loanPayments.get(paymentId))?.transactionId).toBeDefined()
+    expect(await balance(from)).toBe(10_500_00)
+  })
+
+  it('refuses to post with no account to post to', async () => {
+    const contactId = await createContact('Juan')
+    const id = await createLoan(draft({ contactId }))
+
+    await expect(
+      recordPayment({ loanId: id, amount: 500_00, date: '2026-09-12' }),
+    ).rejects.toThrow('Choose an account')
   })
 })
 
