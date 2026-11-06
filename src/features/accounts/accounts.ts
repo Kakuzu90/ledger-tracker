@@ -63,14 +63,16 @@ export function ordinal(day: number): string {
   }
 }
 
-function cycleLabel(account: Account): string | undefined {
+/** "Statement 5th · due 25th", or undefined when neither day is set. */
+export function cycleLabel(account: Account): string | undefined {
   const parts: string[] = []
   if (account.statementDay) parts.push(`Statement ${ordinal(account.statementDay)}`)
   if (account.dueDay) parts.push(`due ${ordinal(account.dueDay)}`)
   return parts.length > 0 ? parts.join(' · ') : undefined
 }
 
-function toCard(account: Account, balance: Centavos): CardSummary {
+/** The limit, headroom and cycle for one card. */
+export function cardSummary(account: Account, balance: Centavos): CardSummary {
   const limit = account.creditLimit ?? 0
   const owed = Math.max(0, -balance)
   const cycle = cycleLabel(account)
@@ -101,7 +103,7 @@ export function buildAccountsView(
     const balance = accountBalance(account, transactions)
 
     if (account.archived) archived.push({ account, balance })
-    else if (account.type === 'credit') cards.push(toCard(account, balance))
+    else if (account.type === 'credit') cards.push(cardSummary(account, balance))
     else spending.push({ account, balance })
   }
 

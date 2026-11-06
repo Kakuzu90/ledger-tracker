@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Screen } from '@/ui/Screen'
 import { CalendarIcon, DownloadIcon, SearchIcon } from '@/ui/Icon'
 import { Money } from '@/ui/Money'
@@ -36,7 +36,16 @@ export function ActivityScreen() {
   const data = useActivityData(today)
   const showSnack = useUIStore((s) => s.showSnack)
 
-  const [filters, setFilters] = useState<ActivityFilters>(() => emptyFilters(monthKey(today)))
+  // `?account=` arrives from an account's own screen, which hands its
+  // search over rather than growing a second search box. Across all time,
+  // since the point is to look for something, not to browse this month.
+  const [params] = useSearchParams()
+  const fromAccount = params.get('account')
+  const [filters, setFilters] = useState<ActivityFilters>(() =>
+    fromAccount
+      ? { ...emptyFilters('all'), accountIds: [fromAccount] }
+      : emptyFilters(monthKey(today)),
+  )
   const [shown, setShown] = useState(DAYS_PER_PAGE)
 
   // Changing what is being looked at starts the window again.

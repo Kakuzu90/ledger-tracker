@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { CategoryTile } from '@/ui/CategoryTile'
 import { Money } from '@/ui/Money'
 import { LoansIcon } from '@/ui/Icon'
+import type { Centavos } from '@/db/types'
 import type { TxnDescription } from '../describe'
 
 interface TxnRowProps {
@@ -9,10 +10,18 @@ interface TxnRowProps {
   subtitle: string
   /** Rows link to the detail screen unless told otherwise. */
   linkTo?: string | false
+  /**
+   * Print this instead of the transaction's own amount, signed and
+   * coloured by its sign. An account's history shows what each row did to
+   * that account, which for a transfer is money in or out rather than the
+   * neutral figure Activity prints.
+   */
+  amount?: Centavos
 }
 
 /** One line in any transaction list. */
-export function TxnRow({ row, subtitle, linkTo }: TxnRowProps) {
+export function TxnRow({ row, subtitle, linkTo, amount }: TxnRowProps) {
+  const override = amount !== undefined
   const body = (
     <>
       {row.isTransfer ? (
@@ -29,9 +38,9 @@ export function TxnRow({ row, subtitle, linkTo }: TxnRowProps) {
       </span>
 
       <Money
-        value={row.amount}
-        tone={row.tone}
-        signed={!row.isTransfer}
+        value={override ? amount : row.amount}
+        tone={override ? 'auto' : row.tone}
+        signed={override || !row.isTransfer}
         compact
         className="font-semibold"
       />

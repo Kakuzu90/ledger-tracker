@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Screen } from '@/ui/Screen'
 import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
@@ -159,22 +160,35 @@ function AccountRow({
   const { account, balance } = summary
 
   return (
-    <button
-      type="button"
-      onClick={() => onEdit(account)}
-      aria-label={`Edit ${account.name}`}
-      className="list-row w-full text-left"
-    >
-      <AccountTile type={account.type} color={account.color} />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{account.name}</span>
-        <span className="block text-meta text-muted">{TYPE_LABEL[account.type]}</span>
-      </span>
-      <Money value={balance} tone={balance < 0 ? 'negative' : 'plain'} whole className="font-semibold" />
-      {/* The row opens the editor; without this it reads as a link to a
-          detail screen that does not exist. */}
-      <EditIcon size={16} aria-hidden="true" className="flex-none text-muted" />
-    </button>
+    <div className="list-row">
+      <Link
+        to={`/accounts/${account.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3 text-ink no-underline"
+      >
+        <AccountTile type={account.type} color={account.color} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{account.name}</span>
+          <span className="block text-meta text-muted">{TYPE_LABEL[account.type]}</span>
+        </span>
+        <Money
+          value={balance}
+          tone={balance < 0 ? 'negative' : 'plain'}
+          whole
+          className="font-semibold"
+        />
+        <ChevronRightIcon size={16} aria-hidden="true" className="flex-none text-muted" />
+      </Link>
+      {/* Its own target rather than the whole row, now that the row goes
+          somewhere of its own. */}
+      <button
+        type="button"
+        onClick={() => onEdit(account)}
+        aria-label={`Edit ${account.name}`}
+        className="-mr-1.5 flex h-touch w-touch flex-none items-center justify-center text-muted"
+      >
+        <EditIcon size={16} />
+      </button>
+    </div>
   )
 }
 
@@ -191,22 +205,30 @@ function CreditCard({
 
   return (
     <section className="card p-4">
-      <button
-        type="button"
-        onClick={() => onEdit(card.account)}
-        aria-label={`Edit ${card.account.name}`}
-        className="flex w-full items-center gap-3 text-left"
-      >
-        <AccountTile type="credit" color={card.account.color} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{card.account.name}</span>
-          <span className="block text-meta text-muted">
-            {card.cycle ?? 'No statement dates set'}
+      <div className="flex items-center gap-3">
+        <Link
+          to={`/accounts/${card.account.id}`}
+          className="flex min-w-0 flex-1 items-center gap-3 text-ink no-underline"
+        >
+          <AccountTile type="credit" color={card.account.color} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">{card.account.name}</span>
+            <span className="block text-meta text-muted">
+              {card.cycle ?? 'No statement dates set'}
+            </span>
           </span>
-        </span>
-        <Money value={card.balance} tone="negative" whole className="font-semibold" />
-        <EditIcon size={16} aria-hidden="true" className="flex-none text-muted" />
-      </button>
+          <Money value={card.balance} tone="negative" whole className="font-semibold" />
+          <ChevronRightIcon size={16} aria-hidden="true" className="flex-none text-muted" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => onEdit(card.account)}
+          aria-label={`Edit ${card.account.name}`}
+          className="-mr-1.5 flex h-touch w-touch flex-none items-center justify-center text-muted"
+        >
+          <EditIcon size={16} />
+        </button>
+      </div>
 
       {card.limit > 0 ? (
         <>

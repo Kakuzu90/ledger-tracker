@@ -24,6 +24,7 @@ the `settings` table are never uploaded.
 | FormalLoan.dc.html | `/loans/formal/:id` | amortization + extra payment simulator |
 | Split.dc.html | `/split/:txnId` | creates personal loans |
 | Accounts.dc.html | `/accounts` | net worth, transfer, credit card |
+| — | `/accounts/:id` | one account: balance and its transaction history (no mockup) |
 | Budgets.dc.html | `/budgets` | category budgets, rollover, savings goals |
 | Bills.dc.html | `/bills` | recurring, subscriptions, notification prompt |
 | Reports.dc.html | `/reports` | donut, 6-month trend, vs last month, year in review |

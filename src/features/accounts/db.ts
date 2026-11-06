@@ -3,6 +3,8 @@ import { db, newId, stamp, touch } from '@/db/db'
 import type { Account, AccountType, Centavos, Id } from '@/db/types'
 import { DEFAULT_CURRENCY } from '@/lib/money'
 import { buildAccountsView, type AccountsView } from './accounts'
+import { buildAccountHistory, type AccountHistory } from './history'
+import { buildLookups, type TxnLookups } from '@/features/transactions/describe'
 
 export function useAccountsView(): AccountsView | undefined {
   return useLiveQuery(async () => {
@@ -12,6 +14,29 @@ export function useAccountsView(): AccountsView | undefined {
     ])
     return buildAccountsView(accounts, transactions)
   }, [])
+}
+
+export interface AccountHistoryData {
+  /** Null once the account is gone, so the screen can leave. */
+  history: AccountHistory | null
+  lookups: TxnLookups
+}
+
+/** One account and everything that has moved through it. */
+export function useAccountHistory(id: Id | undefined): AccountHistoryData | undefined {
+  return useLiveQuery(async () => {
+    if (!id) return undefined
+    const [account, accounts, categories, transactions] = await Promise.all([
+      db.accounts.get(id),
+      db.accounts.toArray(),
+      db.categories.toArray(),
+      db.transactions.toArray(),
+    ])
+
+    const lookups = buildLookups(categories, accounts)
+    if (!account) return { history: null, lookups }
+    return { history: buildAccountHistory(account, transactions), lookups }
+  }, [id])
 }
 
 export interface AccountDraft {

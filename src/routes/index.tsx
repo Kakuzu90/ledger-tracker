@@ -14,6 +14,7 @@ import { PersonScreen } from '@/features/loans/PersonScreen'
 import { FormalLoanScreen } from '@/features/loans/FormalLoanScreen'
 import { SplitScreen } from '@/features/split/SplitScreen'
 import { AccountsScreen } from '@/features/accounts/AccountsScreen'
+import { AccountScreen } from '@/features/accounts/AccountScreen'
 import { BudgetsScreen } from '@/features/budgets/BudgetsScreen'
 import { BillsScreen } from '@/features/bills/BillsScreen'
 
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
           { path: '/loans/formal/:id', element: <FormalLoanScreen /> },
           { path: '/split/:txnId', element: <SplitScreen /> },
           { path: '/accounts', element: <AccountsScreen /> },
+          { path: '/accounts/:id', element: <AccountScreen /> },
           { path: '/budgets', element: <BudgetsScreen /> },
           { path: '/bills', element: <BillsScreen /> },
           // Settings and the two screens under it are reached deliberately
