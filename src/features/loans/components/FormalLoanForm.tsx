@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Account, Loan, RateBasis } from '@/db/types'
 import { Sheet } from '@/ui/Sheet'
 import { Chip } from '@/ui/Chip'
-import { formatAmount, parseMoney } from '@/lib/money'
+import { formatAmount, formatMoney, parseMoney } from '@/lib/money'
 import { useUIStore } from '@/store/ui'
 import { fromAnnualRate, toAnnualRate } from '@/lib/loans'
 import { monthlyPayment } from '@/lib/amortization'
@@ -57,6 +57,8 @@ function Form({ onClose, loan, accounts, paidCount }: FormalLoanFormProps) {
   )
   const [problem, setProblem] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  /** Shown only after asking for a locked loan to go anyway. */
+  const [forcing, setForcing] = useState(false)
 
   const live = accounts.filter((account) => !account.archived || account.id === loan.accountId)
   const update = (patch: Partial<LoanDraft>) => setDraft((current) => ({ ...current, ...patch }))
@@ -77,14 +79,20 @@ function Form({ onClose, loan, accounts, paidCount }: FormalLoanFormProps) {
     }
   }
 
-  const onDelete = async () => {
+  const onDelete = async (force = false) => {
     try {
-      await deleteLoan(loan.id)
+      const { payments, refunded } = await deleteLoan(loan.id, { force })
       onClose()
-      showSnack({ message: 'Loan removed' })
+      showSnack({
+        message:
+          payments > 0 && refunded > 0
+            ? `Loan removed · ${formatMoney(refunded, { compact: true })} back in your accounts`
+            : 'Loan removed',
+      })
       navigate('/loans', { replace: true })
     } catch (error) {
       setConfirming(false)
+      setForcing(false)
       setProblem(error instanceof Error ? error.message : 'Could not remove that')
     }
   }
@@ -226,6 +234,42 @@ function Form({ onClose, loan, accounts, paidCount }: FormalLoanFormProps) {
             {paidCount} {paidCount === 1 ? 'payment has' : 'payments have'} been recorded
             against it. Settle it instead, so what you paid stays in the ledger.
           </p>
+
+          {forcing ? (
+            <div role="alertdialog" aria-label="Delete the loan and its payments?" className="mt-3">
+              <p className="text-meta font-medium text-negative">
+                Delete the loan and its {paidCount}{' '}
+                {paidCount === 1 ? 'payment' : 'payments'}?
+              </p>
+              <p className="mt-1 text-meta text-muted">
+                Each payment that posted is taken back off the account it came from, so
+                the balances end up as if the loan had never been here. The record of
+                what was paid goes with it, and this cannot be undone.
+              </p>
+              <button
+                type="button"
+                className="btn-secondary mt-3 w-full"
+                onClick={() => setForcing(false)}
+              >
+                Keep it
+              </button>
+              <button
+                type="button"
+                className="mt-2 min-h-[50px] w-full rounded-btn bg-negative font-semibold text-negative-ink"
+                onClick={() => void onDelete(true)}
+              >
+                Delete and refund
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setForcing(true)}
+              className="mt-3 flex min-h-touch items-center text-meta font-medium text-negative underline underline-offset-[3px]"
+            >
+              Delete it anyway and refund the payments
+            </button>
+          )}
         </div>
       ) : confirming ? (
         <div role="alertdialog" aria-label="Delete this loan?">

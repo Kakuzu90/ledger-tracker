@@ -63,6 +63,28 @@ export function FormalLoanScreen() {
 
   const { loan } = view
 
+  /**
+   * Takes the most recent instalment back off. The snackbar's Undo only
+   * lasts a few seconds, and a payment logged for a month that was
+   * already paid is usually noticed later than that.
+   */
+  const onUndoLast = async () => {
+    const last = data?.payments.at(-1)
+    if (!last) return
+
+    setLogging(true)
+    try {
+      await deletePayment(last.id)
+      showSnack({
+        message: `Payment ${last.installmentNo ?? view?.paidCount ?? ''} removed`.trim(),
+      })
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'Could not remove that')
+    } finally {
+      setLogging(false)
+    }
+  }
+
   const onLog = async () => {
     if (!view.nextDue) return
     // Only the posting needs somewhere to post to.
@@ -111,6 +133,7 @@ export function FormalLoanScreen() {
       <Summary
         view={view}
         onLog={() => void onLog()}
+        onUndoLast={() => void onUndoLast()}
         logging={logging}
         postToAccount={postToAccount}
         onPostToAccount={setPostToAccount}
@@ -167,12 +190,14 @@ export function FormalLoanScreen() {
 function Summary({
   view,
   onLog,
+  onUndoLast,
   logging,
   postToAccount,
   onPostToAccount,
 }: {
   view: FormalView
   onLog: () => void
+  onUndoLast: () => void
   logging: boolean
   postToAccount: boolean
   onPostToAccount: (on: boolean) => void
@@ -220,6 +245,7 @@ function Summary({
           This loan is paid off.
         </p>
       ) : (
+
         <>
           <div className="mt-3.5 rounded-ctl border border-border px-3.5">
             <Toggle
@@ -246,6 +272,18 @@ function Summary({
             <Money value={view.monthly} whole className="!text-primary-ink" />
           </button>
         </>
+      )}
+
+      {view.paidCount > 0 && (
+        <button
+          type="button"
+          onClick={onUndoLast}
+          disabled={logging}
+          className="mx-auto mt-2 flex min-h-touch items-center text-meta text-muted underline underline-offset-[3px] disabled:opacity-50"
+        >
+          Undo payment {view.paidCount}
+          {view.schedule[view.paidCount - 1] ? ` · ${view.schedule[view.paidCount - 1]!.label}` : ''}
+        </button>
       )}
     </section>
   )

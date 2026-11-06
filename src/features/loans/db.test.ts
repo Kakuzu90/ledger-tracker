@@ -501,3 +501,83 @@ describe('deleteLoan', () => {
     expect(await db.loans.get(id)).toBeDefined()
   })
 })
+
+/**
+ * The way out of a loan that should never have been there — most often
+ * one whose instalments were logged for months that were already paid,
+ * so the account was deducted twice.
+ */
+describe('deleteLoan, forced', () => {
+  it('takes the payments with it and hands the money back', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from, principal: 3_000_00 }))
+
+    await recordPayment({ loanId: id, amount: 500_00, date: '2026-10-12', accountId: from })
+    await recordPayment({ loanId: id, amount: 700_00, date: '2026-11-12', accountId: from })
+    expect(await balance(from)).toBe(11_200_00)
+
+    const result = await deleteLoan(id, { force: true })
+
+    expect(result).toEqual({ payments: 2, refunded: 1_200_00 })
+    expect(await db.loans.get(id)).toBeUndefined()
+    expect(await db.loanPayments.count()).toBe(0)
+    expect(await balance(from)).toBe(10_000_00)
+  })
+
+  it('also unwinds the principal the loan moved when it was created', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(
+      draft({ contactId, accountId: from, principal: 3_000_00, moveMoney: true }),
+    )
+    await recordPayment({ loanId: id, amount: 500_00, date: '2026-10-12', accountId: from })
+
+    await deleteLoan(id, { force: true })
+
+    expect(await db.transactions.count()).toBe(0)
+    expect(await balance(from)).toBe(10_000_00)
+  })
+
+  it('refunds nothing for a payment that never posted', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const id = await createLoan(draft({ contactId, accountId: from }))
+    await recordPayment({
+      loanId: id,
+      amount: 500_00,
+      date: '2026-10-12',
+      accountId: from,
+      postToAccount: false,
+    })
+
+    const result = await deleteLoan(id, { force: true })
+
+    expect(result).toEqual({ payments: 1, refunded: 0 })
+    expect(await balance(from)).toBe(10_000_00)
+  })
+
+  it('is the same as an ordinary delete when nothing was paid', async () => {
+    const contactId = await createContact('Juan')
+    const id = await createLoan(draft({ contactId }))
+
+    expect(await deleteLoan(id, { force: true })).toEqual({ payments: 0, refunded: 0 })
+    expect(await db.loans.get(id)).toBeUndefined()
+  })
+
+  it('leaves other loans and their payments alone', async () => {
+    const contactId = await createContact('Juan')
+    const from = await account('BPI')
+    const doomed = await createLoan(draft({ contactId, accountId: from }))
+    const keeper = await createLoan(draft({ contactId, accountId: from, note: 'Keep me' }))
+
+    await recordPayment({ loanId: doomed, amount: 500_00, date: '2026-10-12', accountId: from })
+    await recordPayment({ loanId: keeper, amount: 300_00, date: '2026-10-12', accountId: from })
+
+    await deleteLoan(doomed, { force: true })
+
+    expect(await db.loans.get(keeper)).toBeDefined()
+    expect(await db.loanPayments.count()).toBe(1)
+    expect(await balance(from)).toBe(10_300_00)
+  })
+})
