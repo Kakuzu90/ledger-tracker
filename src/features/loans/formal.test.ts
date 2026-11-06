@@ -208,6 +208,34 @@ describe('scheduleWindow', () => {
  * sets the length of the schedule, since the term the contract names no
  * longer governs how fast the balance falls.
  */
+/**
+ * `startDate` is labelled "First payment" on both forms, so instalment 1
+ * falls on it. It used to fall a month later, which put every row of the
+ * table — and the payoff date — one month out.
+ */
+describe('where the schedule starts', () => {
+  it('puts instalment 1 on the first-payment date itself', () => {
+    const fresh = view({ startDate: '2026-09-15' }, 0)
+    expect(fresh.schedule[0]?.date).toBe('2026-09-15')
+    expect(fresh.schedule[0]?.label).toBe('Sep')
+    expect(fresh.nextDue).toBe('2026-09-15')
+    expect(fresh.nextNumber).toBe(1)
+  })
+
+  it('walks a month at a time from there, and lands the payoff on the last one', () => {
+    const fresh = view({ startDate: '2026-09-15', termMonths: 12 }, 0)
+    expect(fresh.schedule[1]?.date).toBe('2026-10-15')
+    expect(fresh.schedule.at(-1)?.date).toBe('2027-08-15')
+    expect(fresh.payoffDate).toBe('2027-08-15')
+  })
+
+  it('counts the next one from how many have been logged', () => {
+    const part = view({ startDate: '2026-09-15', termMonths: 12 }, 3)
+    expect(part.nextNumber).toBe(4)
+    expect(part.nextDue).toBe('2026-12-15')
+  })
+})
+
 describe('a loan whose monthly payment was entered by hand', () => {
   const stated = view({ monthlyPayment: 15_000_00 })
   const computed = view()

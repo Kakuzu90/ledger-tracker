@@ -70,9 +70,13 @@ export interface FormalInput {
   accounts: readonly Account[]
 }
 
-/** Instalment `n` falls this many months after the loan starts. */
+/**
+ * When instalment `n` falls. `startDate` is the first payment, so number 1
+ * lands on it rather than a month later — the field says "First payment"
+ * and it has to mean that.
+ */
 const dueOn = (startDate: DateOnly, n: number): DateOnly =>
-  toDateOnly(addMonths(parseISO(startDate), n))
+  toDateOnly(addMonths(parseISO(startDate), n - 1))
 
 function monthLabel(date: DateOnly): string {
   const parsed = parseISO(date)

@@ -145,6 +145,7 @@ export function FormalLoanScreen() {
         onClose={() => setEditing(false)}
         loan={loan}
         accounts={data.accounts}
+        paidCount={view.paidCount}
       />
     </Screen>
   )

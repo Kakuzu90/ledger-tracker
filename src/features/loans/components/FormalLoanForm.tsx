@@ -15,6 +15,8 @@ interface FormalLoanFormProps {
   onClose: () => void
   loan: Loan
   accounts: readonly Account[]
+  /** Instalments logged against it; a loan with any cannot be deleted. */
+  paidCount: number
 }
 
 const toDraft = (loan: Loan): LoanDraft => ({
@@ -36,7 +38,7 @@ export function FormalLoanForm(props: FormalLoanFormProps) {
   return props.open ? <Form key={props.loan.updatedAt} {...props} /> : null
 }
 
-function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
+function Form({ onClose, loan, accounts, paidCount }: FormalLoanFormProps) {
   const navigate = useNavigate()
   const showSnack = useUIStore((s) => s.showSnack)
   const [draft, setDraft] = useState<LoanDraft>(() => toDraft(loan))
@@ -54,6 +56,7 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
     loan.monthlyPayment === undefined ? '' : formatAmount(loan.monthlyPayment),
   )
   const [problem, setProblem] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const live = accounts.filter((account) => !account.archived || account.id === loan.accountId)
   const update = (patch: Partial<LoanDraft>) => setDraft((current) => ({ ...current, ...patch }))
@@ -81,9 +84,14 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
       showSnack({ message: 'Loan removed' })
       navigate('/loans', { replace: true })
     } catch (error) {
+      setConfirming(false)
       setProblem(error instanceof Error ? error.message : 'Could not remove that')
     }
   }
+
+  // `deleteLoan` refuses this anyway. Saying so here means finding out by
+  // reading rather than by tapping a button and watching nothing happen.
+  const locked = paidCount > 0
 
   return (
     <Sheet open onClose={onClose} title="Edit loan">
@@ -181,7 +189,7 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
           onChange={(event) => update({ startDate: event.target.value })}
         />
         <span className="mt-1 block text-meta text-muted">
-          Instalment 1 falls a month after this, and the schedule follows from it.
+          Instalment 1 falls on this date, and the rest follow a month apart.
         </span>
       </label>
 
@@ -211,13 +219,44 @@ function Form({ onClose, loan, accounts }: FormalLoanFormProps) {
         Save changes
       </button>
 
-      <button
-        type="button"
-        className="btn-secondary w-full !text-negative"
-        onClick={() => void onDelete()}
-      >
-        Delete loan
-      </button>
+      {locked ? (
+        <div className="rounded-ctl border border-border bg-bg p-3.5">
+          <p className="text-meta font-medium text-ink">This loan cannot be deleted</p>
+          <p className="mt-1 text-meta text-muted">
+            {paidCount} {paidCount === 1 ? 'payment has' : 'payments have'} been recorded
+            against it. Settle it instead, so what you paid stays in the ledger.
+          </p>
+        </div>
+      ) : confirming ? (
+        <div role="alertdialog" aria-label="Delete this loan?">
+          <p className="text-meta font-medium text-negative">Delete this loan?</p>
+          <p className="mt-1 text-meta text-muted">
+            The loan and anything it posted to your accounts go. This cannot be undone.
+          </p>
+          <button
+            type="button"
+            className="btn-secondary mt-3 w-full"
+            onClick={() => setConfirming(false)}
+          >
+            Keep it
+          </button>
+          <button
+            type="button"
+            className="mt-2 min-h-[50px] w-full rounded-btn bg-negative font-semibold text-negative-ink"
+            onClick={() => void onDelete()}
+          >
+            Yes, delete it
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="btn-secondary w-full !text-negative"
+          onClick={() => setConfirming(true)}
+        >
+          Delete loan
+        </button>
+      )}
     </Sheet>
   )
 }
