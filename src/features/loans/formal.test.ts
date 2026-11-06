@@ -35,6 +35,10 @@ const loan = (over: Partial<Loan> = {}): Loan => ({
   ...over,
 })
 
+/** `range(1, 3)` → [1, 2, 3]. */
+const range = (from: number, to: number): number[] =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i)
+
 const payments = (n: number, loanId = 'l'): LoanPayment[] =>
   Array.from({ length: n }, (_, i) => ({
     id: `p${i}`,
@@ -48,6 +52,21 @@ const payments = (n: number, loanId = 'l'): LoanPayment[] =>
 
 const view = (over: Partial<Loan> = {}, paid = 24, accounts: Account[] = []) =>
   buildFormalView({ loan: loan(over), payments: payments(paid), accounts }, TODAY)
+
+/** Instalments logged by number, so a gap can be left in the middle. */
+const numbered = (numbers: readonly number[], loanId = 'l'): LoanPayment[] =>
+  numbers.map((n) => ({
+    id: `p${n}`,
+    loanId,
+    amount: 13_651_21,
+    date: '2026-01-14',
+    transactionId: `t${n}`,
+    installmentNo: n,
+    ...stamps,
+  }))
+
+const withPayments = (rows: LoanPayment[], over: Partial<Loan> = {}) =>
+  buildFormalView({ loan: loan(over), payments: rows, accounts: [] }, TODAY)
 
 describe('buildFormalView, against the sample car loan', () => {
   it('spells out the terms the way the mockup does', () => {
@@ -289,5 +308,78 @@ describe('a loan whose monthly payment was entered by hand', () => {
   it('does not cry wolf when no payment was entered', () => {
     expect(computed.paymentTooSmall).toBe(false)
     expect(view({ ratePct: undefined, termMonths: undefined }, 0).paymentTooSmall).toBe(false)
+  })
+})
+
+
+/**
+ * Undoing an instalment out of the middle leaves a hole, and the table
+ * has to show it. Marking the first `paidCount` rows instead would
+ * renumber everything and hide the one row that needs attention.
+ */
+describe('a payment undone from the middle', () => {
+  const gapped = withPayments(numbered([...range(1, 11), ...range(13, 24)]))
+
+  it('leaves the gap unpaid and everything after it paid', () => {
+    const status = (n: number) => gapped.schedule[n - 1]?.status
+    expect(status(11)).toBe('paid')
+    expect(status(12)).toBe('due')
+    expect(status(13)).toBe('paid')
+    expect(status(24)).toBe('paid')
+    expect(status(25)).toBe('future')
+  })
+
+  it('counts 23 paid, not 23 rows from the top', () => {
+    expect(gapped.paidCount).toBe(23)
+    expect(gapped.schedule.filter((row) => row.status === 'paid')).toHaveLength(23)
+  })
+
+  it('offers the hole as the next one to log, on its own date', () => {
+    expect(gapped.nextNumber).toBe(12)
+    // Instalment 12 of a loan starting 2024-09-14 falls in August 2025.
+    expect(gapped.nextDue).toBe('2025-08-14')
+    expect(gapped.overdue).toBe(true)
+  })
+
+  it('still amortises off how many were paid, not which', () => {
+    const straight = withPayments(numbered(range(1, 23)))
+    expect(gapped.remaining).toBe(straight.remaining)
+    expect(gapped.interestPaid).toBe(straight.interestPaid)
+  })
+})
+
+describe('without a gap, nothing changes', () => {
+  it('marks the run paid and the next one due', () => {
+    const plain = withPayments(numbered(range(1, 24)))
+    expect(plain.nextNumber).toBe(25)
+    expect(plain.schedule[23]?.status).toBe('paid')
+    expect(plain.schedule[24]?.status).toBe('due')
+  })
+
+  it('falls back to filling from the top for payments with no number', () => {
+    // Nothing writes these now, but a hand-restored row could have one.
+    const stripped = payments(3).map(({ installmentNo: _drop, ...rest }) => rest)
+    const unnumbered = withPayments(stripped)
+    expect(unnumbered.schedule.slice(0, 3).map((row) => row.status)).toEqual([
+      'paid',
+      'paid',
+      'paid',
+    ])
+    expect(unnumbered.nextNumber).toBe(4)
+  })
+
+  it('mixes a numbered payment with unnumbered ones without double-counting', () => {
+    const [first] = payments(1)
+    const loose = payments(2).map(({ installmentNo: _drop, ...rest }) => ({
+      ...rest,
+      id: `${rest.id}-loose`,
+    }))
+    const mixed = withPayments([{ ...first!, installmentNo: 5 }, ...loose])
+
+    expect(mixed.paidCount).toBe(3)
+    expect(mixed.schedule.filter((row) => row.status === 'paid').map((row) => row.n)).toEqual([
+      1, 2, 5,
+    ])
+    expect(mixed.nextNumber).toBe(3)
   })
 })

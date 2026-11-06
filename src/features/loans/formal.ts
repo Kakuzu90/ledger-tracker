@@ -83,6 +83,42 @@ function monthLabel(date: DateOnly): string {
   return parsed.getMonth() === 0 ? format(parsed, "MMM ''yy") : format(parsed, 'MMM')
 }
 
+/**
+ * Which instalments have actually been paid, by number.
+ *
+ * Marking the first `paidCount` rows instead would renumber the table
+ * when a payment is undone from the middle: undo number 12 of 24 and
+ * rows 1–23 would light up, hiding the very hole that needs filling.
+ *
+ * A payment with no number against it — nothing in the app writes one
+ * that way now, but a hand-restored row might — falls back to filling
+ * from the start, which is what the table used to do for all of them.
+ */
+function paidInstalments(payments: readonly LoanPayment[], length: number): Set<number> {
+  const numbered = new Set<number>()
+  for (const payment of payments) {
+    if (payment.installmentNo !== undefined) numbered.add(payment.installmentNo)
+  }
+
+  let unnumbered = payments.length - numbered.size
+  for (let n = 1; n <= length && unnumbered > 0; n++) {
+    if (numbered.has(n)) continue
+    numbered.add(n)
+    unnumbered--
+  }
+
+  return numbered
+}
+
+/** The lowest instalment not yet paid, or one past the end when all are. */
+function firstUnpaid(paid: ReadonlySet<number>, instalments: number, paidCount: number): number {
+  for (let n = 1; n <= instalments; n++) {
+    if (!paid.has(n)) return n
+  }
+  // No schedule to go by — a loan that does not amortise still counts.
+  return Math.max(instalments, paidCount) + 1
+}
+
 export function buildFormalView(
   { loan, payments, accounts }: FormalInput,
   today: DateOnly,
@@ -114,7 +150,11 @@ export function buildFormalView(
 
   const instalments = amortises ? rows.length : term
   const settled = loan.status === 'settled' || remaining === 0
-  const nextNumber = paidCount + 1
+  const paidNumbers = paidInstalments(mine, rows.length)
+  // The first one still owing, which is not `paidCount + 1` once a
+  // payment has been undone out of the middle. Logging the next one
+  // should fill that hole rather than add to the end.
+  const nextNumber = firstUnpaid(paidNumbers, instalments, paidCount)
   const nextDue =
     !settled && nextNumber <= instalments ? dueOn(loan.startDate, nextNumber) : undefined
   const accountName = accounts.find((account) => account.id === loan.accountId)?.name
@@ -152,7 +192,7 @@ export function buildFormalView(
         ...row,
         date,
         label: monthLabel(date),
-        status: row.n <= paidCount ? 'paid' : row.n === nextNumber ? 'due' : 'future',
+        status: paidNumbers.has(row.n) ? 'paid' : row.n === nextNumber ? 'due' : 'future',
       }
     }),
   }

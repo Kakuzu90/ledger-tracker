@@ -134,6 +134,7 @@ export function FormalLoanScreen() {
       <Summary
         view={view}
         onLog={() => void onLog()}
+        lastPayment={data.payments.at(-1)}
         onUndoLast={() => data.payments.at(-1) && setUndoing(data.payments.at(-1)!)}
         logging={logging}
         postToAccount={postToAccount}
@@ -200,6 +201,7 @@ export function FormalLoanScreen() {
 
 function Summary({
   view,
+  lastPayment,
   onLog,
   onUndoLast,
   logging,
@@ -207,6 +209,8 @@ function Summary({
   onPostToAccount,
 }: {
   view: FormalView
+  /** The highest-numbered instalment logged, for the undo shortcut. */
+  lastPayment: LoanPayment | undefined
   onLog: () => void
   onUndoLast: () => void
   logging: boolean
@@ -285,15 +289,15 @@ function Summary({
         </>
       )}
 
-      {view.paidCount > 0 && (
+      {lastPayment && (
         <button
           type="button"
           onClick={onUndoLast}
           disabled={logging}
           className="mx-auto mt-2 flex min-h-touch items-center text-meta text-muted underline underline-offset-[3px] disabled:opacity-50"
         >
-          Undo payment {view.paidCount}
-          {view.schedule[view.paidCount - 1] ? ` · ${view.schedule[view.paidCount - 1]!.label}` : ''}
+          Undo payment {lastPayment.installmentNo ?? view.paidCount}
+          {` · ${format(parseISO(lastPayment.date), 'MMM')}`}
         </button>
       )}
     </section>
