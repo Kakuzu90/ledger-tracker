@@ -22,7 +22,7 @@ import type {
   Transaction,
 } from '@/db/types'
 import { outstanding } from '@/lib/loans'
-import { formatMoney, sumMoney } from '@/lib/money'
+import { formatMoney } from '@/lib/money'
 import { toDateOnly } from '@/lib/dates'
 import { getSetting, setSetting } from '@/db/settings'
 import { loanReminderText, notify } from '@/lib/notifications'
@@ -340,46 +340,21 @@ export async function reopenLoans(ids: readonly Id[]): Promise<void> {
  * Removes a loan and the principal movement it booked. Refused once money has
  * been repaid against it — that history belongs to the account balances.
  */
-export interface DeletedLoan {
-  /** Payment records removed with it. */
-  payments: number
-  /** Money handed back to the accounts, from payments that had posted. */
-  refunded: Centavos
-}
-
 /**
- * Removes a loan.
- *
- * By default it refuses once anything has been paid against it: settling
- * keeps the record of what was paid, and deleting throws it away. `force`
- * is the deliberate way past that, for a loan that should never have been
- * there — it takes the payments with it and hands back whatever they took
- * out of an account, so the balances end up where they would have been.
+ * Removes a loan, and refuses once anything has been paid against it.
+ * Settling keeps the record of what was paid; deleting throws it away,
+ * and a loan with history is almost always one to settle. A payment
+ * logged by mistake is undone one at a time from the schedule instead.
  */
-export async function deleteLoan(
-  id: Id,
-  { force = false }: { force?: boolean } = {},
-): Promise<DeletedLoan> {
-  return db.transaction('rw', db.loans, db.loanPayments, db.transactions, async () => {
-    const payments = await db.loanPayments.where('loanId').equals(id).toArray()
-    if (payments.length > 0 && !force) {
+export async function deleteLoan(id: Id): Promise<void> {
+  await db.transaction('rw', db.loans, db.loanPayments, db.transactions, async () => {
+    const payments = await db.loanPayments.where('loanId').equals(id).count()
+    if (payments > 0) {
       throw new Error('Settle it instead — payments have already been recorded against it')
     }
 
-    // What the payments took out of an account, which is what deleting
-    // their transactions below gives back. A payment logged without
-    // posting took nothing, so it refunds nothing.
-    const refunded = sumMoney(
-      payments.filter((payment) => payment.transactionId).map((payment) => payment.amount),
-    )
-
-    await db.loanPayments.bulkDelete(payments.map((payment) => payment.id))
-    // Covers both the payments' transactions and the principal movement a
-    // personal loan made when it was created; all of them carry `loanId`.
     await db.transactions.where('loanId').equals(id).delete()
     await db.loans.delete(id)
-
-    return { payments: payments.length, refunded }
   })
 }
 

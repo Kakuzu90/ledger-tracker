@@ -506,7 +506,9 @@ export function buildSampleData({ today = new Date() }: SampleOptions = {}): Sam
 
     const start = parseISO(loan.startDate)
     for (let n = 1; n <= paid; n++) {
-      const date = iso(addMonths(start, n))
+      // `startDate` is the first payment, so instalment 1 falls on it —
+      // the same count `dueOn` in features/loans/formal.ts walks.
+      const date = iso(addMonths(start, n - 1))
       const payment = txn({
         type: 'expense',
         amount: instalment,

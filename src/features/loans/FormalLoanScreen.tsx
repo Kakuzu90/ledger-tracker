@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
+import type { LoanPayment } from '@/db/types'
 import { Screen } from '@/ui/Screen'
 import { Money } from '@/ui/Money'
 import { Meter } from '@/ui/Meter'
 import { Toggle } from '@/ui/Toggle'
+import { Sheet } from '@/ui/Sheet'
 import { EditIcon } from '@/ui/Icon'
 import { useUIStore } from '@/store/ui'
 import { formatPercent } from '@/lib/money'
@@ -44,6 +46,8 @@ export function FormalLoanScreen() {
   const [editing, setEditing] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [logging, setLogging] = useState(false)
+  /** The payment a tapped schedule row is asking about. */
+  const [undoing, setUndoing] = useState<LoanPayment | null>(null)
   // Sticky while the screen is open, because catching up on a loan means
   // logging several past instalments in a row, none of which should post.
   const [postToAccount, setPostToAccount] = useState(true)
@@ -64,21 +68,18 @@ export function FormalLoanScreen() {
   const { loan } = view
 
   /**
-   * Takes the most recent instalment back off. The snackbar's Undo only
-   * lasts a few seconds, and a payment logged for a month that was
-   * already paid is usually noticed later than that.
+   * Takes one instalment back off and gives back what it took. The
+   * snackbar's Undo lasts a few seconds; a payment logged for a month
+   * that was already paid is noticed later than that.
    */
-  const onUndoLast = async () => {
-    const last = data?.payments.at(-1)
-    if (!last) return
-
+  const onUndo = async (payment: LoanPayment) => {
     setLogging(true)
     try {
-      await deletePayment(last.id)
-      showSnack({
-        message: `Payment ${last.installmentNo ?? view?.paidCount ?? ''} removed`.trim(),
-      })
+      await deletePayment(payment.id)
+      setUndoing(null)
+      showSnack({ message: `Payment ${payment.installmentNo ?? ''} removed`.trim() })
     } catch (error) {
+      setUndoing(null)
       setProblem(error instanceof Error ? error.message : 'Could not remove that')
     } finally {
       setLogging(false)
@@ -133,7 +134,7 @@ export function FormalLoanScreen() {
       <Summary
         view={view}
         onLog={() => void onLog()}
-        onUndoLast={() => void onUndoLast()}
+        onUndoLast={() => data.payments.at(-1) && setUndoing(data.payments.at(-1)!)}
         logging={logging}
         postToAccount={postToAccount}
         onPostToAccount={setPostToAccount}
@@ -172,9 +173,19 @@ export function FormalLoanScreen() {
           <ScheduleTable
             rows={fullTable ? view.schedule : scheduleWindow(view.schedule)}
             scroll={fullTable}
+            payments={data.payments}
+            onUndo={setUndoing}
           />
         </section>
       )}
+
+      <UndoSheet
+        payment={undoing}
+        accountName={view.accountName}
+        busy={logging}
+        onClose={() => setUndoing(null)}
+        onConfirm={() => undoing && void onUndo(undoing)}
+      />
 
       <FormalLoanForm
         open={editing}
@@ -371,7 +382,23 @@ function Simulator({
   )
 }
 
-function ScheduleTable({ rows, scroll }: { rows: readonly ScheduleRow[]; scroll: boolean }) {
+function ScheduleTable({
+  rows,
+  scroll,
+  payments,
+  onUndo,
+}: {
+  rows: readonly ScheduleRow[]
+  scroll: boolean
+  payments: readonly LoanPayment[]
+  onUndo: (payment: LoanPayment) => void
+}) {
+  // A paid row is backed by a real payment record — the one numbered for
+  // this instalment, or failing that the nth logged, for payments made
+  // before instalment numbers were written down.
+  const paymentFor = (row: ScheduleRow): LoanPayment | undefined =>
+    payments.find((payment) => payment.installmentNo === row.n) ?? payments[row.n - 1]
+
   return (
     <div className={`overflow-x-auto ${scroll ? 'max-h-[420px] overflow-y-auto' : ''}`}>
       <table className="w-full border-collapse text-right text-sm">
@@ -396,8 +423,7 @@ function ScheduleTable({ rows, scroll }: { rows: readonly ScheduleRow[]; scroll:
               }
             >
               <Td className="text-left">
-                {row.status === 'paid' && <span aria-label="Paid">✓ </span>}
-                {row.n} · {row.label}
+                <PaidCell row={row} payment={paymentFor(row)} onUndo={onUndo} />
               </Td>
               <Td>
                 <Money value={row.principal} whole />
@@ -413,6 +439,86 @@ function ScheduleTable({ rows, scroll }: { rows: readonly ScheduleRow[]; scroll:
         </tbody>
       </table>
     </div>
+  )
+}
+
+/**
+ * The first cell of a row. A paid one is a button, because its payment
+ * can be taken back off — the only way to reach an instalment that is
+ * not the most recent one.
+ */
+function PaidCell({
+  row,
+  payment,
+  onUndo,
+}: {
+  row: ScheduleRow
+  payment: LoanPayment | undefined
+  onUndo: (payment: LoanPayment) => void
+}) {
+  const label = `${row.n} · ${row.label}`
+  if (row.status !== 'paid' || !payment) return <>{label}</>
+
+  return (
+    <button
+      type="button"
+      onClick={() => onUndo(payment)}
+      aria-label={`Undo payment ${row.n}, ${row.label}`}
+      className="flex min-h-touch items-center gap-1 text-left underline decoration-dotted underline-offset-[3px]"
+    >
+      <span aria-hidden="true">✓</span>
+      {label}
+    </button>
+  )
+}
+
+/** Asks before taking a payment back off, and says what goes back where. */
+function UndoSheet({
+  payment,
+  accountName,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  payment: LoanPayment | null
+  accountName?: string
+  busy: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!payment) return null
+
+  return (
+    <Sheet open onClose={onClose} title={`Undo payment ${payment.installmentNo ?? ''}`.trim()}>
+      <p className="text-meta text-muted">
+        Logged {format(parseISO(payment.date), 'd MMMM yyyy')}.
+      </p>
+
+      <div className="rounded-ctl bg-bg p-3.5">
+        <Money value={payment.amount} whole className="block text-2xl font-bold" />
+        <p className="mt-1 text-meta text-muted">
+          {payment.transactionId
+            ? `goes back to ${accountName ?? 'the account'}`
+            : 'never left an account, so nothing is given back'}
+        </p>
+      </div>
+
+      <p className="text-meta text-muted">
+        The loan goes back to owing it, and the schedule shows one fewer payment made.
+      </p>
+
+      <button type="button" className="btn-secondary w-full" onClick={onClose}>
+        Keep it
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onConfirm}
+        className="min-h-[50px] w-full rounded-btn bg-negative font-semibold text-negative-ink disabled:opacity-50"
+      >
+        Undo this payment
+      </button>
+    </Sheet>
   )
 }
 
